@@ -33,6 +33,22 @@ The dashboard shows it all live: the active board, the queue, open questions, de
 
 Everything is plain markdown, so it all works by hand too.
 
+## Starting a session
+
+Every session starts with you arriving with something. Three doors cover almost all of it, and each one is a sentence you type.
+
+| You're arriving with | What you say |
+|---|---|
+| A new idea nobody is doing yet | `Run a system phase, queue-shaping: I keep hitting X and there is no row for it.` |
+| The next queued thing, ready to build | `Open [phase name] from the queue.` |
+| A pile of small fixes, by punch list ID | `Run a side phase, sweep: P04 · P07 · P09.` |
+
+Queue-shaping is the lightest door, and the routine way an idea enters the queue. It writes a queue row and a seed, the file where context collects until the phase opens, for a phase of any mode. The queue is a staging area, never a gate: anything urgent skips it and opens its board directly.
+
+Two things need no door. A board left open by an earlier chat is a continuation, so pick it back up. Questions and reading need no board at all, and the first edit is the line where a shape gets named.
+
+All seven ways a session begins, and the parts you can reshape, are in `docs/CONTRIBUTING.md` → Session starters, rendered at `/system/method`.
+
 ## First 30 minutes
 
 1. Copy the repo (or "Use this template" on GitHub).

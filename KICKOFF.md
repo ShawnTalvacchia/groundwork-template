@@ -86,6 +86,40 @@ The kickoff is the **bootstrap** — the one-time phase that runs *before* the t
 
 After that, work the normal loop: queue → open a phase from its mode's template → orient (align or challenge) → build → (product) walkthrough → close (distill + delete). The whole loop is in `docs/CONTRIBUTING.md`.
 
+## Starting a session, after the kickoff
+
+The kickoff is the one session that ships with its board already open. Every session after it starts with you arriving with something, and naming the shape is the first move. The shape sets the mode, and the mode sets the rituals. Three doors cover almost all of it, and each one is a sentence you type.
+
+**A new idea nobody is doing yet.**
+
+> Run a system phase, queue-shaping: exports keep failing and nothing planned covers it.
+
+The lightest door, and the one most work should come through. It writes a queue row and a seed, the file where context collects, for a phase of any mode: a build, a research pass, a fix to the rules themselves. A later session opens it with fresh eyes, which is the whole reason shaping and building are separate sittings.
+
+**The next queued thing, ready to build.**
+
+> Open [phase name] from the queue.
+
+The seed names the mode, so the rituals are already set. Its notes fold into a fresh board, and row and seed leave the queue together.
+
+**A pile of small fixes.**
+
+> Run a side phase, sweep: P04 · P07 · P09.
+
+Punch list IDs. They come onto one light board and get worked together, with no queue row needed.
+
+**The queue is a staging area, never a gate.** Work that cannot wait skips it and opens its board directly. Everything else queues first, because the session that builds reads the seed fresh instead of grading its own plan.
+
+**Two things need no door.** A board left open by an earlier chat is a **continuation**, so pick it back up rather than opening anything. Questions, reading and thinking out loud need no board at all; the first edit is the line where a shape gets named.
+
+**Not sure which one you're holding?** Open the queue-shaping door. Its shaping step exists to name the thing: it proposes the shape, the mode and the kind, and pushes back when what you have isn't phase-shaped at all.
+
+### The doors are yours too
+
+Three doors is the short version of seven, and the seven are not fixed. `docs/CONTRIBUTING.md` → **Adjustments** is the map: name a **kind** when you keep opening the same shape of work, bind a ritual to a moment where nothing fires, edit or delete a step that costs more than it catches, redraw a mode's bands when they stop matching who edits what. Each one names the moment you'd want it, and none of them is something you should do on day one.
+
+The one thing worth doing deliberately rather than by drift: make the change in the section that owns it, commit it, and check that `/system/method` renders your version. The dashboard reads these docs, so your model is the one it shows.
+
 ## The `/system` dashboard (ships with the template)
 
 The live derived dashboard is already built — a **Next.js/React** app that renders every `/system` page from the docs in `docs/` at build time. Run it:
