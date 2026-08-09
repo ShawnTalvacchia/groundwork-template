@@ -47,6 +47,17 @@ export function PageIntro({ title, count, blurb }: { title: string; count?: numb
   );
 }
 
+/** What a heading renders instead of nothing when its source doc is empty.
+ *
+ *  Every tracker and log on this dashboard ships empty, so a new project meets
+ *  five of these before it meets a single row — and a heading with a void under
+ *  it reads as a broken page, not as an empty one. The message always says two
+ *  things: what is absent, and what puts something here. Emptiness is a state
+ *  the record is allowed to be in; the page has to say so out loud. */
+export function EmptyNote({ children }: { children: ReactNode }) {
+  return <p className="text-xs text-fg-tertiary">{children}</p>;
+}
+
 export function Tile({
   href,
   label,
@@ -172,9 +183,7 @@ export function QueueShelf({
         </Link>
       </div>
       {shown.length === 0 ? (
-        <p className="text-xs text-fg-tertiary">
-          Nothing queued yet — planned work lands on the roadmap before a board opens.
-        </p>
+        <EmptyNote>Nothing queued yet — planned work lands on the roadmap before a board opens.</EmptyNote>
       ) : (
         // auto-fit, not a fixed three: the queue's length varies, and two cards
         // holding a third of the row with a gap beside them reads as broken

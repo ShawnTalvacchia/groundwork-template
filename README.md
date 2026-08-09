@@ -8,7 +8,7 @@ It gives a project three things: a work model (phases, modes, rituals), a small 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/system-overview-dark.png">
-  <img alt="The /system overview of a filled project: an active board mid-phase, the queue, trackers, decisions, and the shipped record, all rendered from docs/" src=".github/system-overview-light.png">
+  <img alt="The /system overview of a filled project: an active board mid-phase, the queue of phases waiting behind it, the three trackers, the strategy shelf and doc tiers, the shipped record, and the work model itself, all rendered from docs/" src=".github/system-overview-light.png">
 </picture>
 
 *The dashboard of a project in flight. (Staged demo content: "Frond," a fictional plant-care app.)*
@@ -38,7 +38,7 @@ Everything is plain markdown, so it all works by hand too.
 1. Copy the repo (or "Use this template" on GitHub).
 2. `npm install && npm run dev`, then open [localhost:3000/system](http://localhost:3000/system).
 3. The **Kickoff board** is already open on the dashboard. It is the one-time bootstrap that turns the empty template into your project.
-4. Work it with **`KICKOFF.md`** (repo root) as the guide: answer the seeded questions, fill the strategy shelf, choose your stack, name the project, set the roadmap.
+4. Work it with **`KICKOFF.md`** (repo root) as the guide: answer the seeded questions, fill the strategy shelf, choose your stack, name the project, decide where your record lives, make the identity yours, set the roadmap.
 
 The kickoff's close ritual replaces this README with your project's own and deletes `KICKOFF.md`. The template leaves no onboarding behind. What remains is your project.
 

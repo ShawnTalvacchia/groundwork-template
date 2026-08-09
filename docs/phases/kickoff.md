@@ -29,5 +29,5 @@ read-when: "the first board — work it before anything else; deleted at close, 
 - [ ] **Hand off for verification** — present the filled shelf (Vision + Scope `active`, ROADMAP set, first product phase queued) for the PO's read.
 - [ ] `last-reviewed` stamped on every doc filled/reviewed during kickoff.
 - [ ] **Replace README.md with your project's own** — the template's pitch + quickstart have done their job.
-- [ ] **Delete KICKOFF.md** — its durable notes already live in their homes (`implementation/system-surface.md`, `app/globals.css`, your CLAUDE.md Stack block). The template leaves no onboarding behind.
+- [ ] **Delete KICKOFF.md** — its durable notes already live in their homes (`implementation/shipping.md`, `implementation/system-surface.md`, `app/globals.css`, your CLAUDE.md Stack block). The template leaves no onboarding behind.
 - [ ] **Distill + delete this board**, then open the first product phase from the roadmap. The three-mode loop starts here.

@@ -52,7 +52,7 @@ _(fill at kickoff — the stack-neutral reuse-first + flag-new principles live i
 | `docs/decisions.md` | Institutional memory — dated What/Why/Where decisions, newest first |
 | `docs/CONTRIBUTING.md` | The Work Model, phase lifecycle, doc conventions, hygiene |
 | `docs/implementation/system-surface.md` | The `/system` dashboard's spec — derived-never-authored law, IA, page→source map |
-| `docs/implementation/shipping.md` | Naming across every surface, where the record lives, gate config, renaming later |
+| `docs/implementation/shipping.md` | Identity across every surface (the name and the mark), where the record lives, gate config, renaming later |
 | `docs/strategy/Vision.md` | _(fill at kickoff — the bedrock thesis)_ |
 | `docs/strategy/Scope & Constraints.md` | _(fill at kickoff — in/out of scope, hard constraints, non-goals)_ |
 | `docs/planning/Open Questions & Assumptions Log.md` | Unresolved questions affecting upcoming work |

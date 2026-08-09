@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getArchivedPhases } from "@/lib/system";
-import { PageIntro } from "../ui";
+import { EmptyNote, PageIntro } from "../ui";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -27,6 +27,9 @@ export default function TimelinePage() {
         count={phases.length}
         blurb="The shipped record at a glance — every closed phase by month, newest first. Each links to its archived board (with its walkthrough alongside), which remains the deep record."
       />
+      {phases.length === 0 && (
+        <EmptyNote>Nothing shipped yet — closed phases land here as they are archived.</EmptyNote>
+      )}
       <div className="flex flex-col gap-lg">
         {months.map((mo) => (
           <section key={mo.label} className="flex flex-col gap-xs">

@@ -1,5 +1,5 @@
 import { getDecisions } from "@/lib/system";
-import { MdInline, PageIntro, SourceNote } from "../ui";
+import { EmptyNote, MdInline, PageIntro, SourceNote } from "../ui";
 
 export default function DecisionsPage() {
   const decisions = getDecisions();
@@ -11,6 +11,11 @@ export default function DecisionsPage() {
         count={decisions.length}
         blurb="The institutional memory — dated What/Why/Where entries, newest first. Walkthrough docs capture decisions during a phase; the load-bearing ones get lifted here at close so they survive the archive. This is the catch-up feed: read down until you hit a date you remember."
       />
+      {decisions.length === 0 && (
+        <EmptyNote>
+          No decisions logged yet — phases lift their load-bearing calls here as they close.
+        </EmptyNote>
+      )}
       <div className="flex flex-col gap-lg">
         {decisions.map((d) => (
           <article key={`${d.date}-${d.title}`} className="sys-card flex flex-col gap-sm">

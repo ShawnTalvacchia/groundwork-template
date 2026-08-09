@@ -16,6 +16,7 @@ import {
   getWorkModel,
   TIER_ORDER,
 } from "@/lib/system";
+import { Mark } from "@/components/ui/Mark";
 import { QueueShelf, StartersStrip, Tile } from "./ui";
 
 function Cluster({
@@ -79,7 +80,14 @@ export default function SystemOverview() {
     <>
       {kickoffOpen && (
         <div className="flex flex-col gap-xs rounded-panel border border-brand-light bg-brand-subtle px-lg py-md">
-          <p className="text-sm font-semibold text-fg-primary">◆ Fresh template: not yet kicked off.</p>
+          {/* The mark, not a bare ◆ character. This banner is the first thing a
+              fresh copy shows on its own dashboard, one screen from the kickoff
+              step that tells you to make the mark yours — so it has to be the
+              mark that step edits. Swap Mark.tsx and this follows. */}
+          <p className="flex items-center gap-xs text-sm font-semibold text-fg-primary">
+            <Mark size={14} />
+            Fresh template: not yet kicked off.
+          </p>
           <p className="text-xs text-fg-secondary max-w-[72ch]">
             The Kickoff board below is the one-time bootstrap. Your guide is{" "}
             <code className="sys-code">KICKOFF.md</code> at the repo root. This banner derives from

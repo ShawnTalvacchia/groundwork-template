@@ -1,5 +1,5 @@
 import { getPunchItems, stripMd } from "@/lib/system";
-import { IdTag, MdInline, PageIntro, SourceNote } from "../ui";
+import { EmptyNote, IdTag, MdInline, PageIntro, SourceNote } from "../ui";
 
 /** Lead line: the bold-title convention where present, else the first sentence. */
 function leadOf(description: string): string {
@@ -20,6 +20,9 @@ export default function PunchListPage() {
         count={items.length}
         blurb="Small fixes (≤30 min) that run alongside whatever phase is active. Fixed items are removed from the table — commit history is the record — so this list is always the current open set."
       />
+      {items.length === 0 && (
+        <EmptyNote>Nothing on the punch list — small fixes land here as they are noticed.</EmptyNote>
+      )}
       <div className="flex flex-col">
         {items.map((item) => (
           <details key={item.id} className="sys-details">

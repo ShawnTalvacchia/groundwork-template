@@ -1,5 +1,5 @@
 import { getFutureItems } from "@/lib/system";
-import { IdTag, PageIntro, SourceNote } from "../ui";
+import { EmptyNote, IdTag, PageIntro, SourceNote } from "../ui";
 
 export default function FuturePage() {
   const items = getFutureItems();
@@ -11,6 +11,11 @@ export default function FuturePage() {
         count={items.length}
         blurb="Known directions parked until a trigger fires. The unit here is the trigger, not the task — items promote out (to the punch list, a phase board, or feature scope) when their trigger fires, and leave when a phase ships them."
       />
+      {items.length === 0 && (
+        <EmptyNote>
+          Nothing parked yet — known directions land here with the trigger that will bring them back.
+        </EmptyNote>
+      )}
       <div className="flex flex-col gap-md">
         {items.map((item) => (
           <div key={item.id} className="sys-card flex flex-col gap-sm">

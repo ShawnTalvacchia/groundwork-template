@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getAllDocs, getFeatureAreas, type SystemDoc } from "@/lib/system";
-import { PageIntro } from "../ui";
+import { EmptyNote, PageIntro } from "../ui";
 
 // The feature registry, grouped by the areas the docs themselves declare
 // (`getFeatureAreas`). This page holds NO vocabulary of its own: not the set,
@@ -91,9 +91,7 @@ export default function FeaturesPage() {
         </section>
       )}
       {product.length === 0 && (
-        <p className="text-xs text-fg-tertiary">
-          No product features yet. The first product phase writes the first spec.
-        </p>
+        <EmptyNote>No product features yet — the first product phase writes the first spec.</EmptyNote>
       )}
       {demo.length > 0 && (
         <section className="flex flex-col gap-md">

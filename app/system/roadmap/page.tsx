@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getQueuedSeeds, getRoadmap, MODE_META } from "@/lib/system";
-import { MdInline, PageIntro } from "../ui";
+import { EmptyNote, MdInline, PageIntro } from "../ui";
 
 export default function RoadmapPage() {
   const roadmap = getRoadmap();
@@ -27,6 +27,9 @@ export default function RoadmapPage() {
             the whole card IS the link to the phase's SEED (planning/queued/),
             via the doc reader. Hub-tile hover + the metadata line's trailing
             arrow carry the affordance (the arrow alone on touch screens). */}
+        {roadmap.phases.length === 0 && (
+          <EmptyNote>Nothing queued yet — planned work lands here before a board opens.</EmptyNote>
+        )}
         <div className="grid gap-md sm:grid-cols-2">
           {roadmap.phases.map((p, i) => {
             const seed = seedFor(p.name);

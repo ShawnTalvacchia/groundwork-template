@@ -31,7 +31,7 @@ docs/
     _walkthrough-template.md
   implementation/
     system-surface.md         the /system dashboard spec (its law + page→source map)
-    shipping.md               naming, hosting, the gate, and renaming later
+    shipping.md               identity (name + mark), where the record lives, the gate, renaming later
 app/, components/, lib/        the live /system dashboard — Next.js + the doc parsers
 app/globals.css                the starter design system (edit these tokens to re-skin)
 components/ui/Mark.tsx         the starter mark — one home for the shape, set at kickoff
