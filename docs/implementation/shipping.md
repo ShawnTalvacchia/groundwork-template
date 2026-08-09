@@ -36,9 +36,9 @@ The other half of the identity, set in the same kickoff session (`KICKOFF.md` �
 
 Change the shape in one, change it in all three. The **colour** is the one thing delivered differently per file: `Mark.tsx` reads `var(--brand-main)` and follows your re-skin automatically, while the other two carry the value as a literal.
 
-The favicon also carries a second path the other two do not: a hairline edge traced just inside the starter's silhouette. It is artwork, not machinery — so if you swap in a shape that is not a rounded square, retrace it or delete it, or it will be left outlining a shape that is no longer there.
+The favicon's literal is a **lighter** step on the ramp than the other two, on purpose. It is the one renderer whose backdrop you do not control — browser chrome is dark for a lot of people — and the starter's brand colour measures 2.04:1 against a dark tab strip, under the 3:1 non-text minimum. A step lighter clears 3:1 in both directions (3.60:1 dark, 3.41:1 light). Worth re-checking against your own palette when you swap the mark in.
 
-The favicon's literal is a **lighter** step on the ramp than the other two, on purpose. It is the one renderer whose backdrop you do not control — browser chrome is dark for a lot of people — and the starter's brand colour measures 2.04:1 against a dark tab strip, under the 3:1 non-text minimum. A step lighter clears 3:1 in both directions. Worth re-checking against your own palette when you swap the mark in.
+**Fix the edge with colour, not with an outline.** A stroke traced inside the mark's silhouette paints the outermost ring of it, so it does not reinforce the edge — it becomes the edge. The starter carried one briefly and measured *worse* for it: 2.27:1 on a light tab strip, against 3.41:1 for the plain fill. If your own brand is dark rather than light, the trade can run the other way, so measure both backdrops before adding one.
 
 The starter's centre is a real cutout — one path with `fill-rule="evenodd"`, so nothing paints the middle and whatever sits behind the mark shows through. Worth keeping in your own shape: a painted centre has to know what is behind it, and every new callsite is a chance to get that backwards.
 

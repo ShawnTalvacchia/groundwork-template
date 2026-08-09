@@ -22,21 +22,20 @@
 
        This is a per-renderer colour, not per-renderer centre logic - the
        centre is a hole in all three, with no mechanism at all. Keep it that
-       way when you swap in your own mark. -->
+       way when you swap in your own mark.
+
+       ONE PATH, AND NO OUTLINE ON TOP OF IT. This file briefly carried a
+       hairline stroke inset 1 unit from the tile edge, meant to firm up the
+       silhouette on dark chrome. A 2-wide stroke centred on that path paints
+       the outermost ring of the mark, so the stroke IS the silhouette - it
+       does not reinforce the edge, it replaces it. Composited over brand-400
+       it measures 2.27:1 on a light tab strip and 2.98:1 on white, both under
+       the 3:1 above. Deleting it is what restores the numbers this comment
+       claims. If your own mark is a DARK brand, the trade can genuinely run
+       the other way; measure both backdrops before adding one back. -->
   <path
     d="M7 0H25A7 7 0 0 1 32 7V25A7 7 0 0 1 25 32H7A7 7 0 0 1 0 25V7A7 7 0 0 1 7 0Z M16 7.5L24.5 16L16 24.5L7.5 16Z"
     fill-rule="evenodd"
     fill="#6366f1"
-  />
-  <!-- Hairline inset edge: defines the silhouette against dark chrome without
-       painting anything into the cutout. Traced to the rounded-square starter,
-       so a different silhouette has to retrace this path or delete it — it is
-       the one piece of geometry the other two renderers do not carry. -->
-  <path
-    d="M7 1H25A6 6 0 0 1 31 7V25A6 6 0 0 1 25 31H7A6 6 0 0 1 1 25V7A6 6 0 0 1 7 1Z"
-    fill="none"
-    stroke="#ffffff"
-    stroke-opacity="0.24"
-    stroke-width="2"
   />
 </svg>
