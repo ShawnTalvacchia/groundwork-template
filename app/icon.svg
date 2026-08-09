@@ -29,7 +29,9 @@
     fill="#6366f1"
   />
   <!-- Hairline inset edge: defines the silhouette against dark chrome without
-       painting anything into the cutout. -->
+       painting anything into the cutout. Traced to the rounded-square starter,
+       so a different silhouette has to retrace this path or delete it — it is
+       the one piece of geometry the other two renderers do not carry. -->
   <path
     d="M7 1H25A6 6 0 0 1 31 7V25A6 6 0 0 1 25 31H7A6 6 0 0 1 1 25V7A6 6 0 0 1 7 1Z"
     fill="none"

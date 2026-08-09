@@ -23,8 +23,10 @@
  * standalone file because a favicon has no stylesheet to inherit from, and
  * `app/opengraph-image.tsx` re-declares it because Satori renders outside CSS
  * entirely. Three renderers, one set of path data — if the shape changes, it
- * changes in all three. Only the colour needs a per-renderer mechanism; the
- * cutout carries none.
+ * changes in all three. The cutout needs no per-renderer mechanism at all; the
+ * colour is delivered differently per file (this one reads a custom property,
+ * the other two carry a literal), and the favicon alone carries a hairline edge
+ * traced to the starter silhouette, which a new shape has to retrace or drop.
  *
  * No `viewBox` scaling logic: `size` drives width/height and the 32x32 box does
  * the rest.

@@ -34,7 +34,9 @@ The other half of the identity, set in the same kickoff session (`KICKOFF.md` �
 | **Favicon** | `app/icon.svg` | Served outside the CSS pipeline, so it inherits no stylesheet |
 | **Link preview** | `app/opengraph-image.tsx` | Rendered through Satori, which has no CSS at all |
 
-Change the shape in one, change it in all three. Only the **colour** needs a per-renderer mechanism: `Mark.tsx` reads `var(--brand-main)` and follows your re-skin automatically, while the other two carry the value as a literal.
+Change the shape in one, change it in all three. The **colour** is the one thing delivered differently per file: `Mark.tsx` reads `var(--brand-main)` and follows your re-skin automatically, while the other two carry the value as a literal.
+
+The favicon also carries a second path the other two do not: a hairline edge traced just inside the starter's silhouette. It is artwork, not machinery — so if you swap in a shape that is not a rounded square, retrace it or delete it, or it will be left outlining a shape that is no longer there.
 
 The favicon's literal is a **lighter** step on the ramp than the other two, on purpose. It is the one renderer whose backdrop you do not control — browser chrome is dark for a lot of people — and the starter's brand colour measures 2.04:1 against a dark tab strip, under the 3:1 non-text minimum. A step lighter clears 3:1 in both directions. Worth re-checking against your own palette when you swap the mark in.
 
