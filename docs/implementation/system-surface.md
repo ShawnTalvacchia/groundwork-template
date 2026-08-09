@@ -72,7 +72,7 @@ A fixed header carries the main tabs — **System** + three groups (Work · Stru
 | Active board(s) | `docs/phases/*.md` (templates excluded) — the board in full under a mode badge + progress. Heavy boards derive it from each `## Workstream` section's Status-cell task rows + legacy checkboxes; light boards (no workstreams) count their `## Items` checkboxes directly, excluding the closing checklist |
 | Roadmap | `ROADMAP.md` (Where We Are, the queue table — any mode, horizon) + `planning/queued/*.md` seeds (`getQueuedSeeds` — frontmatter + lede feed the cards, `mode:` badges each; the whole card links to its seed; the invariant is bidirectional and mode-agnostic — an orphaned seed or a seedless row trips the drift banner) |
 | Questions | `planning/Open Questions & Assumptions Log.md` (`## N. Topic` → `### Question?` with Area/Opened/Priority/Thinking/Resolves-when; everything in the file is open — resolved is deleted) |
-| Punch list | `planning/punch-list.md` (the `P##` table) |
+| Punch list | `planning/punch-list.md` (the `P##` table). The summary line is the row's own `title` column — the page used to guess it from a bold prefix or a truncated first sentence, which is the surface authoring a label the doc never wrote |
 | Future | `planning/Future Considerations.md` (`FC##` sections, Trigger/Context/Effort fields) |
 | Docs | `tier:` frontmatter across live docs + per-tier staleness heuristics (working >30d, commitments >90d) |
 | Features | `docs/features/*.md` frontmatter (`feature-status`, `feature-kind`, `area`, `routes`). The area **set and labels** derive too (`getFeatureAreas` — alphabetical, title-cased); the page holds no vocabulary of its own |

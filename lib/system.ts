@@ -594,10 +594,14 @@ export function getOpenQuestions(): OpenQuestionTopic[] {
 }
 
 /* ── Punch list (planning/punch-list.md) ─────────────────────────────
-   A single `| P## | description | category | area | refs | added |` table. */
+   A single `| P## | title | description | category | area | refs | added |`
+   table. The title is the row's index entry: queue-shaping scans punch titles
+   without reading the descriptions, so a row whose title hides its content is
+   a hole in that index (CONTRIBUTING.md § Queue-shaping). */
 
 export interface PunchItem {
   id: string;
+  title: string; // short label — what the index sees
   description: string; // markdown kept — render with MdInline/stripMd
   category: string;
   area: string;
@@ -609,10 +613,18 @@ export function getPunchItems(): PunchItem[] {
   const parsed = readDoc("planning/punch-list.md");
   if (!parsed) return [];
   const items: PunchItem[] = [];
-  const re = /^\| (P\d+\w*) \| (.*?) \| (.*?) \| (.*?) \| (.*?) \| (.*?) \|\s*$/gm;
+  const re = /^\| (P\d+\w*) \| (.*?) \| (.*?) \| (.*?) \| (.*?) \| (.*?) \| (.*?) \|\s*$/gm;
   let m;
   while ((m = re.exec(parsed.body))) {
-    items.push({ id: m[1], description: m[2], category: m[3], area: m[4], refs: m[5], added: m[6] });
+    items.push({
+      id: m[1],
+      title: m[2],
+      description: m[3],
+      category: m[4],
+      area: m[5],
+      refs: m[6],
+      added: m[7],
+    });
   }
   return items;
 }

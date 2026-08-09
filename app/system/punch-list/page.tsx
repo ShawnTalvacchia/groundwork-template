@@ -1,14 +1,9 @@
-import { getPunchItems, stripMd } from "@/lib/system";
+import { getPunchItems } from "@/lib/system";
 import { EmptyNote, IdTag, MdInline, PageIntro, SourceNote } from "../ui";
 
-/** Lead line: the bold-title convention where present, else the first sentence. */
-function leadOf(description: string): string {
-  const bold = description.match(/^\*\*(.+?)\*\*/);
-  if (bold) return stripMd(bold[1]).replace(/\.$/, "");
-  const plain = stripMd(description);
-  const dot = plain.indexOf(". ");
-  return dot > 0 && dot < 160 ? plain.slice(0, dot) : plain.slice(0, 160);
-}
+// The summary line is the row's own `title` column. It used to be guessed here
+// — bold prefix if the row had one, else the first sentence truncated — which
+// meant the surface authored a label the doc never wrote.
 
 export default function PunchListPage() {
   const items = getPunchItems();
@@ -32,7 +27,9 @@ export default function PunchListPage() {
                   ›
                 </span>
                 <IdTag id={item.id} />
-                <span className="text-sm text-fg-primary flex-1 leading-snug">{leadOf(item.description)}</span>
+                <span className="text-sm text-fg-primary flex-1 leading-snug">
+                  <MdInline text={item.title} />
+                </span>
               </span>
               <span className="block pl-xl pt-xs text-2xs text-fg-tertiary">
                 {item.category} · {item.area} · added {item.added}
