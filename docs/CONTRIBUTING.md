@@ -53,7 +53,7 @@ Every session starts with someone arriving with something, and naming the shape 
 | Something to understand before anything gets decided | Research | side | "Run a side phase, research: explore §2 before we commit." | The **side phase**, in its **research** kind. Lands a doc in `strategy/research/` and updates the tracker that asked — understanding is the deliverable, not code. |
 | Friction with the system itself — docs, rules, dashboard | System phase | system | "Run a system phase: the close ritual keeps missing X." | The **system phase** itself, no kind. Name the friction and agree the scope before touching anything; system work is always done with the PO. |
 | An open board from an earlier chat | Continuation | the board's | "Continue the [phase name] board." | Not a new phase — the board's own mode carries on, so its rituals are already set. Commit anything stranded first (the session-end rule), then keep working the board. |
-| Questions, reading, thinking out loud | Not a phase yet | — | "How does the export band work?" | No mode, no board — reading is never gated. The first edit is the line: at it, name the shape that fits and open its board (see the shared rules). |
+| Questions, reading, thinking out loud | Not a phase yet | — | "How do the touch bands work?" | No mode, no board — reading is never gated. The first edit is the line: at it, name the shape that fits and open its board (see the shared rules). |
 
 ### The product phase — building the product
 
@@ -144,7 +144,7 @@ This model is built from five parts, and every one of them is yours to reshape. 
 #### Mode
 
 **Is:** A phase's flavor — the setting that fixes every property at once. Three ship: the product phase (building the product), the system phase (tending the system), the side phase (working the trackers).
-**Properties:** Purpose · the touch bands · opening ritual · during-rules · closing ritual · a board template (`phases/_*-template.md`) · its kinds, if any — named shapes that reuse the mode's rituals whole (the sweep and research under side, queue-shaping under system; product has none — every product phase is the same shape, a thesis-carrying build).
+**Properties:** Purpose · the touch bands · opening ritual · during-rules · closing ritual · a board template (`phases/_*-template.md`) · its kinds, if any — named shapes that live inside the mode's rituals (the sweep and research under side, queue-shaping under system; product has none — every product phase is the same shape, a thesis-carrying build).
 
 #### Ritual
 
@@ -226,7 +226,7 @@ The system's terms, defined once. Used consistently everywhere — docs, boards,
 - **Phase** — the work unit: any chunk of work run through the rituals, in exactly one mode. Opens as a board, closes by distill + delete.
 - **Session** — one chat. One phase per session is the strong default, not a law: a phase survives a force-ended chat, and a fresh session picking its board back up is continuation, not error-recovery. Named at board open — `Project · mode · Phase name` — with the title recorded on the board.
 - **Mode** — a phase's flavor: the product phase (building the product), the system phase (tending the system itself), or the side phase (working the trackers). The mode sets the ritual's weight and focus, the board's template, the orient set, and the touch bands.
-- **Kind** — a named shape of work inside an existing mode, reusing its rituals whole: the sweep and research (side), queue-shaping (system); product has none. Earned by recurrence, never declared for symmetry — the test lives in § Adjustments, each kind's opening line in § Session starters.
+- **Kind** — a named shape of work living inside an existing mode's rituals: the sweep and research (side), queue-shaping (system); product has none. Earned by recurrence, never declared for symmetry — the test lives in § Adjustments, each kind's opening line in § Session starters.
 - **Kickoff** — the one-time bootstrap that runs before the three-mode loop: it writes the strategy shelf (rather than orienting against it) and opens all ground because it's creating everything. Not a fourth mode — the ignition. See "The Kickoff" above.
 - **Board** — a phase's worklist and running record while open, in `phases/`, created from its mode's template. Scale varies by mode: product boards are heavy (workstreams + a walkthrough sibling); side boards are light (the tracker items pulled in); system boards fit the friction. Always `tier: working` while open; distilled and deleted at close — product phases leave a compact record.
 - **Seed** — a queued phase's accumulation space, one file in `planning/queued/` for any mode: a pitch, dated notes, candidate scope, refs — never tasks. Folds into the board at phase open and is deleted.
