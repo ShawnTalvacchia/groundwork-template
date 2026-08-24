@@ -175,6 +175,18 @@ export function getDriftAlarms(): DriftAlarm[] {
   if (!roadmap.goal || roadmap.whereWeAre.length === 0) {
     alarm("getRoadmap", "ROADMAP.md", "goal or Where We Are parsed empty");
   }
+  // Key Considerations: bullets that don't parse. Presence-not-count - a fresh
+  // ROADMAP carries the section with a placeholder and no bullets, which is
+  // silent. It fires when the section HAS `- ` items and none reached
+  // `keyConsiderations`: the lenses are written and the page shows none.
+  if (roadmap.keyConsiderationsWritten > 0 && roadmap.keyConsiderations.length === 0) {
+    alarm(
+      "getRoadmap",
+      "ROADMAP.md § Key Considerations",
+      `${roadmap.keyConsiderationsWritten} bullet(s) written, 0 parsed — each lens is \`- **Title:** text\`, and the page renders nothing without the bold title`,
+    );
+  }
+
   // The seed ↔ queued-row match is bidirectional and mode-agnostic (2026-07-20:
   // the queue holds upcoming work of any mode; every queued row carries a seed,
   // and the roadmap card IS the link to it). A rename on either side silently
@@ -321,7 +333,10 @@ export function getDriftAlarms(): DriftAlarm[] {
   }
 
   for (const a of alarms) {
-    console.warn(`[system-surface] ${a.parser} (${a.source}): ${a.problem}`);
+    // "DRIFT" leads so the line is greppable in a build log. The build still
+    // passes (see WARN, never fail above) - `npm run verify` is the gate that
+    // reads these back and exits non-zero.
+    console.warn(`DRIFT [system-surface] ${a.parser} (${a.source}): ${a.problem}`);
   }
   cache = alarms;
   return alarms;

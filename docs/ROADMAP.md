@@ -10,7 +10,9 @@ read-when: "at the start and end of every phase"
 # Roadmap
 
 <!-- PARSED by lib/system.ts (getRoadmap) -> /system/roadmap + the hub. Changing this section's SHAPE
-     (the Goal line, the Where We Are / What's Next / Key Considerations / On the horizon section headings, the queued-phase table) breaks that page silently - the /system drift banner will name it.
+     (the Goal line, the Where We Are / What's Next / Key Considerations / On the horizon section headings, the queued-phase table,
+     and Key Considerations' `- **Title:** text` bullets) breaks that page silently - the /system drift banner will name it.
+     Section ORDER is free and the PAGE FOLLOWS IT - reorder the sections here and /system/roadmap reorders with them.
      Check /system after editing. Spec: docs/implementation/system-surface.md -->
 
 **Goal:** _(fill at kickoff — one or two sentences on what this project is building toward.)_

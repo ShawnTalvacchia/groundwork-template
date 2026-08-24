@@ -684,6 +684,16 @@ export interface RoadmapPhase {
   refs: string;
 }
 
+/** The roadmap sections a surface renders, named by their heading. */
+export type RoadmapSection = "whereWeAre" | "queue" | "keyConsiderations" | "horizon";
+
+const ROADMAP_SECTIONS: Array<{ heading: string; key: RoadmapSection }> = [
+  { heading: "Where We Are", key: "whereWeAre" },
+  { heading: "What's Next", key: "queue" },
+  { heading: "Key Considerations", key: "keyConsiderations" },
+  { heading: "On the horizon", key: "horizon" },
+];
+
 export interface KeyConsideration {
   title: string;
   text: string;
@@ -691,11 +701,20 @@ export interface KeyConsideration {
 
 export interface Roadmap {
   goal: string;
+  /** The `## ` headings this parser knows, in the DOC's order. The page renders
+   *  its sections in this order rather than a hardcoded one: section order is a
+   *  claim the compass makes, and a surface that hardcodes it overrides that
+   *  claim silently. */
+  sectionOrder: RoadmapSection[];
   whereWeAre: string[]; // markdown paragraphs
   phases: RoadmapPhase[];
   validationHorizon: string;
   runningAlongside: string[];
   keyConsiderations: KeyConsideration[];
+  /** Bullets the section HAS, parsed or not. The drift invariant compares the
+   *  two: bullets written with none parsed means the lenses are authored and
+   *  the page shows nothing. */
+  keyConsiderationsWritten: number;
   /** ROADMAP § On the horizon. Named for the section, not for any one
    *  project's shape. */
   horizon: string[];
@@ -738,17 +757,34 @@ export function getRoadmap(): Roadmap {
   const runningBlock = nextSection.split(/\*\*Running alongside[^*]*\*\*/)[1] ?? "";
   const runningAlongside = (runningBlock.match(/^- .*$/gm) ?? []).map((b) => b.slice(2).trim());
 
+  // `- **Title:** text` bullets, one per lens.
   const considerations: KeyConsideration[] = [];
-  for (const p of sectionOf(body, "Key Considerations").split(/\n\n+/)) {
-    const cm = p.trim().match(/^\*\*(.+?)\*\*\s*([\s\S]*)$/);
-    if (cm) considerations.push({ title: cm[1].replace(/\.$/, ""), text: cm[2].trim() });
+  const kcBullets = sectionOf(body, "Key Considerations").match(/^- .*$/gm) ?? [];
+  for (const line of kcBullets) {
+    const cm = line.slice(2).trim().match(/^\*\*(.+?)\*\*\s*([\s\S]*)$/);
+    if (cm) considerations.push({ title: cm[1].replace(/[:.]$/, ""), text: cm[2].trim() });
   }
 
   const horizon = (sectionOf(body, "On the horizon").match(/^- .*$/gm) ?? []).map((b) =>
     stripMd(b.slice(2))
   );
 
-  return { goal, whereWeAre: where, phases, validationHorizon, runningAlongside, keyConsiderations: considerations, horizon };
+  const sectionOrder = ROADMAP_SECTIONS.filter((sec) => new RegExp(`^## ${sec.heading}\\s*$`, "m").test(body))
+    .map((sec) => ({ sec, at: body.search(new RegExp(`^## ${sec.heading}\\s*$`, "m")) }))
+    .sort((a, b) => a.at - b.at)
+    .map(({ sec }) => sec.key);
+
+  return {
+    goal,
+    sectionOrder,
+    whereWeAre: where,
+    phases,
+    validationHorizon,
+    runningAlongside,
+    keyConsiderations: considerations,
+    keyConsiderationsWritten: kcBullets.length,
+    horizon,
+  };
 }
 
 /* ── Seeds (planning/queued/*.md) ────────────────────────────────────

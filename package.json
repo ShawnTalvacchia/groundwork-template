@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run lint",
-    "verify": "NEXT_DIST_DIR=.next-verify next build --webpack"
+    "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
