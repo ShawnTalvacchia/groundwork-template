@@ -13,7 +13,7 @@ read-when: "while this system phase is open (deleted at close — decisions.md c
 
 ## Session open — YYYY-MM-DD
 
-- **Session title:** [`Project · mode · Phase name` — the PO's answer at open]
+- **Session title:** [`mode · Phase name` — the PO's answer at open]
 - **Project:** [the repo this board lives in — work outside it gets handed over, not done]
 - **Friction named:** [what this phase fixes, in one or two sentences]
 - **Scope agreed with the PO:** [what's in, what's out]

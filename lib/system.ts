@@ -252,8 +252,14 @@ export function getGlossary(): GlossaryTerm[] {
 export interface WorkMode {
   key: BoardMode;
   label: string; // "The product phase"
-  tagline: string; // "building the product"
+  tagline: string; // "builds the thing"
   purpose: string; // markdown kept — render with MdInline
+  /** The mode's orient set, in one line: what a phase of this mode reads
+   *  before it edits anything. § The parts names the orient set as a property
+   *  every mode fixes, and the mode sections stated it nowhere until this
+   *  field existed — it lived inside opening-ritual step 2, in the rituals'
+   *  register. */
+  reads: string;
   /** The three touch bands — they gate pens, not eyes (reading is never gated). */
   homeGround: string; // edit freely, per the board
   careful: string; // update deliberately when the work bears on it
@@ -347,6 +353,7 @@ export function getWorkModel(): WorkModel {
         label: `The ${hm[1]} phase`,
         tagline: hm[2].trim(),
         purpose: boldField(body, "Purpose"),
+        reads: boldField(body, "Reads first"),
         homeGround: boldField(body, "Home ground"),
         careful: boldField(body, "Careful"),
         gated: boldField(body, "Gated"),

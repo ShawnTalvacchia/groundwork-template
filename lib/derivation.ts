@@ -72,6 +72,7 @@ export function getDriftAlarms(): DriftAlarm[] {
   for (const m of wm.modes) {
     const missing = [
       !m.purpose && "Purpose",
+      !m.reads && "Reads first",
       !m.homeGround && "Home ground",
       !m.careful && "Careful",
       !m.gated && "Gated",

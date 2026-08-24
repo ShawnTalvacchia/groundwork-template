@@ -33,7 +33,7 @@ Rules for humans and agents working in this repo. Read before building. This is 
 - **A change that makes an open walkthrough item — or any ROADMAP claim about where the project currently stands — inaccurate fixes it in the same edit, whoever made the change.** The rule binds the phase *making* the change, not the phase that owns the walkthrough or the compass, so it reaches across concurrent boards and across modes. Never defer it: a note on your board is deleted at your close, and the stale text outlives it. **Every mode may make this correction, including where the text is otherwise gated ground** — repointing a line your own work invalidated is mechanical, and the alternative is a rule nobody is permitted to obey. Re-orienting the compass's *direction* is not covered and stays where it was. (Detail: § During a Phase.)
 - **A phase belongs to one project — the repo its board lives in.** The board names that repo at open, and everything outside it is out of bounds for every mode: no edits, no commits, no "while I'm here." A sibling project's problem gets written down and handed to a session running *in* that project; re-scoping takes a new session there, not a note here.
 - **One phase per session is the default — and no board, no pen.** A session that legitimately runs several phases still gives each its own board; succession is fine — close one, open the next. A session that only reads or talks needs no phase at all — but the first edit is the line: before touching code or docs, stop, name the shape that fits (§ Session starters), and open its board. Filing a tracker row stays free — capture between phases is what trackers are for. A fix small enough not to earn a board is a punch item (≤30 min, any mode), swept later.
-- **The session is named at board open, and the board records the title.** A session cannot read or rename itself, so right after the board is created — the phase name is known by then — ask the PO to rename the chat to `Project · mode · Phase name`: yes, renamed · no, I named it: [title] · skip. Whatever the answer, the board's open section records the session title. Session identity lives in the harness, not in git; the board's line is the only place the record can say which chat ran the phase.
+- **The session is named at board open, and the board records the title.** A session cannot read or rename itself, so right after the board is created — the phase name is known by then — ask the PO to rename the chat to `mode · Phase name`: yes, renamed · no, I named it: [title] · skip. Whatever the answer, the board's open section records the session title. Session identity lives in the harness, not in git; the board's line is the only place the record can say which chat ran the phase.
 - **Session end commits the board.** A session that ends mid-phase — deliberately or with the chat force-closed — commits the open board as it stands, code ready or not. A board is a doc: committing it is mode-pure and costs nothing, and it is the difference between a phase that survives its chat and work that strands. A session that finds stranded work commits the board before anything else.
 - **Push is the publish trigger.** The deploy rebuilds the record from every push, so pushing *is* publishing where things stand. The smallest push worth naming is the **status push**: commit the record alone — board, trackers, compass — and push. One gesture that puts the state of the work on the record without shipping half-finished code. Session end's board commit is its natural companion.
 - **Commits are mode-pure.** A commit serves exactly one board and names it in the message. Never mix product and system changes in one commit.
@@ -55,15 +55,17 @@ Every session starts with someone arriving with something, and naming the shape 
 | An open board from an earlier chat | Continuation | the board's | "Continue the [phase name] board." | Not a new phase — the board's own mode carries on, so its rituals are already set. Commit anything stranded first (the session-end rule), then keep working the board. |
 | Questions, reading, thinking out loud | Not a phase yet | — | "How do the touch bands work?" | No mode, no board — reading is never gated. The first edit is the line: at it, name the shape that fits and open its board (see the shared rules). |
 
-### The product phase — building the product
+### The product phase — Builds the thing
 
-**Purpose:** Chunked product work toward the app's goals, carrying a thesis (the structural change it delivers). Usually born from the queue; may open directly when something serious earns it. The product ships through this mode, so its rituals are the deepest.
+**Purpose:** A thesis, the change the phase sets out to make. Then the build, then a walkthrough you drive point by point. The deepest ritual of the three, because this is where the product ships.
 
-**Home ground:** product code, feature docs.
+**Reads first:** The strategy docs, whole. Then whatever this particular phase answers to.
 
-**Careful:** strategy docs and ROADMAP content — updated deliberately when the work bears on them (a ratified walkthrough decision, or a structured challenge when new work presses on an old commitment), never in passing.
+**Home ground:** Product code and feature docs.
 
-**Gated:** the governance docs — CLAUDE.md, this file, ROADMAP *structure*, the `/system` code. Not forbidden: suggest the edit, and it lands through a system phase.
+**Careful:** Strategy docs and roadmap content. Updated when the work genuinely bears on them, never in passing: a walkthrough decision the PO ratified, or a structured challenge when new work presses on an old commitment.
+
+**Gated:** The rules themselves. CLAUDE.md, this file, the ROADMAP's *structure*, the `/system` code. Not forbidden: suggest the edit and a system phase lands it.
 
 **Opening ritual:**
 
@@ -79,15 +81,17 @@ Every session starts with someone arriving with something, and naming the shape 
 2. The **Closing Checklist** (§ Closing a Phase) — decisions propagated to home docs and the load-bearing ones lifted to `decisions.md`, feature docs updated, trackers pruned, ROADMAP re-oriented.
 3. **Distill + delete** — a compact record replaces the board and walkthrough.
 
-### The system phase — tending the system
+### The system phase — Tends the rules
 
-**Purpose:** Meta-work on the docs, workflow, and `/system` surface themselves — restructuring a tracker, rewriting these rules, reorganizing the doc tree, dashboard changes, a styleguide pass, **queue-shaping** (a system-phase kind, not a fourth mode — § Queue-shaping). Product-**agnostic** by definition, and the **inverse of a side phase**: the governance docs are its home ground. It must never settle product strategy in passing — if a strategic question surfaces mid-phase, it goes to Open Questions, not decided.
+**Purpose:** The docs, the work model, and the dashboard itself. Always done together, never solo. One kind lives inside it: **queue-shaping**, for tending the queue when no phase's own open or close is doing it.
 
-**Home ground:** the governance docs (CLAUDE.md, this file, ROADMAP structure, the trackers' formats, the templates, the doc tree) **and production code that is the system's own surface** — `lib/system.ts`, `app/system/`, and the shared conventions the system defines (styleguide, design tokens, shared component patterns) wherever those live.
+**Reads first:** The rules themselves, and the log of past decisions.
 
-**Careful:** `decisions.md`'s prior entries (amend with a new dated entry, never rewrite history), and mechanical ripples into product-facing docs when a governance change lands (repoint the refs; don't touch their content).
+**Home ground:** The docs, the rules, the molds, and the code behind the dashboard.
 
-**Gated:** **product behavior** — features, flows, product copy, seeded content, strategy doc *content*. The band is purpose, not file location: production code is home ground while the edit serves the system's own surface, and gated the moment it adds or changes what the product does for its users. Not forbidden: suggest it, and it lands through a product phase.
+**Careful:** Prior entries in `decisions.md`: amend with a new dated entry, never rewrite history. And ripples into product-facing docs when a rule changes: repoint the references, leave their content alone.
+
+**Gated:** **Product behavior**: features, flows, product copy, seeded content, and the *content* of strategy docs. The band is **purpose, not file location**: production code is home ground while the edit serves the system's own surface, and gated the moment it adds or changes what the product does for its users. That surface is `lib/system.ts` and `app/system/`, plus the styleguide, the design tokens and the shared component patterns wherever they live. It never settles product strategy in passing either: a strategic question that surfaces goes to Open Questions rather than being decided here. Not forbidden: suggest it and a product phase lands it.
 
 **Opening ritual:**
 
@@ -106,15 +110,17 @@ Every session starts with someone arriving with something, and naming the shape 
 5. Lands as its **own commit** (or PR), described as system work — mode-pure.
 6. **Board deleted** (git is the record; `decisions.md` carries the calls). A build-scale system phase that shipped something durable leaves a compact record in `archive/phases/`, like a product phase.
 
-### The side phase — working the trackers
+### The side phase — Sweeps the small stuff
 
-**Purpose:** Tracker-born work that runs alongside other phases — sweeping punch items, exploring an open question, **research** (a side-phase kind, not a fourth mode), or a verification pass. A side phase usually pulls **several** tracker items (a sweep), not one — single ≤30-min items wait in the punch list until a sweep collects them. Its board is light: the pulled items, checked off as they land.
+**Purpose:** Small logged fixes, an open question, a research pass. Tracker-born work that runs alongside the other phases, usually **several** items at once (a **sweep**) rather than one. If an item grows a thesis it stops, because that is product work now.
 
-**Home ground:** the code it changes, and **its own tracker rows** (moving them is the close).
+**Reads first:** The items it pulled, and the docs for the code they touch.
 
-**Careful:** the feature docs describing the code it changed — updated at close, `last-reviewed` bumped.
+**Home ground:** The code it changes, and **the tracker items it pulled**.
 
-**Gated:** governance docs, other boards, strategy, tracker *restructuring* (moving your own rows ≠ reformatting the file), and resuming a paused phase (default answer: no — ask first). Not forbidden: surface it, and the user routes it to the right mode.
+**Careful:** The feature docs describing the code it changed. Updated at close, `last-reviewed` bumped.
+
+**Gated:** The rules, other boards, strategy, and tracker *restructuring* (moving your own items is not reformatting the file). Resuming a paused phase is gated too, and the default answer is no: ask first. Not forbidden: surface it and the PO routes it to the right mode.
 
 **Opening ritual:**
 
@@ -143,7 +149,7 @@ This model is built from five parts, and every one of them is yours to reshape. 
 
 #### Mode
 
-**Is:** A phase's flavor — the setting that fixes every property at once. Three ship: the product phase (building the product), the system phase (tending the system), the side phase (working the trackers).
+**Is:** A phase's flavor — the setting that fixes every property at once. Three ship: the product phase (builds the thing), the system phase (tends the rules), the side phase (sweeps the small stuff).
 **Properties:** Purpose · the touch bands · opening ritual · during-rules · closing ritual · a board template (`phases/_*-template.md`) · its kinds, if any — named shapes that live inside the mode's rituals (the sweep and research under side, queue-shaping under system; product has none — every product phase is the same shape, a thesis-carrying build).
 
 #### Ritual
@@ -224,8 +230,8 @@ The system's terms, defined once. Used consistently everywhere — docs, boards,
 
 - **PO** — the product owner: the human the work is done with and for. Every close ritual hands off to the PO; walkthroughs are driven by the PO. In a solo project, that's you wearing the reviewer hat.
 - **Phase** — the work unit: any chunk of work run through the rituals, in exactly one mode. Opens as a board, closes by distill + delete.
-- **Session** — one chat. One phase per session is the strong default, not a law: a phase survives a force-ended chat, and a fresh session picking its board back up is continuation, not error-recovery. Named at board open — `Project · mode · Phase name` — with the title recorded on the board.
-- **Mode** — a phase's flavor: the product phase (building the product), the system phase (tending the system itself), or the side phase (working the trackers). The mode sets the ritual's weight and focus, the board's template, the orient set, and the touch bands.
+- **Session** — one chat. One phase per session is the strong default, not a law: a phase survives a force-ended chat, and a fresh session picking its board back up is continuation, not error-recovery. Named at board open — `mode · Phase name` — with the title recorded on the board.
+- **Mode** — a phase's flavor: the product phase (builds the thing), the system phase (tends the rules), or the side phase (sweeps the small stuff). The mode sets the ritual's weight and focus, the board's template, the orient set, and the touch bands.
 - **Kind** — a named shape of work living inside an existing mode's rituals: the sweep and research (side), queue-shaping (system); product has none. Earned by recurrence, never declared for symmetry — the test lives in § Adjustments, each kind's opening line in § Session starters.
 - **Kickoff** — the one-time bootstrap that runs before the three-mode loop: it writes the strategy shelf (rather than orienting against it) and opens all ground because it's creating everything. Not a fourth mode — the ignition. See "The Kickoff" above.
 - **Board** — a phase's worklist and running record while open, in `phases/`, created from its mode's template. Scale varies by mode: product boards are heavy (workstreams + a walkthrough sibling); side boards are light (the tracker items pulled in); system boards fit the friction. Always `tier: working` while open; distilled and deleted at close — product phases leave a compact record.

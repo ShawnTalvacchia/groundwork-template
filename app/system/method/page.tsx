@@ -1,4 +1,4 @@
-import { Check, Eye, Lock } from "@phosphor-icons/react/dist/ssr";
+import { BookOpen, Check, Eye, Lock } from "@phosphor-icons/react/dist/ssr";
 import { getWorkModel } from "@/lib/system";
 import { MdInline, SourceNote } from "../ui";
 
@@ -21,6 +21,10 @@ const BAND_META = {
   home: { label: "Home ground", Icon: Check },
   careful: { label: "Careful", Icon: Eye },
   gated: { label: "Gated", Icon: Lock },
+  // Not a band: the orient set — what the mode reads before it edits
+  // anything. It renders in the left column with the purpose, never beside
+  // the three bands, because bands gate pens and this one is about eyes.
+  reads: { label: "Reads first", Icon: BookOpen },
 } as const;
 
 function Scope({ kind, text }: { kind: keyof typeof BAND_META; text: string }) {
@@ -194,9 +198,12 @@ export default function MethodPage() {
 
               {/* What it is (left) · what it may touch (right) */}
               <div className="grid gap-lg lg:grid-cols-[1.4fr_1fr]">
-                <p className="text-sm text-fg-secondary leading-normal">
-                  <MdInline text={m.purpose} />
-                </p>
+                <div className="flex flex-col gap-md">
+                  <p className="text-sm text-fg-secondary leading-normal">
+                    <MdInline text={m.purpose} />
+                  </p>
+                  <Scope kind="reads" text={m.reads} />
+                </div>
                 <div className="flex flex-col gap-sm">
                   <Scope kind="home" text={m.homeGround} />
                   <Scope kind="careful" text={m.careful} />
