@@ -13,13 +13,17 @@ queued: YYYY-MM-DD
      (mode/phase/queued/priority) + the first paragraph are the card; `phase` must match the
      ROADMAP row name exactly - the /system drift banner flags a mismatch. `mode` badges the card. -->
 
-# Phase Name — seed
+# Phase Name — {product | system | side} seed
 
 One-paragraph pitch: what this phase is and why it's queued.
 
-**A seed holds notes and pointers, never tasks.** It's the accumulation space between "queued on the ROADMAP" and "board opens" — the plan starts here, the work doesn't. A task list here is a shadow board; if you're writing one, open the phase. At phase open the seed feeds the board and is deleted.
-
-**Every queued ROADMAP row carries a seed** — a bare seed keeps this full section structure even where sections hold little or nothing; the container ready to receive notes is the point. Doc refs are relative markdown links (from `planning/queued/`, e.g. `[features/foo.md](../../features/foo.md)`) so they navigate in the doc reader; other identifiers stay plain text.
+> **How this works**
+>
+> **This seed opens a phase in the mode its heading names**, and that mode sets the board's template, the rituals it runs, what it reads at open and what it may edit. Keep the heading and the `mode:` field above saying the same thing — the field badges this seed's card on the roadmap, and the heading is what a person sees when they open the file.
+>
+> **A seed holds notes and pointers, never tasks.** It's the accumulation space between "queued on the ROADMAP" and "board opens" — the plan starts here, the work doesn't. A task list here is a shadow board; if you're writing one, open the phase. At phase open the seed feeds the board and is deleted.
+>
+> **Every queued ROADMAP row carries a seed** — a bare seed keeps this full section structure even where sections hold little or nothing; the container ready to receive notes is the point. Doc refs are relative markdown links (from `planning/queued/`, e.g. `[features/foo.md](../../features/foo.md)`) so they navigate in the doc reader; other identifiers stay plain text.
 
 ## Notes & finds
 

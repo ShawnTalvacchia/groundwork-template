@@ -88,6 +88,11 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
                   </a>
                 );
               }
+              // An in-app path the mount does not own is still a real
+              // destination. Emit a plain anchor rather than swallowing the
+              // link into text — a de-linked path gives the reader no sign a
+              // link was ever meant. Only an unresolvable ref stays inert.
+              if (resolved.startsWith("/")) return <a href={resolved}>{children}</a>;
               return <span>{children}</span>;
             },
           }}

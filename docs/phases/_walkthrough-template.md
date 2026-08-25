@@ -7,27 +7,17 @@ read-when: "Update as items are walked, edit as scope adjusts"
 
 # Phase Name — Walkthrough
 
-Verification checklist for the Phase Name phase. **Concise by design** — three priority categories instead of an exhaustive per-workstream checklist. Trust that automated checks + visual sanity passes ran during the build; surface only what's worth the reader's judgment, what risks regression, and what they should glance at to confirm the phase thesis lands.
-
-**How to use:** run the app, walk top-to-bottom (categories ordered by "needs your eyeballs most" → "least"). `[ ]` not yet walked · `[x]` walked, no issues. The settled calls collect in the Decisions log at the bottom.
-
-**This is a working surface, not an archive.** It is consumed at close: the Decisions log is the propagation worklist, and then this file is deleted along with the board (`CONTRIBUTING.md` → Closing a Phase, steps 2 and 8). Nothing here has to survive, because everything that matters has left for its home doc by then.
-
-**Any change that makes an item here inaccurate fixes the item in the same edit** — whoever made the change, including a concurrent board of another mode (`CONTRIBUTING.md` → Rules shared by all modes). Flagging it on your own board does not work: that board is deleted at your close and the stale item outlives it.
-
-<!-- Optional context block — phase-specific seed data, dates that matter, etc. Keep it terse. Drop entirely if not needed. -->
+> **How this works**
+>
+> A living surface while the phase is open, in two parts. **The first part is yours to walk:** each **O** item is a call the agent made alone, for you to ratify or redirect — settled ones are deleted; each **V** item is a check that needs a human at the keyboard, naming where to look and what to expect — `[ ]` not walked, `[x]` passed; the occasional **G** item is a surface to glance at, nothing to drive. **The second part is what the system absorbs:** the Decisions log at the bottom holds the calls as they currently stand, one line each, and closing writes each line into the doc it names, then deletes this file with the board. The full ritual: [CONTRIBUTING.md → Walkthrough](../CONTRIBUTING.md#walkthrough-the-review-stage).
+>
+> Work keeps moving while this is open — on this board or another — and that can change the plan an item or a logged decision describes. Both get **updated in place** so what's written is always the current plan (raised with you first when the direction is in question), and nothing here chronicles how it changed: this file records where things stand, never the path taken. History lives in git.
+>
+> Items are written concisely. Unsure what one means? **Just ask.**
 
 ---
 
 ## Open for your call
-
-Decisions the author made that warrant a second look — direction, not bug-hunt. These are the calls made during the build instead of stopping to ask — surfaced so the reviewer can ratify or redirect (see `CONTRIBUTING.md` → "During a Phase" → decide-and-flag). Each one describes a real call the author made that someone else might land differently, and tells the reader the quickest path to see it in context.
-
-Identifier prefix: **`O`** (O1, O2, ...). **Bullets, not checkboxes** — an item is open, or it is gone.
-
-**What enters: only calls the author made alone.** A change the PO **directed**, or picked from options offered, is never an O item — filing it here asks the PO to ratify their own instruction, and it turns the close gate into checking your own work. One exception, and it does not live here either: a directed change that **reverses settled work** is a structured challenge (`CONTRIBUTING.md` → Doc Tiers & Review Physics), logged in `decisions.md` win or lose.
-
-**What leaves: a resolved item is deleted, and its outcome becomes one line in the Decisions log.** Nothing is checked off in place; no item grows its rationale where it sits. The list only ever shrinks as the walkthrough runs, so what is on screen is exactly what still needs the reviewer. **Identifiers are never reused** — O7 stays O7's name after O7 is gone, so anything that referred to it still resolves.
 
 - **O1. {One-line framing of the call.}** Why it could go another way. ({who's looking} → `/url` to see it.)
 - **O2. {The next one — its own call, its own pointer.}** ...
@@ -35,16 +25,6 @@ Identifier prefix: **`O`** (O1, O2, ...). **Bullets, not checkboxes** — an ite
 ---
 
 ## Worth verifying
-
-Interaction nuance, complex state, round-trips, anything author-confidence is genuinely uncertain about. Each item describes a behavior the reader needs to drive themselves — an automated check or a static screenshot wouldn't have caught it.
-
-**Every check names where to look and what to expect.** Give each item the exact URL/view + a one-line *Expect:*. A check the reader can't locate is not a check. Add a *who's-looking* qualifier only when who's looking changes what's shown (an edit/self surface, a permission-gated view, a viewer-specific default); omit it when the surface looks the same to everyone.
-
-**What earns a V item: a behavior a human has to drive.** Multi-step round-trips, interaction nuance, anything whose result depends on who is looking. **Not** "confirm the text now says X" — an author verifies their own edits before the walkthrough starts, and filing that here spends the reviewer's attention on finished work. If a check can pass unattended, it is not a V item; run it and move on.
-
-**One check per item — split freely.** If an item bundles two surfaces or two behaviours, that's two items. No penalty for many small, clearly-pointed items; the penalty is a fat item that buries three checks behind one URL.
-
-Identifier prefix: **`V`**. Group a workstream's checks under a `### V1 — {workstream}` sub-heading and **number each `V1.1`, `V1.2`, …**. These keep their checkboxes: a passed check is evidence, and it stays.
 
 ### V1 — {workstream}
 
@@ -55,60 +35,31 @@ Identifier prefix: **`V`**. Group a workstream's checks under a `### V1 — {wor
 
 ## Surfaces to glance _(usually skip)_
 
-**Only include when V can't naturally exercise a shipped surface** — a styleguide render, a static seeded view, a print/export view, a CSS-only state no behavioral test reaches. Driving a V item already lands the reviewer on the surface, so a separate glance pass is almost always redundant. Most phases have 0 G items. If this section ends up empty, delete it before shipping.
-
-Identifier prefix: **`G`** (G1, G2, ...).
-
 - [ ] **G1.** {who's looking} → `/url` — one-line description of what should be there.
 
 ---
 
 ## Decisions surfaced during walkthrough
 
-The calls the walkthrough settled, one line each, newest at the bottom. Every entry carries a `→ target-doc.md` annotation naming where it lands. At close this section **is** the propagation worklist: each entry is written into its home doc, and the load-bearing ones lift to `decisions.md`.
-
-**Two rules keep this honest. They are the two ways this section has actually failed:**
-
-1. **Current state, not an event log.** A superseded entry is **edited**, never appended beside the one it replaces. The signal you got this wrong: at close, one surface has two entries describing it differently.
-2. **The call, not the path to it.** Three rounds of back-and-forth produce **one** entry — the decision that survived, written as though it had always been the answer. Reasoning goes to the doc the `→` names, not into the line here: this section is transit, and it is deleted at close.
-
-Format:
-```
 - **{Decision in one line.}** {Optional one-line context.} → `features/foo.md`
 - **{Implementation-only change.}** {What/why.} → no feature-doc update needed
-```
 
-<!--
-================================================================================
-Authoring conventions — read before writing or expanding this walkthrough.
-================================================================================
+---
 
-THE THREE CATEGORIES — what belongs where:
-
-  Open for your call — calls the author made where another reasonable person
-    would land differently. Lead with the call itself. Zero of these is fine:
-    "No open calls — everything landed per spec."
-
-  Worth verifying — behaviors that need a human at the keyboard. The entry
-    test is in the body, with the section.
-
-  Surfaces to glance (usually skip) — only shipped surfaces V can't exercise.
-    If it overlaps any V item, delete it.
-
-ANTI-PATTERNS the structure exists to fight:
-
-  1. Listing every viewer × surface permutation. If verifying X once implies it
-     works everywhere (same code path), list it once.
-  2. Spelling out what another item exercises in passing.
-  3. Pure-visual checks dressed up as verification. Either it's fine (don't list
-     it) or it isn't (fix it, don't ask the reader to flag it).
-  4. Decisions buried in workstream items — promote to the Decisions log, shrink
-     the item to "verify X behaves correctly."
-  5. Bundled or unpointed checks — one check per item; every item carries an
-     exact URL + a one-line Expect. Two surfaces = two items.
-
-The rules governing what enters the O list, what leaves it, and how the
-Decisions log is written are in the BODY, next to the sections they govern —
-they are read while the walkthrough is being walked, not only while it is
-being authored.
--->
+> **Before you write items — then delete this card**
+>
+> This half is for whoever authors the items, not for the reader walking them. Write your first pass, then delete this card and the `---` above it. Everything the reader needs is in the card at the top.
+>
+> **Identifiers** — `O1`, `V1.1` under a `### V1 — {workstream}` heading, `G1`. **Never reused:** `O7` stays O7's name after O7 is gone, so anything that referred to it still resolves. O items are bullets, not checkboxes — an item is open, or it is gone.
+>
+> **What enters the O list: only calls you made alone.** A change the PO directed, or picked from options you offered, is never an O item — filing it there asks them to ratify their own instruction, and turns the close gate into checking your own work. One exception, and it does not live here either: a directed change that *reverses settled work* is a structured challenge ([CONTRIBUTING.md → Doc Tiers & Review Physics](../CONTRIBUTING.md#doc-tiers-review-physics)), logged in `decisions.md` win or lose. **What leaves:** a resolved item is deleted and its outcome becomes one line in the Decisions log. Nothing is checked off in place, and no item grows its rationale where it sits — the list only shrinks, so what is on screen is exactly what still needs the reader.
+>
+> **An O item has to be legible cold.** This file is read across days, not in one sitting, so an item names the concrete thing on screen — its label, its numbers — the fork that was open, and why you picked your side. "The stats came back plain" is not an item: it assumes the reader is carrying your build in their head.
+>
+> **What earns a V item: a behavior a human has to drive.** Round-trips, interaction nuance, anything whose result depends on who is looking. **Not** "confirm the text now says X" — you verify your own edits before the walkthrough starts, and filing that spends the reader's attention on finished work. If a check can pass unattended, run it and move on. **One check per item, split freely:** two surfaces is two items, and every item carries its URL **as a markdown link** plus a one-line *Expect*. Link it, do not just name it — the dashboard renders in-app paths as real links, and a reader who has to reassemble an address is one who skips the check. Add a *who's-looking* qualifier only when who is looking changes what is shown.
+>
+> **G is an exception, not a section to fill.** Only a shipped surface V cannot exercise — a styleguide render, a static seeded view, a print or export view, a CSS-only state no behavioral test reaches. Driving a V item already lands the reader on the surface, so most phases have no G items; delete the section if yours does.
+>
+> **The Decisions log has two rules, and they are the two ways it has actually failed.** A superseded entry is **edited**, never appended beside the one it replaces — the tell is two entries at close describing one surface differently. And it carries **the call, not the path to it**: three rounds of back-and-forth produce one entry, written as though it had always been the answer. Reasoning goes to the doc the `→` names, never into the line here; this section is transit, and it is deleted at close.
+>
+> **Four anti-patterns the structure exists to fight:** listing every viewer × surface permutation, where one code path means one item · spelling out what another item already exercises in passing · pure-visual checks dressed up as verification, where either it is fine or you fix it · a decision buried in a workstream item, which belongs in the log with the item shrunk to its check.

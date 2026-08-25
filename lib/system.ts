@@ -806,10 +806,16 @@ export interface QueuedSeed {
   mode: BoardMode; // badges the roadmap card
   queued: string | null;
   priority: string | null;
-  /** First body paragraph — the card's condensed description. */
-  lede: string;
   noteCount: number;
 }
+
+/* No `lede` here on purpose. It existed as the seed's first body paragraph and
+   no surface ever rendered it: the roadmap card takes its sentence from the
+   ROADMAP row's Goal cell and joins only this frontmatter. A parsed field
+   nothing consumes is worse than an absent one — this one nearly forced a
+   mold's shape, because the shape was designed around a lede never displayed.
+   If a card should ever speak in the seed's own voice, add it back
+   deliberately and render it in the same edit. */
 
 export function getQueuedSeeds(): QueuedSeed[] {
   const dir = path.join(DOCS_DIR, "planning", "queued");
@@ -819,11 +825,6 @@ export function getQueuedSeeds(): QueuedSeed[] {
     if (!f.endsWith(".md") || f.startsWith("_")) continue;
     const parsed = readDoc(path.join("planning", "queued", f));
     if (!parsed) continue;
-    const paragraphs = parsed.body
-      .replace(/^# .*$/m, "")
-      .split(/\n\n+/)
-      .map((p) => p.trim())
-      .filter((p) => p && !p.startsWith("#"));
     const notes = sectionOf(parsed.body, "Notes & finds");
     seeds.push({
       relPath: path.join("planning", "queued", f),
@@ -831,7 +832,6 @@ export function getQueuedSeeds(): QueuedSeed[] {
       mode: resolveMode(parsed.fm.mode),
       queued: parsed.fm.queued ?? null,
       priority: parsed.fm.priority ?? null,
-      lede: paragraphs[0] ?? "",
       noteCount: (notes.match(/^- /gm) ?? []).length,
     });
   }

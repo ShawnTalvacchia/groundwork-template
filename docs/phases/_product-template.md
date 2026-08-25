@@ -8,6 +8,8 @@ read-when: When any task is completed or blocked
 
 # Phase Name
 
+**Mode:** product · [the rituals this board runs](../CONTRIBUTING.md#the-product-phase-builds-the-thing)
+
 **Goal:** One sentence describing what "done" looks like.
 
 **Project:** [the repo this board lives in — work outside it gets handed over, not done]
@@ -20,7 +22,7 @@ read-when: When any task is completed or blocked
 
 ## Open notes (phase-specific only)
 
-> **Canonical open process:** `docs/CONTRIBUTING.md` → "Opening a Product Phase" — the single source of truth. Work through those steps; do **not** copy them here.
+> **Canonical open process** — [CONTRIBUTING.md → Opening a Product Phase](../CONTRIBUTING.md#opening-a-product-phase) is the single source of truth. Work through those steps; do **not** copy them here.
 >
 > List below ONLY what's specific to THIS phase: how it serves the vision (checklist step 1), conflicts surfaced during the opening audit, docs re-checked, scope calls made at open.
 
@@ -41,9 +43,9 @@ read-when: When any task is completed or blocked
      A row whose last cell isn't one of these keywords is ignored, so the
      header + |---| separator + any non-task data table don't inflate the count. -->
 
-> Letters are creation-order IDs, not sequence — workstreams get added as the
-> board runs, so don't read A→Z as priority. The **close workstream is
-> unlettered** ("## Close items") and sits last, whenever it was written.
+> **How to read the workstreams**
+>
+> Letters are creation-order IDs, not sequence — workstreams get added as the board runs, so don't read A→Z as priority. The **close workstream is unlettered** ("## Close items") and sits last, whenever it was written.
 
 | Task | Description | Refs | Status |
 |------|-------------|------|--------|
@@ -60,7 +62,7 @@ read-when: When any task is completed or blocked
 
 ## Close notes (phase-specific only)
 
-> **Canonical close process:** `docs/CONTRIBUTING.md` → "Closing a Phase" — the single source of truth. Work through those steps; do **not** copy them here — that duplication is exactly what drifts.
+> **Canonical close process** — [CONTRIBUTING.md → Closing a Phase](../CONTRIBUTING.md#closing-a-phase) is the single source of truth. Work through those steps; do **not** copy them here — that duplication is exactly what drifts.
 >
 > List below ONLY what's specific to THIS phase: the feature docs it touched, outward-facing artifacts to graduate, punch-list items it closes, next-phase dependencies it satisfies. Per-decision doc targets live in the walkthrough's "Decisions surfaced" log.
 

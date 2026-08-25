@@ -9,7 +9,7 @@ read-when: "board close (deleted at close — the moved tracker rows + the commi
 
 # [Sweep — P## · P## · P## | Explore §N | Research: topic] — opened YYYY-MM-DD
 
-**Mode: side.** Light board: the tracker items this session pulled. Opening/closing ritual in `CONTRIBUTING.md` → The side phase. Deleted at close.
+**Mode:** side · [the rituals this board runs](../CONTRIBUTING.md#the-side-phase-sweeps-the-small-stuff)
 
 **Project:** [the repo this board lives in — work outside it gets handed over, not done]
 

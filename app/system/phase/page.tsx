@@ -1,7 +1,7 @@
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { getActiveBoards, getRoadmap, getWorkModel } from "@/lib/system";
+import { getActiveBoards, getRoadmap, MODE_META } from "@/lib/system";
 import { MdInline, PageIntro } from "../ui";
 
 // The board in full — this IS its home. Work owns it; it isn't a summary
@@ -10,7 +10,6 @@ import { MdInline, PageIntro } from "../ui";
 export default function ActiveBoardPage() {
   const boards = getActiveBoards();
   const roadmap = getRoadmap();
-  const { modes } = getWorkModel();
 
   if (boards.length === 0) {
     return (
@@ -48,14 +47,13 @@ export default function ActiveBoardPage() {
   return (
     <>
       {boards.map((board, i) => {
-        const mode = modes.find((m) => m.key === board.mode);
         return (
           <section
             key={board.slug}
             className={`flex flex-col gap-md${i > 0 ? " border-t border-edge-light pt-xl" : ""}`}
           >
             <div className="flex items-center gap-sm flex-wrap">
-              <span className="sys-pill">{mode?.label ?? board.mode}</span>
+              <span className="sys-pill">{MODE_META[board.mode].label}</span>
               <span className="text-xs text-fg-tertiary tabular-nums">
                 {board.done}/{board.total} tasks
               </span>
