@@ -30,7 +30,7 @@ Rules for humans and agents working in this repo. Read before building. This is 
 - **Trackers hold candidates, not queued work.** A tracker note that bloats, or a cluster of connected notes, promotes into a phase — the rows leave the trackers and the board gets a cohesive chunk. Tracker work needed sooner than later gets a seed and/or a board, depending on how soon it'll be picked up.
 - **Reading is never gated — the touch bands gate pens, not eyes.** Every opening ritual has a bounded orient step (read the mode's core set whole; actively align to the emphasized set), and any doc may be pulled freely mid-build. Orientation is **align or challenge**: new work pressing on an old commitment isn't drift to suppress — it's a structured challenge to raise (§ Doc Tiers), and sometimes the challenge should win. That pressure is how new directions, features, and strategy are born.
 - **Concurrency — one open board per mode.** One product and (when needed) one system board may be open simultaneously; never two boards of the same mode. Side phases run alongside either.
-- **A change that makes a shared compass claim inaccurate fixes it in the same edit, whoever made the change.** The compass surfaces — the ROADMAP's current-state claims, in Where We Are as much as in What's Next, and CLAUDE.md's Where We Are — belong to no board, so nobody else will. **Every mode may make this correction, even where the text is otherwise gated ground**: repointing a line your own work invalidated is mechanical, and the alternative is a rule nobody is permitted to obey. Never defer it — a note on your board is deleted at your close, and the stale text outlives it. Re-orienting the compass's *direction* is not covered and stays where it was. **Another board's walkthrough is not yours to edit:** raise what you noticed and the PO routes it, and its owner re-reads at close (§ Closing a Phase, step 1). (Detail: § During a Phase.)
+- **A change that makes a shared compass claim inaccurate fixes it in the same edit, whoever made the change.** The compass surfaces — the ROADMAP's current-state claims, in Where We Are as much as in What's Next, and CLAUDE.md's Where We Are — belong to no board, so nobody else will. **Every mode may make this correction, even where the text is otherwise gated ground**: repointing a line your own work invalidated is mechanical, and the alternative is a rule nobody is permitted to obey. Never defer it — a note on your board is deleted at your close, and the stale text outlives it. Re-orienting the compass's *direction* is not covered and stays where it was. **Another board's walkthrough is not yours to edit:** raise what you noticed and the PO routes it, and its owner re-reads at close (`product-lifecycle.md` → Closing a Phase, step 1). (Detail: `product-lifecycle.md` → During a Phase.)
 - **A phase belongs to one project — the repo its board lives in.** The board names that repo at open, and everything outside it is out of bounds for every mode: no edits, no commits, no "while I'm here." A sibling project's problem gets written down and handed to a session running *in* that project; re-scoping takes a new session there, not a note here.
 - **One phase per session is the default — and no board, no pen.** A session that legitimately runs several phases still gives each its own board; succession is fine — close one, open the next. A session that only reads or talks needs no phase at all — but the first edit is the line: before touching code or docs, stop, name the shape that fits (§ Session starters), and open its board. Filing a tracker row stays free — capture between phases is what trackers are for. A fix small enough not to earn a board is a punch item (≤30 min, any mode), swept later.
 - **The session is named at board open, and the board records the title.** A session cannot read or rename itself, so right after the board is created — the phase name is known by then — ask the PO to rename the chat to `mode · Phase name`: yes, renamed · no, I named it: [title] · skip. Whatever the answer, the board's open section records the session title. Session identity lives in the harness, not in git; the board's line is the only place the record can say which chat ran the phase.
@@ -70,22 +70,22 @@ Every session starts with someone arriving with something, and naming the shape 
 **Opening ritual:**
 
 1. Open the board from `_product-template.md` (`mode: product`) with its thesis stated; fold the phase's **seed** into the board, and remove row + seed per the shared rule (§ Rules shared by all modes). Update the ROADMAP's Where-We-Are current-phase line instead.
-2. Orient — run the **Opening Checklist** (§ Opening a Product Phase): Ring 1 reads the strategy shelf whole, Ring 2 actively aligns to the docs this phase answers to; align or challenge.
+2. Orient — run the **Opening Checklist** (`product-lifecycle.md` → Opening a Product Phase): Ring 1 reads the strategy shelf whole, Ring 2 actively aligns to the docs this phase answers to; align or challenge.
 3. Confirm thesis + scope with the user — no task moves to in-progress before this.
 
-**During:** work only from the board; decide-and-flag; keep the walkthrough doc current as you build (§ During a Phase).
+**During:** work only from the board; decide-and-flag; keep the walkthrough doc current as you build (`product-lifecycle.md` → During a Phase).
 
 **Closing ritual:**
 
-1. The collaborative **Walkthrough** — every O/V point passed with the PO, point by point (§ Walkthrough).
-2. The **Closing Checklist** (§ Closing a Phase) — decisions propagated to home docs and the load-bearing ones lifted to `decisions.md`, feature docs updated, trackers pruned, ROADMAP re-oriented.
+1. The collaborative **Walkthrough** — every O/V point passed with the PO, point by point (`product-lifecycle.md` → Walkthrough).
+2. The **Closing Checklist** (`product-lifecycle.md` → Closing a Phase) — decisions propagated to home docs and the load-bearing ones lifted to `decisions.md`, feature docs updated, trackers pruned, ROADMAP re-oriented.
 3. **Distill + delete** — a compact record replaces the board and walkthrough.
 
 ### The system phase — Tends the rules
 
 **Purpose:** The docs, the work model, and the dashboard itself. Always done together, never solo. One kind lives inside it: **queue-shaping**, for tending the queue when no phase's own open or close is doing it.
 
-**Reads first:** The rules themselves, whole. The decisions log by its headings, opened where the work touches it.
+**Reads first:** The rules themselves — the standing sections whole, and the ones marked `Read when` only if this work fires them. The decisions log by its headings, opened where the work touches it.
 
 **Home ground:** The docs, the rules, the molds, and the code behind the dashboard.
 
@@ -97,7 +97,7 @@ Every session starts with someone arriving with something, and naming the shape 
 
 1. **Name the friction** this phase fixes, and agree the scope with the user — system work is always done *with* the user, never solo.
 2. **Open a board** from `_system-template.md` (`mode: system`) sized to the friction — a few lines for a small fix, workstreams for a build. Max one open; may run alongside a product phase, but never opens mid-walkthrough (doc churn collides with phase edits).
-3. Orient: read the governance docs whole (CLAUDE.md, this file, `implementation/system-surface.md`). Then **scan `decisions.md` by its headings**, deep-reading only the entries this work touches, and check the doc tiers — the log is lookup context, not standing context, and reading every settled call cold is not what aligns a phase. The scan carries the same honest-index caveat as queue-shaping's (§ Queue-shaping). Reopening a settled call is a structured challenge (§ Doc Tiers), not a silent rewrite. **Queue-shaping scans the rules too**, editing one row and one seed rather than the rules themselves.
+3. **Orient by trigger, not by list.** Read this file whole *except* the sections carrying a **`Read when:`** line — those are read only when their moment fires, and this work's may (§ Frontmatter maintenance). Every other governance doc is read when its own frontmatter `read-when` matches the work, `implementation/system-surface.md` included; CLAUDE.md was read at session start, which is its ritual, and is not read twice. Then **scan `decisions.md` by its headings**, deep-reading only the entries this work touches, and check the doc tiers — the log is lookup context, not standing context, and reading every settled call cold is not what aligns a phase. Both scans carry the same honest-index caveat as queue-shaping's (§ Queue-shaping). Reopening a settled call is a structured challenge (§ Doc Tiers), not a silent rewrite. **Queue-shaping is cheaper still**, scanning the rules rather than reading the standing ones, because it edits one row and one seed rather than the rules themselves.
 
 **During:** keep it lean — **a system pass adds to the rule-set only to close a gap or a contradiction, and names which on its board; otherwise it leaves the rule-set the same size or smaller.** Silence and self-contradiction are what prose has to fix; everything else that grows the rules is bloat carrying a rationale. ("Rule-set" = the governance docs: this file and CLAUDE.md.) Log decisions in `decisions.md` **as they're made** (this mode writes there directly; there's no walkthrough to lift from).
 
@@ -186,6 +186,8 @@ None of these are things you should do. They're things the model won't break und
 <!-- Prose only — NOT parsed by lib/system.ts. Named in the system phase's Purpose, which IS parsed;
      this section is the how-to behind that clause. -->
 
+**Read when:** you're running a queue-shaping session — the friction is a queue that's wrong about what comes next.
+
 **You have an idea and nobody is doing it yet. That isn't a phase — it's a queue-shaping session.** It is to the system phase what research is to the side phase: a recognized *kind*, not a fourth mode. It is the routine way work enters the queue outside a phase's own close, and like all system work it is done with the PO. It runs the system phase's rituals with **one divergence — a cheaper orient (step 2 below)**, because it edits one row and one seed rather than the rules.
 
 **What it is for:** adding a row and writing its seed, splitting one row in two, reordering what comes next, dropping a row the project outgrew. **Not** for settling product strategy — a system phase never does that (§ The system phase); a strategic question found while shaping goes to Open Questions. And if the idea turns out to be one you want built now, stop shaping and open its board — the queue is a staging area, never a gate. **Queue-shaping ends at the shaped queue:** a queued phase launches in its own session, so the seed is read by fresh eyes rather than graded by the context that wrote it. Wanting to launch immediately is the signal it was never queue work — take the direct-open path instead.
@@ -193,7 +195,7 @@ None of these are things you should do. They're things the model won't break und
 **How to run it, start to finish:**
 
 1. **Open the chat with the friction, not the feature.** "The queue is wrong about what comes next." "I keep hitting this and there's no row for it." "These two rows are really one phase." Then agree the scope, as any system phase does.
-2. **Open a board** from `_system-template.md` — a few lines is the right size. **Orient in two tiers, not the system phase's full read.** Shaping is a *search* problem, not a comprehension one: you are adding one row and writing one seed, so you need to know what already exists and where to look, not to hold the rule-set in context.
+2. **Open a board** from `_system-template.md` — a few lines is the right size. **Orient in two tiers, not even the system phase's standing read.** Shaping is a *search* problem, not a comprehension one: you are adding one row and writing one seed, so you need to know what already exists and where to look, not to hold the rule-set in context.
    - **Tier 1 — scan the index.** Every heading in `decisions.md`, every FC and open-question title, every punch row's title, the ROADMAP and its queue, plus § Session starters and the rules shared by all modes.
    - **Tier 2 — deep-read only what the idea touches.** Usually two to four entries. Read those whole; leave the rest at their titles.
    - **The scan is trustworthy only while *absent from the index* means *absent*.** A heading that hides its content — an untitled tracker row, an entry named for its phase instead of its call — is a hole in the index, and it gets fixed where it lives rather than read around.
@@ -205,6 +207,8 @@ None of these are things you should do. They're things the model won't break und
 ## The Kickoff — the bootstrap before the loop
 
 <!-- Prose only — NOT parsed by lib/system.ts (deliberately not a fourth mode; getWorkModel still parses exactly the three phase headings above). The kickoff is the one-time ignition, not part of the recurring cycle. -->
+
+**Read when:** once, at the very start of a project — or when you want to know why the bootstrap isn't a fourth mode.
 
 The three modes govern the **recurring** work cycle. The **kickoff is the ignition that runs once, before the cycle begins** — the bootstrap that turns an empty template into a project. It is deliberately *not* a fourth mode, because it breaks the two traits every mode shares:
 
@@ -249,83 +253,13 @@ The system's terms, defined once. Used consistently everywhere — docs, boards,
 
 ---
 
-## Product Lifecycle (the product phase's rituals, in full)
-
-The detailed rituals behind the product phase above. Every product phase follows this lifecycle. **Do not skip steps.**
-
-**Template:** New product phases start from `phases/_product-template.md`, which includes embedded opening and closing checklists. The checklists are part of the board — they get marked done alongside the tasks.
-
-### Opening a Product Phase
-
-Before writing any code for a new phase, complete the **Opening Checklist** on the phase board:
-
-1. **Ring 1 — read the strategy shelf whole.** The evergreen strategy docs (`strategy/` root) plus CLAUDE.md and the Work Model. They're few, reading is fast, and this is exactly the set the Careful band lets a product phase touch — a phase can only carefully-edit what it oriented on. Reading the vision here IS bedrock's check-up (it has no staleness clock because it gets read at every open); state on the board, in one line, how this phase serves it. **Align or challenge:** if the work presses on a commitment — or on bedrock — don't quietly bend the work to the doc or the doc to the work; raise a structured challenge (§ Doc Tiers). Sometimes the challenge should win: new ideas pressing on old ones is how new directions, features, and strategy are born.
-2. **Read the phase board** in `phases/`. Understand every task and its references.
-3. **Ring 2 — active alignment.** The docs this phase is *answerable to*, read as instruction rather than background: every doc the board references, every doc whose `read-when` matches this phase's subject, and any domain gate the project defines (a subject area that always requires reading a specific doc first). Everything else stays a free pull mid-build — reading is never gated.
-4. **Review Open Questions** (`planning/Open Questions & Assumptions Log.md`) — your phase's **area**, not all of them. Resolve or flag before building.
-5. **Audit for conflicts.** Compare what the phase proposes against what's currently built. Raise anything that contradicts existing code, strategy docs, or feature docs. Don't assume the phase board is correct — it may have been written before recent changes.
-6. **Re-check anything flagged stale.** If a referenced doc is past its tier's threshold (§ Doc Tiers — 90d commitments, 30d working), review it now and stamp `last-reviewed`.
-7. **Scan the Punch List and Future Considerations.** Check if any open items overlap the new phase's scope — adopt them into the board or note the overlap. If this phase **fires a Future Consideration's trigger**, promote that FC onto the board now rather than building blind to it.
-8. **Confirm scope.** If the phase has tasks that feel like they belong in a different phase, or if scope has grown, discuss before starting.
-
-**Enforcement:** Run the checklist from here — the board does **not** copy it (that duplication is what drifts). What the board's *Open notes* records is what the checklist surfaced: the one-line statement of how the phase serves the vision, conflicts found, docs re-checked, scope calls made. No note, no start.
-
-### During a Phase
-
-- Work only on tasks from the **current phase board**.
-- **Decide-and-flag — bias toward action.** Make reasonable design and implementation calls during the build instead of stopping at every fork to ask. Two things still get raised mid-build:
-  - **(a) True blockers** — you can't take the next step and can't unblock yourself.
-  - **(b) Scope or strategy shifts** — anything that contradicts the phase board, expands what the phase ships, affects another phase, or touches a paused phase.
-
-  Everything else — design choices, copy variants, structural picks where multiple answers are reasonable — gets MADE during the build and surfaced as an **"Open for your call"** item on the phase walkthrough. The reviewer ratifies or redirects there. "No feature sprawl" still applies: if the call would EXPAND scope, that's a scope shift and gets raised.
-- When you finish a task, update the phase board status immediately.
-- If you change a feature, update its **feature doc** in `features/`.
-- If you make a significant decision, record it in the relevant feature doc under a "Decisions" section.
-- **Keep the shared compass accurate: any ROADMAP current-state claim your work invalidates, in Where We Are as much as in What's Next, and CLAUDE.md's Where We Are** (§ Rules shared by all modes — the rule binds whoever makes the change). A compass line naming work that just shipped reads as a live claim, and the build-time dangling-reference alarm only catches the subset that names an ID. **Noticed something stale on another board's walkthrough? Raise it, don't fix it** — the PO routes it, and its owner re-reads at close.
-
-### Walkthrough (the review stage)
-
-**The walkthrough is a main stage of the phase, not a step inside closing.** Once the build is committed, the phase enters a collaborative review: the PO and the agent go through the walkthrough doc **together, point by point.** This is where the bulk of the design refinement happens — building gets a surface ~80% there; the walkthrough gets it right. **Expect many iterations.** Budget for it; don't rush toward close.
-
-How it runs:
-
-- **The agent prepares the walkthrough doc as it builds** (`phases/<name>-walkthrough.md`, from `_walkthrough-template.md`) — "Open for your call" (O) items, "Worth verifying" (V) items, and a Decisions log. It is ready for review when the build is committed; it is **not** authored from scratch at close.
-- **Every checkable item names where to look + what to expect, and holds exactly one check.** Each O/V item carries the exact URL/view + a one-line expected result. If an item bundles two surfaces or behaviours, split it into two.
-- **Only the agent's own calls become O items.** A change the PO **directed** is not one — filing it asks the PO to ratify their own instruction and makes the close gate meaningless. A directed change that *reverses settled work* is a structured challenge (§ Doc Tiers), logged in `decisions.md` win or lose.
-- **The PO drives the review with the agent.** Each O/V point is passed or sent back. **A resolved O item is deleted from the list and its outcome written as one line in the Decisions log** — never checked off in place, never grown where it sits. The O list shrinks as the walkthrough runs, so it always shows exactly what still needs the PO. Identifiers are never reused.
-- **The phase is not ready to close until the O list is empty and every V point has passed**, with the Decisions log reflecting what actually shipped.
-
-Closing comes *after* the walkthrough passes, and **consumes** it — the Decisions log is the propagation worklist, and the file itself is deleted with the board at step 8. **A walkthrough is a working surface and is never archived.**
-
-### Closing a Phase
-
-These steps are the **canonical closing process — the single source of truth.** Work through them in order. The phase board does **not** repeat them; it carries only **phase-specific** close items under its "Close notes" section. Do not copy these steps onto the board — that duplication is what drifts.
-
-1. **Confirm the walkthrough passed.** The O list is empty and every V point checked, acceptance criteria holding against the running app. **Re-read the remaining items against the running app first** — the phase's own later work is the commonest source of drift, and a concurrent phase touching these surfaces is the other. Other boards raise what they notice rather than editing your items, so this re-read is the net that catches the rest.
-2. **Sweep the walkthrough's "Decisions surfaced" section.** A plain log — process each entry in order: update the named home doc per the `→` annotation, then check it off in the phase board's Closing Checklist. **The phase cannot close until every entry has been propagated** — the walkthrough is deleted at step 8, so an unpropagated entry is a lost decision. **Then lift the load-bearing subset into `decisions.md`** (What / Why / Instead of / Scope, newest first) — only entries that would surprise a reader in six months or that future-us might reopen, **each written as the call that survived rather than the path to it.** Then read what you wrote back against the index: every heading states its call, and no entry already there covers it — if one does, merge rather than add (`decisions.md` names the two forms). Scoped to this phase's own entries; the log is not re-audited at every close.
-3. **Update all affected feature docs.** Scan for anything else the phase changed (component patterns, edge cases, copy conventions). The feature docs must reflect the new reality.
-4. **Update the Open Questions log.** Close any questions this phase resolved — and **compress each resolved item to a one-line pointer at its home doc.** Add any new questions that emerged.
-5. **Update ROADMAP.md — re-orient forward.** The phase's row already left the roadmap at open; refresh the Where-We-Are current-phase line. Then update the forward view *informed by what this phase built and revealed*. Keep it strictly **future-focused** — never log *what shipped*. The Roadmap tracks objectives and what's next, not history.
-6. **Review CLAUDE.md.** If the phase changed navigation, key components, or project structure, update the project instructions.
-7. **Review the running trackers — Punch List and Future Considerations.** Check completed punch-list items since the last close for doc impact. Then **prune Future Considerations**: every FC this phase **shipped** is removed; every FC **partly** shipped is rewritten to lead with the remaining open work; every FC whose **trigger fired** is confirmed promoted out.
-7a. **The canon diff** (§ Rules shared by all modes). Gather every change this phase made to bedrock- and commitments-tier docs (CLAUDE.md included) — steps 2–7 wrote most of it — and walk the PO through it for ratification. Most hunks are quick confirms of walkthrough decisions; the step catches what nobody decided.
-8. **Distill and delete.** Write a **compact record** (~15 lines: frontmatter with `status: archived` + dates, the thesis, the what-shipped close banner, a pointer to its `decisions.md` entries) at `docs/archive/phases/<name>.md`, then **delete the full board and walkthrough files**. Precondition: steps 2 and 7a fully done.
-9. **Trim pass.** Skim the Roadmap, CLAUDE.md, and touched docs. Cut anything stale, redundant, or duplicated.
-9a. **Structural audit.** Run these checks — any hits get fixed before phase close:
-   - `grep -rl "status: archived\|status: complete" docs/phases/` should return nothing but the `_*-template.md` molds (never) and legitimately paused phases. Anything else — delete it; the archive copy exists.
-   - Compare filenames in `docs/phases/` vs `docs/archive/phases/`. Any overlap means a cleanup was skipped — delete the live copy.
-   - Scan docs in `strategy/`, `features/`, `implementation/` with `last-reviewed` older than 21 days. Review or bump.
-10. **Strategic review.** The most important step. Stop building and think. Read the Open Questions log, the Roadmap, the relevant strategy docs, and the next phase's scope. Then present a brief covering: **what changed** (how the work shifts understanding), **open questions worth resolving now**, **alternatives and challenges** (overbuilding? underbuilding? simpler paths?), **research suggestions**, and **next phase readiness**. This isn't a checkbox — it's a thinking mode.
-
-**Enforcement:** The closing checklist items must all be checked off before a new phase can be opened.
-
----
-
 ## The Planning Trackers
 
 <!-- PARSED by lib/system.ts (getTrackerModel) -> /system/trackers. Changing this section's SHAPE
      (the tracker table columns, the 'How work flows' bullets, the bold 'Shared rule' lede) breaks that page silently - the /system drift banner will name it.
      Check /system after editing. Spec: docs/implementation/system-surface.md -->
+
+**Read when:** you're filing, moving or pruning a tracker row, or deciding where a loose piece of work goes.
 
 Three running lists in `planning/` hold **candidates** — quick, lean task notes that aren't on a board or in the queue. Each is a different **stance** on not-yet-done work — keep an item in the one that matches its stance, and move it when the stance changes. Phases pull from them at open; side phases usually sweep several at once. Keep the notes lean: an item that bloats, or a cluster of connected items, is a phase trying to be born — pull it out.
 
@@ -391,6 +325,7 @@ Tiers govern **docs**, not coding rules — hard gates (if your project defines 
 ### Frontmatter maintenance
 - Every doc has YAML frontmatter: `status`, `tier`, `last-reviewed`, `read-when` (plus `category`/`tags` where the family uses them).
 - **`read-when`** answers *when is this doc relevant to what I'm doing?* — the condition that should pull it open. It is a **read** condition, not a review schedule: a session's opening ritual reads the docs whose `read-when` matches the work.
+- **Sections carry the same field when a doc outgrows one answer.** A doc a ritual reads whole can still hold sections only a named moment needs. Such a section opens with a **`Read when:`** line naming that moment, and the ritual skips it until the moment fires; a section with no line is read with the doc. This is what lets an orient step read by trigger instead of by a list of sections somebody has to keep extending. Adding a section to a whole-read doc is therefore a question, not a default: *what fires this?* No answer means it's standing, and it stays unmarked.
 - Update `last-reviewed` when you **review** a doc — a material edit, or a deliberate check that finds nothing to change. Not on mechanical touches.
 - Valid statuses: `active` (living doc), `draft` (in progress), `archived`.
 - `tier`: `bedrock | commitments | working | surface` — see "Doc Tiers & Review Physics."
@@ -427,7 +362,7 @@ When nothing fits and new is genuinely warranted, surface it before creating —
 | `implementation/` | Technical references, coding standards, component catalog |
 | `phases/` | Active boards (any mode) + walkthroughs, plus the `_product-template.md` / `_system-template.md` / `_side-template.md` / `_walkthrough-template.md` molds. Closed boards are distilled + deleted; product phases leave a compact record in the archive. |
 | `archive/` | Completed/superseded docs kept for reference |
-| root | Meta docs (this file, ROADMAP, `decisions.md`, CLAUDE.md) |
+| root | Meta docs (this file, `product-lifecycle.md`, ROADMAP, `decisions.md`, CLAUDE.md) |
 
 **Meeting notes and prep live outside the repo.** They're ephemeral *input*, not project knowledge — whatever a meeting settles lands in `decisions.md`, a strategy doc, or a tracker. `docs/` holds what the project knows, not the conversations it came from.
 

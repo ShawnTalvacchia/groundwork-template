@@ -22,7 +22,7 @@ read-when: When any task is completed or blocked
 
 ## Open notes (phase-specific only)
 
-> **Canonical open process** — [CONTRIBUTING.md → Opening a Product Phase](../CONTRIBUTING.md#opening-a-product-phase) is the single source of truth. Work through those steps; do **not** copy them here.
+> **Canonical open process** — [product-lifecycle.md → Opening a Product Phase](../product-lifecycle.md#opening-a-product-phase) is the single source of truth. Work through those steps; do **not** copy them here.
 >
 > List below ONLY what's specific to THIS phase: how it serves the vision (checklist step 1), conflicts surfaced during the opening audit, docs re-checked, scope calls made at open.
 
@@ -62,7 +62,7 @@ read-when: When any task is completed or blocked
 
 ## Close notes (phase-specific only)
 
-> **Canonical close process** — [CONTRIBUTING.md → Closing a Phase](../CONTRIBUTING.md#closing-a-phase) is the single source of truth. Work through those steps; do **not** copy them here — that duplication is exactly what drifts.
+> **Canonical close process** — [product-lifecycle.md → Closing a Phase](../product-lifecycle.md#closing-a-phase) is the single source of truth. Work through those steps; do **not** copy them here — that duplication is exactly what drifts.
 >
 > List below ONLY what's specific to THIS phase: the feature docs it touched, outward-facing artifacts to graduate, punch-list items it closes, next-phase dependencies it satisfies. Per-decision doc targets live in the walkthrough's "Decisions surfaced" log.
 

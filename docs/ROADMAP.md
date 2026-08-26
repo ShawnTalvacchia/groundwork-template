@@ -17,7 +17,7 @@ read-when: "at the start and end of every phase"
 
 **Goal:** _(fill at kickoff — one or two sentences on what this project is building toward.)_
 
-**Process:** The Work Model + Product Lifecycle in `CONTRIBUTING.md`. Boards in `phases/`. Archive in `archive/phases/`.
+**Process:** The Work Model in `CONTRIBUTING.md`; the product phase's checklists in `product-lifecycle.md`. Boards in `phases/`. Archive in `archive/phases/`.
 
 ---
 

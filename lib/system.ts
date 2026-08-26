@@ -421,7 +421,7 @@ export function getTrackerModel(): TrackerModel {
   const parsed = readDoc("CONTRIBUTING.md");
   if (!parsed) return { lede: "", trackers: [], flow: [], sharedRule: "" };
   const section = sectionOf(parsed.body, "The Planning Trackers");
-  const lede = section.trim().split("\n\n")[0] ?? "";
+  const lede = ledeOf(section);
   const trackers: TrackerRow[] = [];
   const re = /^\| `?([\w .&'-]+?)\.md`? \| (.*?) \| (.*?) \| (.*?) \|\s*$/gm;
   let m;
@@ -725,6 +725,16 @@ export interface Roadmap {
   /** ROADMAP § On the horizon. Named for the section, not for any one
    *  project's shape. */
   horizon: string[];
+}
+
+/** A section's opening paragraph, skipping the `**Read when:**` trigger line
+ *  that marks a lookup section (CONTRIBUTING § Frontmatter maintenance). The
+ *  line is content a human reading the doc should see, so it isn't stripped the
+ *  way parser markers are — but it is never a section's lede. */
+function ledeOf(section: string): string {
+  const paras = section.trim().split("\n\n");
+  const first = paras[0]?.trim() ?? "";
+  return /^\*\*Read when:\*\*/.test(first) ? (paras[1]?.trim() ?? "") : first;
 }
 
 function sectionOf(body: string, heading: string): string {

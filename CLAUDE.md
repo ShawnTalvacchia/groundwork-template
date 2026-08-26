@@ -19,7 +19,7 @@ Canonical rules + glossary: `docs/CONTRIBUTING.md` → "The Work Model." Live pi
 2. **Read referenced docs** before starting a task. Update them if anything changed.
 3. **Doc frontmatter:** every doc has `status`, `tier`, `last-reviewed`, `read-when`. Bump `last-reviewed` only when you **review** a doc, never on a mechanical touch.
 4. **No feature sprawl.** If it's not on the phase board, don't build it without discussion.
-5. **Phase close = doc review.** See `docs/CONTRIBUTING.md` → Closing a Phase.
+5. **Phase close = doc review.** See `docs/product-lifecycle.md` → Closing a Phase.
 6. **Push back, don't just comply.** When there's a better approach, make the case — lead with a recommendation, not a menu.
 7. **Never run `npm audit fix --force`.** In this dependency tree it "fixes" advisories by **downgrading Next.js to 9.x** — a pre-App-Router version from 2020 that cannot run this app. `npm audit fix` (without `--force`) is safe. See "A note on `npm audit`" below before acting on a vulnerability report.
 
