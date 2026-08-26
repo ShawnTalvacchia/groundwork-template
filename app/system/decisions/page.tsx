@@ -9,7 +9,7 @@ export default function DecisionsPage() {
       <PageIntro
         title="Decisions"
         count={decisions.length}
-        blurb="The institutional memory — dated What/Why/Where entries, newest first. Walkthrough docs capture decisions during a phase; the load-bearing ones get lifted here at close so they survive the archive. This is the catch-up feed: read down until you hit a date you remember."
+        blurb="The institutional memory — dated entries, newest first: the call, why it holds, what was rejected instead, and what it governs. Walkthrough docs capture decisions during a phase; the load-bearing ones get lifted here at close so they survive the archive. This is the catch-up feed: read down until you hit a date you remember."
       />
       {decisions.length === 0 && (
         <EmptyNote>
@@ -33,9 +33,21 @@ export default function DecisionsPage() {
                 <span className="font-semibold">Why:</span> <MdInline text={d.why} />
               </p>
             )}
-            {d.where && (
+            {d.instead.length > 0 && (
+              <div className="text-xs text-fg-secondary leading-snug">
+                <span className="font-semibold">Instead of:</span>
+                <ul className="mt-2xs flex flex-col gap-2xs pl-md">
+                  {d.instead.map((alt, i) => (
+                    <li key={i} className="list-disc">
+                      <MdInline text={alt} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {d.scope && (
               <p className="text-2xs text-fg-tertiary leading-snug">
-                <span className="font-semibold">Where:</span> <MdInline text={d.where} />
+                <span className="font-semibold">Scope:</span> <MdInline text={d.scope} />
               </p>
             )}
           </article>

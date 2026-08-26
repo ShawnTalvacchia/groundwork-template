@@ -1,4 +1,6 @@
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ReactNode } from "react";
 import type { BoardMode, Tier } from "@/lib/system";
 import { MODE_META, TIER_META } from "@/lib/system";
@@ -313,4 +315,82 @@ export function MdInline({ text }: { text: string }) {
   }
   if (last < text.length) nodes.push(text.slice(last));
   return <>{nodes}</>;
+}
+
+
+/** GitHub-flavored heading id, so `#fragment` links into a doc resolve.
+ *  Must stay in sync with the slugs used by section links in the docs. */
+function headingId(children: ReactNode): string {
+  const textOf = (n: ReactNode): string => {
+    if (typeof n === "string" || typeof n === "number") return String(n);
+    if (Array.isArray(n)) return n.map(textOf).join("");
+    if (n && typeof n === "object" && "props" in n)
+      return textOf((n as { props: { children?: ReactNode } }).props.children);
+    return "";
+  };
+  return textOf(children)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+/** Doc prose rendered from markdown, with relative `.md` links resolved to
+ *  doc pages under /system. Two routes render doc bodies — the docs route and
+ *  the active board on /system/phase — and only the first used to resolve
+ *  links, so every board shipped a dead `../CONTRIBUTING.md`. It is in all
+ *  three board molds, so every project carried it. One home for both.
+ *
+ *  `docDir` is the doc's own directory relative to the docs root, so a link
+ *  resolves the way it reads in the file: "phases" for a board, "." at root. */
+export function DocProse({ body, docDir }: { body: string; docDir: string }) {
+  const resolveHref = (href: string): string => {
+    if (/^(https?:)?\/\//.test(href) || href.startsWith("#") || href.startsWith("/")) return href;
+    const [clean, hash] = href.split("#");
+    if (!clean.endsWith(".md")) return href;
+    const segs = (docDir === "." || docDir === "" ? [] : docDir.split("/")).concat(clean.split("/"));
+    const out: string[] = [];
+    for (const seg of segs) {
+      if (seg === "" || seg === ".") continue;
+      if (seg === "..") out.pop();
+      else out.push(seg);
+    }
+    // A #fragment survives resolution — section links (e.g. CONTRIBUTING.md#closing-a-phase)
+    // land on the heading id stamped below.
+    return `/system/docs/${out.join("/")}${hash ? `#${hash}` : ""}`;
+  };
+
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      // Raw HTML nodes hide instead of rendering as literal text — the
+      // parser markers (<!-- PARSED by … -->) must stay invisible here.
+      // Code spans/fences are unaffected (they aren't html nodes).
+      skipHtml
+      components={{
+        h2: ({ children }) => <h2 id={headingId(children)}>{children}</h2>,
+        h3: ({ children }) => <h3 id={headingId(children)}>{children}</h3>,
+        h4: ({ children }) => <h4 id={headingId(children)}>{children}</h4>,
+        a: ({ href, children }) => {
+          const resolved = resolveHref(href ?? "");
+          if (resolved.startsWith("/system/")) return <Link href={resolved}>{children}</Link>;
+          if (/^https?:\/\//.test(resolved)) {
+            return (
+              <a href={resolved} target="_blank" rel="noreferrer">
+                {children}
+              </a>
+            );
+          }
+          // An in-app path the mount does not own is still a real destination.
+          // Emit a plain anchor rather than swallowing the link into text — a
+          // de-linked path gives the reader no sign a link was ever meant.
+          // Only an unresolvable ref stays inert.
+          if (resolved.startsWith("/")) return <a href={resolved}>{children}</a>;
+          return <span>{children}</span>;
+        },
+      }}
+    >
+      {body}
+    </ReactMarkdown>
+  );
 }

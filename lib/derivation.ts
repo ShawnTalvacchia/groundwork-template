@@ -169,6 +169,14 @@ export function getDriftAlarms(): DriftAlarm[] {
   if (decNoWhat) {
     alarm("getDecisions", "decisions.md", `${decNoWhat} entrie(s) missing a What field`);
   }
+  // Scope replaced Where. An entry still carrying the retired field parses
+  // with an empty scope and renders without it, which is a silent failure —
+  // so it is named here. Presence-not-count, like every invariant: a project
+  // with no decisions fires nothing.
+  const decNoScope = decisions.filter((d) => d.what && !d.scope).length;
+  if (decNoScope) {
+    alarm("getDecisions", "decisions.md", `${decNoScope} entrie(s) missing a Scope field (retired Where?)`);
+  }
 
   const roadmap = getRoadmap();
   // An empty queue is valid (a fresh project has queued nothing yet), so the

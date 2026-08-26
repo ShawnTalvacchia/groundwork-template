@@ -900,7 +900,16 @@ export interface Decision {
   title: string;
   what: string;
   why: string;
-  where: string;
+  /** Rejected alternatives, one per bullet. The field exists so they cannot be
+   *  dropped by accident: as a clause inside Why they were the first thing cut,
+   *  and a re-proposable option that loses its line gets re-proposed in
+   *  ignorance. Empty when the entry weighed nothing. */
+  instead: string[];
+  /** What the decision governs, in durable terms — a rule, a surface, a band,
+   *  a ritual step. Replaced `where` (a file list): paths rot and git already
+   *  holds the diff, so the only field making a claim about the present was
+   *  the only one nobody maintained. */
+  scope: string;
 }
 
 export function getDecisions(): Decision[] {
@@ -916,12 +925,17 @@ export function getDecisions(): Decision[] {
     const bodyText = section.slice(section.indexOf("\n") + 1);
     const field = (label: string) =>
       bodyText.match(new RegExp(`\\*\\*${label}[^:]*:\\*\\*\\s*([\\s\\S]*?)(?=\\n\\*\\*|\\n\\n|$)`))?.[1].trim() ?? "";
+    const insteadBlock = field("Instead of");
     decisions.push({
       date: hm[1].trim(),
       title: hm[2].trim(),
       what: field("What"),
       why: field("Why"),
-      where: field("Where"),
+      instead: insteadBlock
+        .split(/\n(?=[-*]\s)/)
+        .map((line) => line.replace(/^[-*]\s+/, "").trim())
+        .filter(Boolean),
+      scope: field("Scope"),
     });
   }
   return decisions;

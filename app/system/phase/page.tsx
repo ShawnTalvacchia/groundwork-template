@@ -1,8 +1,6 @@
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { getActiveBoards, getRoadmap, MODE_META } from "@/lib/system";
-import { MdInline, PageIntro } from "../ui";
+import { MdInline, PageIntro, DocProse } from "../ui";
 
 // The board in full — this IS its home. Work owns it; it isn't a summary
 // pointing at a doc page. (The breadcrumb row is the way back out.)
@@ -67,7 +65,7 @@ export default function ActiveBoardPage() {
               )}
             </div>
             <article className="sys-doc">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} skipHtml>{board.body}</ReactMarkdown>
+              <DocProse body={board.body} docDir="phases" />
             </article>
           </section>
         );

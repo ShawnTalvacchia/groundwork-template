@@ -78,7 +78,7 @@ A fixed header carries the main tabs — **System** + three groups (Work · Stru
 | Features | `docs/features/*.md` frontmatter (`feature-status`, `feature-kind`, `area`, `routes`). The area **set and labels** derive too (`getFeatureAreas` — alphabetical, title-cased); the page holds no vocabulary of its own |
 | Strategy | `docs/strategy/**` frontmatter (`summary` one-liners; grouped by tier + subfolder) |
 | Timeline | `docs/archive/phases/*.md` (walkthroughs skipped) — month-grouped, newest first |
-| Decisions | `docs/decisions.md` (`## date · title` entries, What/Why/Where) |
+| Decisions | `docs/decisions.md` (`## date · title` entries, What/Why/Instead of/Scope) |
 | Method → How we work | `CONTRIBUTING.md § The Work Model` — parsed: lede, shared rules, per-mode purpose / touch bands / numbered rituals (the three `### The <product|system|side> phase — tagline` headings), § Session starters (the front-door table: arriving → shape → mode → example prompt → what happens), § The parts (`#### <Part>` blocks with Is / Properties — the concept layer), and § Adjustments (`- **when** → what` bullets). The page teaches terms before uses: the starters *lede* sits up with the phase arc (plus a jump link), and the starter *rows* render after § The parts, whose vocabulary they speak — parts → starters → adjustments → modes → shared rules, regardless of doc order |
 | Method → Trackers | `CONTRIBUTING.md § The Planning Trackers` |
 | Method → Tiers | `CONTRIBUTING.md § Doc Tiers & Review Physics` |
