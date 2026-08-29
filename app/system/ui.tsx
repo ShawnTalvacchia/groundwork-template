@@ -122,41 +122,57 @@ export function StartersStrip({
         </Link>
       </summary>
       <div className="sys-starters-body flex flex-col">
-        {starters.map((s) => (
-          <details key={s.arriving} className="sys-details">
-            {/* md: a fixed arrival column so every arrow sits on the same
-                line; small screens fall back to wrapping flex. */}
-            <summary className="flex flex-wrap items-baseline gap-sm md:grid md:grid-cols-[minmax(0,22rem)_auto_1fr]">
-              <span className="flex items-baseline gap-sm text-xs text-fg-secondary leading-snug">
-                <span className="sys-caret" aria-hidden>
-                  ›
-                </span>
-                {s.arriving}
-              </span>
-              <span aria-hidden className="text-fg-light">
-                →
-              </span>
-              {/* Shape as a pill, mode beside it — same pairing the method
-                  page uses, so the two surfaces name a session identically. */}
-              <span className="flex items-baseline gap-sm">
-                <span className="sys-pill">{s.shape}</span>
-                <span className="text-2xs uppercase tracking-wide text-fg-tertiary">
-                  <MdInline text={s.mode} />
-                </span>
-              </span>
-            </summary>
-            <div className="flex flex-col gap-xs pb-md pl-lg max-w-[72ch]">
-              <p className="text-xs italic text-fg-primary leading-snug">
-                <MdInline text={s.prompt} />
-              </p>
-              <p className="text-xs text-fg-secondary leading-snug">
-                <MdInline text={s.openBy} />
-              </p>
-            </div>
-          </details>
-        ))}
+        <StarterRows starters={starters} />
       </div>
     </details>
+  );
+}
+
+/** The starter rows themselves — one collapsed card per arrival, expanding to
+ *  the prompt you'd type. Shared by the hub's shelf (inside `.sys-starters`)
+ *  and the method page (inside a plain `.sys-starters > .sys-starters-body`
+ *  card without the shelf summary), so the two surfaces stay one markup. */
+export function StarterRows({
+  starters,
+}: {
+  starters: { arriving: string; shape: string; mode: string; prompt: string; openBy: string }[];
+}) {
+  return (
+    <>
+      {starters.map((s) => (
+        <details key={s.arriving} className="sys-details">
+          {/* md: a fixed arrival column so every arrow sits on the same
+              line; small screens fall back to wrapping flex. */}
+          <summary className="flex flex-wrap items-baseline gap-sm md:grid md:grid-cols-[minmax(0,22rem)_auto_1fr]">
+            <span className="flex items-baseline gap-sm text-xs text-fg-secondary leading-snug">
+              <span className="sys-caret" aria-hidden>
+                ›
+              </span>
+              {s.arriving}
+            </span>
+            <span aria-hidden className="text-fg-light">
+              →
+            </span>
+            {/* Shape as a pill, mode beside it — the pairing both surfaces
+                use, so a session is named identically everywhere. */}
+            <span className="flex items-baseline gap-sm">
+              <span className="sys-pill">{s.shape}</span>
+              <span className="text-2xs uppercase tracking-wide text-fg-tertiary">
+                <MdInline text={s.mode} />
+              </span>
+            </span>
+          </summary>
+          <div className="flex flex-col gap-xs pb-md pl-lg max-w-[72ch]">
+            <p className="text-xs italic text-fg-primary leading-snug">
+              <MdInline text={s.prompt} />
+            </p>
+            <p className="text-xs text-fg-secondary leading-snug">
+              <MdInline text={s.openBy} />
+            </p>
+          </div>
+        </details>
+      ))}
+    </>
   );
 }
 
@@ -248,25 +264,55 @@ export function SourceNote({ href, path, note }: { href: string; path: string; n
    strikethrough; links render as their text. Bold/italic content is parsed
    recursively so nested forms like **`code`** render cleanly. Block rendering
    (doc detail) uses react-markdown instead. */
-export function MdInline({ text }: { text: string }) {
+export function MdInline({ text, anchors }: { text: string; anchors?: Record<string, string> }) {
   const nodes: ReactNode[] = [];
   const re = /(\*\*[^*]+\*\*|\*[^*\n]+\*|`[^`]+`|~~[^~]+~~|\[\[[^\]]+\]\]|\[[^\]]+\]\([^)]*\))/g;
   let last = 0;
   let m;
   let key = 0;
+  // Plain text, with any `§ <name>` the caller mapped rendered as an anchor
+  // link. The map is per-page and opt-in: a page passes only the sections it
+  // renders, so an unmapped § reference stays plain text rather than a link
+  // to nowhere. Threaded through the bold/italic recursion — several §
+  // references live inside bold.
+  const pushText = (t: string) => {
+    if (!anchors) {
+      if (t) nodes.push(t);
+      return;
+    }
+    let rest = t;
+    for (;;) {
+      let best: { i: number; name: string } | null = null;
+      for (const name of Object.keys(anchors)) {
+        const i = rest.indexOf(`§ ${name}`);
+        if (i !== -1 && (!best || i < best.i)) best = { i, name };
+      }
+      if (!best) {
+        if (rest) nodes.push(rest);
+        return;
+      }
+      if (best.i > 0) nodes.push(rest.slice(0, best.i));
+      nodes.push(
+        <a key={key++} href={anchors[best.name]} className="underline underline-offset-2">
+          {`§ ${best.name}`}
+        </a>
+      );
+      rest = rest.slice(best.i + `§ ${best.name}`.length);
+    }
+  };
   while ((m = re.exec(text))) {
-    if (m.index > last) nodes.push(text.slice(last, m.index));
+    if (m.index > last) pushText(text.slice(last, m.index));
     const tok = m[0];
     if (tok.startsWith("**"))
       nodes.push(
         <strong key={key++}>
-          <MdInline text={tok.slice(2, -2)} />
+          <MdInline text={tok.slice(2, -2)} anchors={anchors} />
         </strong>
       );
     else if (tok.startsWith("~~"))
       nodes.push(
         <s key={key++}>
-          <MdInline text={tok.slice(2, -2)} />
+          <MdInline text={tok.slice(2, -2)} anchors={anchors} />
         </s>
       );
     else if (tok.startsWith("`")) nodes.push(<code key={key++} className="sys-code">{tok.slice(1, -1)}</code>);
@@ -308,12 +354,12 @@ export function MdInline({ text }: { text: string }) {
     else
       nodes.push(
         <em key={key++}>
-          <MdInline text={tok.slice(1, -1)} />
+          <MdInline text={tok.slice(1, -1)} anchors={anchors} />
         </em>
       );
     last = m.index + tok.length;
   }
-  if (last < text.length) nodes.push(text.slice(last));
+  if (last < text.length) pushText(text.slice(last));
   return <>{nodes}</>;
 }
 

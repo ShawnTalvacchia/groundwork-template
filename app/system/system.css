@@ -259,6 +259,12 @@
   border-bottom: 0;
 }
 
+/* A folded shelf holding card content rather than rows: no edge-bleeding
+   dividers to honor, so the body insets to the header's own padding. */
+.sys-starters-body--padded {
+  padding: var(--space-4);
+}
+
 .sys-shelf {
   display: flex;
   flex-direction: column;
@@ -576,40 +582,42 @@
 
 /* ── Method: how we work ── */
 
-/* The phase arc — Open → Work → Close */
-.sys-arc {
+/* The roles that carry the arc — one card per role, each tagged with the
+   steps it runs. The tags are the arc; there is no separate step strip. */
+.sys-arc-roles {
   display: grid;
   gap: var(--space-3);
   grid-template-columns: 1fr;
 }
 
 @media (min-width: 700px) {
-  .sys-arc {
-    grid-template-columns: repeat(3, 1fr);
+  .sys-arc-roles {
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   }
 }
 
-.sys-arc-step {
-  position: relative;
+.sys-arc-role {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
   padding: var(--space-4);
-  background: var(--surface-inset);
+  background: var(--surface-top);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-panel);
 }
 
-/* Chevron between steps (wide viewports only) */
-@media (min-width: 700px) {
-  .sys-arc-step:not(:last-child)::after {
-    content: "→";
-    position: absolute;
-    right: calc(var(--space-3) * -1);
-    top: 50%;
-    transform: translate(50%, -50%);
-    color: var(--text-light);
-    font-size: var(--text-sm);
-  }
+/* A role's level text can be a phrase, not a word — let its pill wrap
+   instead of forcing the grid column wide. */
+.sys-arc-role .sys-pill {
+  white-space: normal;
+  text-align: left;
+}
+
+/* A shared rule with no bold lead renders as a plain row with the folded
+   rows' own rhythm: same vertical padding, same divider. */
+.sys-rule-plain {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-light);
 }
 
 /* Mode card: an accent rail keeps the three readable at a glance */

@@ -6,6 +6,7 @@ import {
   getFutureItems,
   getGlossary,
   getOpenQuestions,
+  getPhasePipeline,
   getPunchItems,
   getQueuedSeeds,
   getRoadmap,
@@ -111,6 +112,19 @@ export function getDriftAlarms(): DriftAlarm[] {
   }
   if (wm.adjustments.length < 3) {
     alarm("getWorkModel", "CONTRIBUTING.md § The Work Model", `parsed ${wm.adjustments.length} adjustments, expected 3+`);
+  }
+
+  // § The phase pipeline — presence, not count. A project that reshapes the
+  // model may delete the section (silent), but a section that exists and
+  // parses hollow is drift: the method page would render its heading over
+  // nothing. No role-count assertion — the roles are the project's own words.
+  const pipeline = getPhasePipeline();
+  if (pipeline && (!pipeline.lede || pipeline.roles.length === 0)) {
+    alarm(
+      "getPhasePipeline",
+      "CONTRIBUTING.md § The phase pipeline",
+      "section present but its lede or role bullets parsed empty",
+    );
   }
 
   const tm = getTrackerModel();

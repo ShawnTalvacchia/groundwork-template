@@ -14,6 +14,8 @@ read-when: When any task is completed or blocked
 
 **Project:** [the repo this board lives in — work outside it gets handed over, not done]
 
+**Levels:** [none — one chat, roles collapsed | planner: high · executor: [tier] · closer: [tier], fires: [the `Read when:` triggers its close is expected to fire] — see CONTRIBUTING → The phase pipeline]
+
 **Depends on:** Previous phases or conditions.
 
 **Refs:** [[doc-1]], [[doc-2]]

@@ -297,6 +297,10 @@ export interface Adjustment {
 
 export interface WorkModel {
   lede: string;
+  /** The phase arc's step names, parsed from the lede's own "its arc is
+   *  A → B → C" sentence. Empty when the lede states no arc — the method
+   *  page then skips the role strip's tags rather than authoring them. */
+  arc: string[];
   sharedRules: string[];
   modes: WorkMode[];
   /** Lede paragraph of `### Session starters`. */
@@ -322,13 +326,15 @@ function numberedUnder(body: string, label: string): string[] {
 export function getWorkModel(): WorkModel {
   const parsed = readDoc("CONTRIBUTING.md");
   const empty: WorkModel = {
-    lede: "", sharedRules: [], modes: [],
+    lede: "", arc: [], sharedRules: [], modes: [],
     startersLede: "", starters: [], partsLede: "", parts: [],
     adjustmentsLede: "", adjustments: [],
   };
   if (!parsed) return empty;
   const section = sectionOf(parsed.body, "The Work Model — every phase runs in one of three modes");
   const lede = section.trim().split("\n\n")[0] ?? "";
+  const arc = (stripMd(lede).match(/arc is ([^.]+)/)?.[1] ?? "")
+    .split("→").map((s) => s.trim()).filter(Boolean);
   const sharedBlock = section.split(/\*\*Rules shared by all modes:\*\*/)[1]?.split(/^### /m)[0] ?? "";
   const sharedRules = (sharedBlock.match(/^- .*$/gm) ?? []).map((b) => b.slice(2).trim());
 
@@ -399,7 +405,60 @@ export function getWorkModel(): WorkModel {
       while ((m = re.exec(body))) adjustments.push({ when: m[1].trim(), what: m[2].trim() });
     }
   }
-  return { lede, sharedRules, modes, startersLede, starters, partsLede, parts, adjustmentsLede, adjustments };
+  return { lede, arc, sharedRules, modes, startersLede, starters, partsLede, parts, adjustmentsLede, adjustments };
+}
+
+/** One role bullet of § The phase pipeline: `- **The planner** (runs high) …`.
+ *  The names are the project's own words — a project may rename or reshape
+ *  the roles, so nothing here asserts which roles exist. */
+export interface PipelineRole {
+  name: string;
+  level: string; // the parenthetical: the level the role's chat runs at
+  text: string; // markdown kept — render with MdInline
+}
+
+export interface PhasePipeline {
+  lede: string; // markdown kept
+  roles: PipelineRole[];
+  /** The trailing bold-led paragraphs — the pipeline's standing rules. */
+  rules: { title: string; text: string }[];
+}
+
+/** Like sectionOf, but matches the `## ` heading by prefix, so a project's
+ *  tagline after the section name can vary without orphaning the parse. */
+function sectionByPrefix(body: string, prefix: string): string | null {
+  const re = new RegExp(`^## ${prefix}\\b.*$`, "m");
+  const m = re.exec(body);
+  if (!m) return null;
+  const rest = body.slice(m.index + m[0].length);
+  const next = rest.search(/^## /m);
+  return next === -1 ? rest : rest.slice(0, next);
+}
+
+/** § The phase pipeline — how one phase runs across chats. Absence is
+ *  legitimate: a project that reshapes the model may delete the section,
+ *  and the method page then renders no role cards. The section's
+ *  `**Read when:**` line is a trigger for readers, never a lede. */
+export function getPhasePipeline(): PhasePipeline | null {
+  const parsed = readDoc("CONTRIBUTING.md");
+  if (!parsed) return null;
+  const section = sectionByPrefix(parsed.body, "The phase pipeline");
+  if (section === null) return null;
+  const lede = ledeOf(section);
+  const roles: PipelineRole[] = [];
+  const roleRe = /^- \*\*(.+?)\*\*\s*\(([^)]+)\)\s*(.+)$/gm;
+  let m;
+  while ((m = roleRe.exec(section))) {
+    roles.push({ name: m[1].trim(), level: m[2].trim(), text: m[3].trim() });
+  }
+  const rules: { title: string; text: string }[] = [];
+  for (const para of section.split("\n\n")) {
+    const p = para.trim();
+    if (!p || p.startsWith("- ") || /^\*\*Read when:\*\*/.test(p) || p === lede) continue;
+    const rm = p.match(/^\*\*(.+?)\*\*\s*([\s\S]+)$/);
+    if (rm) rules.push({ title: rm[1].trim().replace(/[.:]$/, ""), text: rm[2].trim() });
+  }
+  return { lede, roles, rules };
 }
 
 export interface TrackerRow {

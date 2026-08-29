@@ -47,10 +47,13 @@ Before writing any code for a new phase, complete the **Opening Checklist** on t
 
 **The walkthrough is a main stage of the phase, not a step inside closing.** Once the build is committed, the phase enters a collaborative review: the PO and the agent go through the walkthrough doc **together, point by point.** This is where the bulk of the design refinement happens — building gets a surface ~80% there; the walkthrough gets it right. **Expect many iterations.** Budget for it; don't rush toward close.
 
+**The two heavy modes run one:** every product phase and every system phase; side phases keep their light in-chat handoff. This section is the ritual for both; it sits here because the product phase is where it runs deepest.
+
 How it runs:
 
 - **The agent prepares the walkthrough doc as it builds** (`phases/<name>-walkthrough.md`, from `_walkthrough-template.md`) — "Open for your call" (O) items, "Worth verifying" (V) items, and a Decisions log. It is ready for review when the build is committed; it is **not** authored from scratch at close.
 - **Every checkable item names where to look + what to expect, and holds exactly one check.** Each O/V item carries the exact URL/view + a one-line expected result. If an item bundles two surfaces or behaviours, split it into two.
+- **An item carries its evidence, not a claim about it.** Each item links its proof — command output, a diff hunk, a verify run, a screenshot — because review reviews evidence, never narrative. In a phase run across chats, verdicts are written on the doc in the lanes § The phase pipeline defines (CONTRIBUTING.md).
 - **Only the agent's own calls become O items.** A change the PO **directed** is not one — filing it asks the PO to ratify their own instruction and makes the close gate meaningless. A directed change that *reverses settled work* is a structured challenge (§ Doc Tiers), logged in `decisions.md` win or lose.
 - **The PO drives the review with the agent.** Each O/V point is passed or sent back. **A resolved O item is deleted from the list and its outcome written as one line in the Decisions log** — never checked off in place, never grown where it sits. The O list shrinks as the walkthrough runs, so it always shows exactly what still needs the PO. Identifiers are never reused.
 - **The phase is not ready to close until the O list is empty and every V point has passed**, with the Decisions log reflecting what actually shipped.
