@@ -46,9 +46,14 @@ export default function ActiveBoardPage() {
     <>
       {boards.map((board, i) => {
         return (
+          /* Every open board renders here, stacked. The `id` is what the
+             Active Board tiles on the hub and Work link to: without it every
+             tile landed at the top of the page, so with two boards open a card
+             naming one of them scrolled the reader to the other. */
           <section
             key={board.slug}
-            className={`flex flex-col gap-md${i > 0 ? " border-t border-edge-light pt-xl" : ""}`}
+            id={board.slug}
+            className={`sys-board-anchor flex flex-col gap-md${i > 0 ? " border-t border-edge-light pt-xl" : ""}`}
           >
             <div className="flex items-center gap-sm flex-wrap">
               <span className="sys-pill">{MODE_META[board.mode].label}</span>

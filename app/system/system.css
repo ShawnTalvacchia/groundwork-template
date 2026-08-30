@@ -417,6 +417,13 @@
   color: var(--text-primary);
 }
 
+/* A board section on /system/phase is a #fragment landing too — the Active
+   Board tiles link to their own board — and it sits outside .sys-doc, so it
+   needs the same clearance as the headings below. */
+.sys-board-anchor {
+  scroll-margin-top: 140px;
+}
+
 .sys-doc h1,
 .sys-doc h2,
 .sys-doc h3,
@@ -496,6 +503,14 @@
 .sys-doc li.task-list-item input[type="checkbox"] {
   margin-right: var(--space-2);
   vertical-align: middle;
+}
+/* `text-indent` inherits, so a plain list nested inside a checklist item would
+   take the item's -20px first-line pull on top of its own 20px marker room —
+   cancelling it, and landing the nested text on its own bullet. The hanging
+   indent belongs to the checklist row only. */
+.sys-doc li.task-list-item ul,
+.sys-doc li.task-list-item ol {
+  text-indent: 0;
 }
 
 .sys-doc a {

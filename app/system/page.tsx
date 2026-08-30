@@ -127,7 +127,7 @@ export default function SystemOverview() {
             boards.map((b) => (
               <Tile
                 key={b.slug}
-                href="/system/phase"
+                href={`/system/phase#${b.slug}`}
                 label={`Active board · ${modes.find((m) => m.key === b.mode)?.label ?? b.mode}`}
                 value={boardName(b.title)}
                 detail={`${b.done}/${b.total} tasks`}

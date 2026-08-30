@@ -57,7 +57,7 @@ export default function WorkPage() {
             boards.map((b) => (
               <Tile
                 key={b.slug}
-                href="/system/phase"
+                href={`/system/phase#${b.slug}`}
                 label={`Active board · ${MODE_META[b.mode].label}`}
                 value={boardName(b.title)}
                 detail={`${b.done}/${b.total} tasks`}
