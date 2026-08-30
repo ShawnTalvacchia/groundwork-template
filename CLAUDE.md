@@ -1,3 +1,11 @@
+---
+category: meta
+status: active
+tier: commitments
+last-reviewed: YYYY-MM-DD
+read-when: "at the start of every session, before any other doc"
+---
+
 # Project Instructions
 
 Read this before every session. These rules override defaults. **This is a fresh template** — fill the `_(fill at kickoff)_` blocks in your first session (see `KICKOFF.md`).
