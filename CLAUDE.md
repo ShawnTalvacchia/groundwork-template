@@ -8,7 +8,7 @@ read-when: "at the start of every session, before any other doc"
 
 # Project Instructions
 
-Read this before every session. These rules override defaults. **This is a fresh template** — fill the `_(fill at kickoff)_` blocks in your first session (see `KICKOFF.md`).
+These rules override defaults. **This is a fresh template** — fill the `_(fill at kickoff)_` blocks in your first session (see `KICKOFF.md`).
 
 ## The Work Model — phases, modes, rituals
 
@@ -57,7 +57,7 @@ _(fill at kickoff — the stack-neutral reuse-first + flag-new principles live i
 
 | Doc | What it covers |
 |-----|---------------|
-| `docs/ROADMAP.md` | The compass — where we are, the queue, the horizon. Never a changelog |
+| `docs/ROADMAP.md` | Where we are, the queue, the horizon. Never a changelog |
 | `docs/decisions.md` | Institutional memory — dated What/Why/Where decisions, newest first |
 | `docs/CONTRIBUTING.md` | The Work Model, phase lifecycle, doc conventions, hygiene |
 | `docs/implementation/system-surface.md` | The `/system` dashboard's spec — derived-never-authored law, IA, page→source map |
@@ -66,10 +66,6 @@ _(fill at kickoff — the stack-neutral reuse-first + flag-new principles live i
 | `docs/strategy/Scope & Constraints.md` | _(fill at kickoff — in/out of scope, hard constraints, non-goals)_ |
 | `docs/planning/Open Questions & Assumptions Log.md` | Unresolved questions affecting upcoming work |
 | `docs/planning/Future Considerations.md` | Known directions waiting for a trigger |
-
-## Where We Are
-
-_(fill at kickoff — this replaces the template's placeholder. Compass: `docs/ROADMAP.md`. Live picture: `/system`. History: `docs/decisions.md` + `docs/archive/phases/`.)_
 
 ## Strategic Context
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import path from "node:path";
-import { getAllDocPaths, getDocByPath } from "@/lib/system";
+import { docSourcePath, getAllDocPaths, getDocByPath } from "@/lib/system";
 import { StalePill, TierPill, DocProse } from "../../ui";
 
 // Renders any doc under docs/ (archive included) as a read-only page.
@@ -13,8 +13,10 @@ import { StalePill, TierPill, DocProse } from "../../ui";
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  // CLAUDE.md is the one renderable doc outside docs/ (repo root).
-  return [...getAllDocPaths(), "CLAUDE.md"].map((relPath) => ({ slug: relPath.split("/") }));
+  // The briefing at the project root is in this list too — getAllDocPaths
+  // includes it when the project has one, so a briefing-less project
+  // prerenders no route for it rather than a 404.
+  return getAllDocPaths().map((relPath) => ({ slug: relPath.split("/") }));
 }
 
 export default async function DocPage({ params }: { params: Promise<{ slug: string[] }> }) {
@@ -29,7 +31,7 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
   return (
     <>
       <div className="sys-card flex flex-wrap items-center gap-sm text-xs text-fg-tertiary">
-        <code className="sys-code">{doc.relPath === "CLAUDE.md" ? "CLAUDE.md" : `docs/${doc.relPath}`}</code>
+        <code className="sys-code">{docSourcePath(doc.relPath)}</code>
         <TierPill tier={doc.tier} />
         {doc.status && <span className="sys-pill">{doc.status}</span>}
         {doc.featureStatus && <span className="sys-pill">{doc.featureStatus}</span>}

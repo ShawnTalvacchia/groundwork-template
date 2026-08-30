@@ -33,7 +33,7 @@ export default function ActiveBoardPage() {
           ))}
         </div>
         <p className="text-xs text-fg-tertiary">
-          The compass:{" "}
+          Where the project stands:{" "}
           <Link href="/system/roadmap" className="underline underline-offset-2">
             Roadmap
           </Link>

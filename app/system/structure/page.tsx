@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { getAllDocs, getArchivedPhases, getDecisions, TIER_ORDER } from "@/lib/system";
+import { BRIEFING_FILE, getAllDocs, getArchivedPhases, getDecisions, TIER_ORDER } from "@/lib/system";
 import { GROUPS } from "../nav-model";
-import { PageIntro, Tile } from "../ui";
+import { PageIntro, StalePill, Tile } from "../ui";
 
 const group = GROUPS.find((g) => g.slug === "structure")!;
 
@@ -55,10 +55,29 @@ export default function StructurePage() {
   const archived = getArchivedPhases();
   const decisions = getDecisions();
   const tierCounts = TIER_ORDER.map((t) => `${docs.filter((d) => d.tier === t).length} ${t}`).join(" · ");
+  const briefing = docs.find((d) => d.relPath === BRIEFING_FILE);
 
   return (
     <>
       <PageIntro title="Structure" blurb={group.blurb} />
+
+      {/* The briefing leads, at full width, above the four parts.
+          It is one row among many on the docs index, which is where a doc
+          belongs — but this is the doc every session reads and nobody opens,
+          and burying it in the list is the exact failure this surfaces to fix.
+          The pill is the point: freshness is the only thing here that ever
+          asks for a review, and asking is what this tile is for. */}
+      {briefing && (
+        <Tile
+          href={`/system/docs/${BRIEFING_FILE}`}
+          label="Briefing"
+          value={BRIEFING_FILE}
+          detail={`${briefing.title} — ${
+            briefing.readWhen ? `read when ${briefing.readWhen}` : "read at every session start"
+          }. Every session reads it; only you review it.`}
+          pill={<StalePill staleDays={briefing.staleDays} lastReviewed={briefing.lastReviewed} />}
+        />
+      )}
 
       {/* The four parts — what it does, what we believe, what we've written,
           how it looks. Peers here; whether one earns a tab is a navigation

@@ -138,8 +138,8 @@ export function getDriftAlarms(): DriftAlarm[] {
 
   const tiers = getTiers();
   const tierKeys = new Set(tiers.map((t) => t.key));
-  if (tiers.length !== 4 || !TIER_ORDER.every((k) => tierKeys.has(k))) {
-    alarm("getTiers", "CONTRIBUTING.md § Doc Tiers & Review Physics", `parsed ${tiers.length} tier rows, expected the 4 known tiers`);
+  if (tiers.length !== TIER_ORDER.length || !TIER_ORDER.every((k) => tierKeys.has(k))) {
+    alarm("getTiers", "CONTRIBUTING.md § Doc Tiers & Review Physics", `parsed ${tiers.length} tier rows, expected the ${TIER_ORDER.length} known tiers`);
   }
   for (const key of ["commitments", "working"] as const) {
     if ((tiers.find((t) => t.key === key)?.staleAfterDays ?? null) === null) {

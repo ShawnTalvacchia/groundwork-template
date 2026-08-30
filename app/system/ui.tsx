@@ -65,17 +65,25 @@ export function Tile({
   label,
   value,
   detail,
+  pill,
 }: {
   href: string;
   label: string;
   value: ReactNode;
   detail?: string;
+  /** Opt-in slot on the label row — a freshness pill, a badge. Added for the
+   *  briefing tile, whose whole job is to prompt a review, and the amber
+   *  StalePill is the only thing on the surface that ever asks for one. */
+  pill?: ReactNode;
 }) {
   // Numbers get the big stat treatment; text values sit a step smaller.
   const valueSize = typeof value === "number" ? "text-2xl" : "text-lg";
   return (
     <Link href={href} className="sys-tile">
-      <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">{label}</span>
+      <span className="flex items-baseline justify-between gap-md">
+        <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">{label}</span>
+        {pill}
+      </span>
       <span
         className={`${valueSize} font-semibold text-fg-primary leading-tight truncate`}
         title={typeof value === "string" ? value : undefined}
@@ -244,6 +252,20 @@ export function StalePill({ staleDays, lastReviewed }: { staleDays: number | nul
 
 export function IdTag({ id }: { id: string }) {
   return <span className="sys-id">{id}</span>;
+}
+
+/** The inset explainer, on a React page.
+ *
+ *  Same visual as a mold's blockquote inside a rendered doc — one CSS home
+ *  (`.sys-inset`, system.css), two callers. `label` opts into the info glyph;
+ *  without one the block is a quiet aside rather than a signpost. */
+export function InsetNote({ label, children }: { label?: string; children: ReactNode }) {
+  return (
+    <div className="sys-inset flex flex-col gap-tiny">
+      {label && <span className="sys-inset-label text-xs font-semibold text-fg-primary">{label}</span>}
+      {children}
+    </div>
+  );
 }
 
 /** Standard "where this page comes from" footer — every list page carries one,

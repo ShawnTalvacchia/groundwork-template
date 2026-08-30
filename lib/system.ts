@@ -25,9 +25,13 @@ const DOCS_DIR = process.env.DOCS_ROOT
 
 /* ── Tiers ─────────────────────────────────────────────────────────── */
 
-export type Tier = "bedrock" | "commitments" | "working" | "surface";
+export type Tier = "bedrock" | "commitments" | "working";
 
-export const TIER_ORDER: Tier[] = ["surface", "working", "commitments", "bedrock"];
+/* Least guarded first. A fourth tier, `surface`, held derived pages until
+   2026-08-30: they are not docs, never enter the registry, and are not guarded
+   but regenerated, so no doc could ever sit there. Derived-never-authored is
+   carried by the glossary's "The law" and the spec, which is where it acts. */
+export const TIER_ORDER: Tier[] = ["working", "commitments", "bedrock"];
 
 /** Short labels for tier badges. Everything else about a tier — what lives
  *  there, what it takes to change, when to re-check it, and its stale threshold — is
@@ -36,7 +40,6 @@ export const TIER_META: Record<Tier, { label: string }> = {
   bedrock: { label: "Bedrock" },
   commitments: { label: "Commitments" },
   working: { label: "Working" },
-  surface: { label: "Surface" },
 };
 
 /* ── Shared helpers ────────────────────────────────────────────────── */
@@ -93,7 +96,23 @@ export function daysSince(isoDate: string | null): number | null {
   return Math.floor((Date.now() - then.getTime()) / 86_400_000);
 }
 
-/* ── The doc registry (everything live under docs/) ────────────────── */
+/* ── The doc registry (everything live under docs/, plus the briefing) ─ */
+
+/** The **briefing**: a project's root-level instruction file, read at the
+ *  start of every session — that reading IS the session-start ritual. It sits
+ *  one level above `docs/`, so it is resolved from the docs root rather than
+ *  from the working directory, and follows DOCS_ROOT with the rest of the tree.
+ *
+ *  It is named here once because four places need to know it: the registry
+ *  (below), the doc reader (`getDocByPath`), the dangling-reference scan
+ *  (`getStateReferences`), and the pages that label where a doc lives. */
+export const BRIEFING_FILE = "CLAUDE.md";
+
+/** A doc's path as it exists in the repo — what a reader would open. Registry
+ *  paths are relative to `docs/`; the briefing is the one that is not. */
+export function docSourcePath(relPath: string): string {
+  return relPath === BRIEFING_FILE ? BRIEFING_FILE : `docs/${relPath}`;
+}
 
 export interface SystemDoc {
   title: string;
@@ -126,37 +145,56 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+function toSystemDoc(
+  relPath: string,
+  fm: Frontmatter,
+  body: string,
+  limits: Partial<Record<Tier, number | null>>,
+): SystemDoc {
+  const tier = (["bedrock", "commitments", "working"].includes(fm.tier ?? "")
+    ? fm.tier
+    : null) as Tier | null;
+  const lastReviewed = fm["last-reviewed"] ?? null;
+  const limit = tier ? limits[tier] ?? null : null;
+  const age = daysSince(lastReviewed);
+  const staleDays = limit !== null && age !== null && age > limit ? age - limit : null;
+  return {
+    title: stripMd(firstHeading(body) ?? path.basename(relPath, ".md")),
+    relPath,
+    dir: relPath.includes(path.sep) ? relPath.split(path.sep)[0] : "",
+    status: fm.status ?? null,
+    tier,
+    category: fm.category ?? null,
+    lastReviewed,
+    readWhen: fm["read-when"] ?? null,
+    featureStatus: fm["feature-status"] ?? null,
+    featureKind: fm["feature-kind"] ?? null,
+    area: fm.area ?? null,
+    summary: fm.summary ?? null,
+    routes: fm.routes ? fm.routes.split(",").map((r) => r.trim()) : [],
+    staleDays,
+  };
+}
+
+/** Every live doc the project holds: the `docs/` tree, plus the **briefing**
+ *  at the project root.
+ *
+ *  The briefing was reachable but never offered — `/system/docs/CLAUDE.md`
+ *  rendered, and no listing anywhere linked it, so the file every session reads
+ *  first was the one the record never showed. It is a doc by every rule the
+ *  others obey (frontmatter, a tier, the canon diff names it), so it belongs in
+ *  the registry rather than in a card of its own. A project with no briefing
+ *  simply has one fewer doc. */
 export function getAllDocs(): SystemDoc[] {
   const limits = staleLimits();
-  return walk(DOCS_DIR)
-    .map((full) => {
-      const relPath = path.relative(DOCS_DIR, full);
-      const { fm, body } = parseFrontmatter(fs.readFileSync(full, "utf-8"));
-      const tier = (["bedrock", "commitments", "working", "surface"].includes(fm.tier ?? "")
-        ? fm.tier
-        : null) as Tier | null;
-      const lastReviewed = fm["last-reviewed"] ?? null;
-      const limit = tier ? limits[tier] ?? null : null;
-      const age = daysSince(lastReviewed);
-      const staleDays = limit !== null && age !== null && age > limit ? age - limit : null;
-      return {
-        title: stripMd(firstHeading(body) ?? path.basename(relPath, ".md")),
-        relPath,
-        dir: relPath.includes(path.sep) ? relPath.split(path.sep)[0] : "",
-        status: fm.status ?? null,
-        tier,
-        category: fm.category ?? null,
-        lastReviewed,
-        readWhen: fm["read-when"] ?? null,
-        featureStatus: fm["feature-status"] ?? null,
-        featureKind: fm["feature-kind"] ?? null,
-        area: fm.area ?? null,
-        summary: fm.summary ?? null,
-        routes: fm.routes ? fm.routes.split(",").map((r) => r.trim()) : [],
-        staleDays,
-      };
-    })
-    .sort((a, b) => a.relPath.localeCompare(b.relPath));
+  const briefing = path.join(path.dirname(DOCS_DIR), BRIEFING_FILE);
+  const read = (full: string, relPath: string) => {
+    const { fm, body } = parseFrontmatter(fs.readFileSync(full, "utf-8"));
+    return toSystemDoc(relPath, fm, body, limits);
+  };
+  const docs = walk(DOCS_DIR).map((full) => read(full, path.relative(DOCS_DIR, full)));
+  if (fs.existsSync(briefing)) docs.push(read(briefing, BRIEFING_FILE));
+  return docs.sort((a, b) => a.relPath.localeCompare(b.relPath));
 }
 
 /* ── The project's own domain vocabulary ──────────────────────────────
@@ -212,8 +250,11 @@ export function getFeatureAreas(): FeatureArea[] {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
-/** Every .md path under docs/ including the archive — used to prerender the
- *  doc detail pages so no fs read happens at request time. */
+/** Every path the doc reader can render — the `.md` tree under docs/ including
+ *  the archive, plus the briefing at the project root when the project has one.
+ *  Used to prerender the doc detail pages so no fs read happens at request
+ *  time, which is why an absent briefing must drop out here rather than being
+ *  appended unconditionally by the page. */
 export function getAllDocPaths(): string[] {
   const out: string[] = [];
   const walkAll = (dir: string) => {
@@ -225,6 +266,7 @@ export function getAllDocPaths(): string[] {
     }
   };
   walkAll(DOCS_DIR);
+  if (fs.existsSync(path.join(path.dirname(DOCS_DIR), BRIEFING_FILE))) out.push(BRIEFING_FILE);
   return out;
 }
 
@@ -563,36 +605,17 @@ export function getTierPhysics(): TierPhysics {
 /** Reads any doc under docs/ (archive included) — used by the doc detail page.
  *  CLAUDE.md is the one special case outside docs/ (repo root). */
 export function getDocByPath(relPath: string): { doc: SystemDoc; body: string } | null {
-  const full =
-    relPath === "CLAUDE.md"
-      ? path.join(process.cwd(), "CLAUDE.md")
-      : path.normalize(path.join(DOCS_DIR, relPath));
-  if (relPath !== "CLAUDE.md" && (!full.startsWith(DOCS_DIR + path.sep) || !full.endsWith(".md"))) return null;
+  const isBriefing = relPath === BRIEFING_FILE;
+  const full = isBriefing
+    ? path.join(path.dirname(DOCS_DIR), BRIEFING_FILE)
+    : path.normalize(path.join(DOCS_DIR, relPath));
+  if (!isBriefing && (!full.startsWith(DOCS_DIR + path.sep) || !full.endsWith(".md"))) return null;
   if (!fs.existsSync(full)) return null;
   const { fm, body } = parseFrontmatter(fs.readFileSync(full, "utf-8"));
-  const rel = relPath === "CLAUDE.md" ? "CLAUDE.md" : path.relative(DOCS_DIR, full);
-  const tier = (["bedrock", "commitments", "working", "surface"].includes(fm.tier ?? "")
-    ? fm.tier
-    : null) as Tier | null;
-  return {
-    doc: {
-      title: stripMd(firstHeading(body) ?? path.basename(rel, ".md")),
-      relPath: rel,
-      dir: rel.includes(path.sep) ? rel.split(path.sep)[0] : "",
-      status: fm.status ?? null,
-      tier,
-      category: fm.category ?? null,
-      lastReviewed: fm["last-reviewed"] ?? null,
-      readWhen: fm["read-when"] ?? null,
-      featureStatus: fm["feature-status"] ?? null,
-      featureKind: fm["feature-kind"] ?? null,
-      area: fm.area ?? null,
-      summary: fm.summary ?? null,
-      routes: fm.routes ? fm.routes.split(",").map((r) => r.trim()) : [],
-      staleDays: null,
-    },
-    body,
-  };
+  const rel = isBriefing ? BRIEFING_FILE : path.relative(DOCS_DIR, full);
+  // No stale limits: the detail page shows the doc, never a freshness verdict
+  // on it — that judgement belongs to the index, which passes the real ones.
+  return { doc: toSystemDoc(rel, fm, body, {}), body };
 }
 
 /* ── Open Questions (planning/Open Questions & Assumptions Log.md) ──
@@ -769,7 +792,7 @@ export interface Roadmap {
   goal: string;
   /** The `## ` headings this parser knows, in the DOC's order. The page renders
    *  its sections in this order rather than a hardcoded one: section order is a
-   *  claim the compass makes, and a surface that hardcodes it overrides that
+   *  claim the ROADMAP makes, and a surface that hardcodes it overrides that
    *  claim silently. */
   sectionOrder: RoadmapSection[];
   whereWeAre: string[]; // markdown paragraphs
@@ -955,7 +978,7 @@ export function getStateReferences(): StateReference[] {
   const refs: StateReference[] = [];
   const roadmap = readDoc("ROADMAP.md");
   if (roadmap) collectReferences("ROADMAP.md", roadmap.body, refs);
-  const claude = readProjectRootDoc("CLAUDE.md");
+  const claude = readProjectRootDoc(BRIEFING_FILE);
   if (claude) collectReferences("CLAUDE.md", claude, refs);
   return refs;
 }

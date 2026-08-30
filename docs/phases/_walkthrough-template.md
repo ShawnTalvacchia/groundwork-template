@@ -13,7 +13,7 @@ read-when: "Update as items are walked, edit as scope adjusts"
 >
 > Work keeps moving while this is open — on this board or another — and that can change the plan an item or a logged decision describes. Both get **updated in place** so what's written is always the current plan (raised with you first when the direction is in question), and nothing here chronicles how it changed: this file records where things stand, never the path taken. History lives in git.
 >
-> Items are written concisely, and each links its **evidence** — the command output, diff hunk, verify run or screenshot that proves it, never a claim about it. In a phase run across chats, verdicts land on this doc in the pipeline's lanes (CONTRIBUTING.md → The phase pipeline). Unsure what an item means? **Just ask.**
+> Items are written concisely, and each links its **evidence** — the command output, diff hunk, verify run or screenshot that proves it, never a claim about it. **Evidence obeys the same two rules as the items:** a superseded exhibit is replaced in place, and an exhibit whose item settles is deleted with it unless a live V item or a logged decision still cites it. In a phase run across chats, verdicts land on this doc in the pipeline's lanes (CONTRIBUTING.md → The phase pipeline). Unsure what an item means? **Just ask.**
 
 ---
 

@@ -8,8 +8,8 @@ export default function RoadmapPage() {
   const seedFor = (name: string) => seeds.find((s) => s.phase === name);
 
   // Section ORDER comes from the doc, never from this file. Reorder ROADMAP.md
-  // and this page follows: the order a compass puts its sections in is a claim
-  // it makes, and a surface that hardcodes the order overrides that claim
+  // and this page follows: the order the ROADMAP puts its sections in is a
+  // claim it makes, and a surface that hardcodes the order overrides that claim
   // without saying so.
   const blocks: Record<RoadmapSection, React.ReactNode> = {
     whereWeAre: (
@@ -26,7 +26,7 @@ export default function RoadmapPage() {
       <div key="queue" className="flex flex-col gap-xl">
         <section className="flex flex-col gap-md">
           <h2 className="text-lg font-semibold text-fg-primary">The queue</h2>
-          {/* Condensed cards — the ROADMAP row is compass-weight (1-2 sentences);
+          {/* Condensed cards — the ROADMAP row is brief (1-2 sentences);
               the whole card IS the link to the phase's SEED (planning/queued/),
               via the doc reader. Hub-tile hover + the metadata line's trailing
               arrow carry the affordance (the arrow alone on touch screens). */}
@@ -136,7 +136,7 @@ export default function RoadmapPage() {
     <>
       <PageIntro
         title="Roadmap"
-        blurb="Where we are and the queue — upcoming planned work of any mode; the compass, never a changelog. Closed phases live on the timeline; boards are created only when a phase opens."
+        blurb="Where the project stands, and the queue of planned work of any mode. This doc says where things are going, never where they have been — what closed lives on the timeline, and a board is created only when a phase opens."
       />
       {roadmap.sectionOrder.map((key) => blocks[key])}
       <p className="text-xs text-fg-tertiary">

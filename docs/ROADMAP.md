@@ -29,7 +29,7 @@ read-when: "at the start and end of every phase"
 
 ## Where We Are
 
-_(fill at kickoff — one or two short paragraphs: what's built, what's next, what the current focus is. Keep it a compass, not a changelog.)_
+_(fill at kickoff — one or two short paragraphs: what's built, what's next, what the current focus is. Every sentence checkable against the project's present state, never a changelog — `CONTRIBUTING.md` → The ROADMAP and the briefing are not changelogs.)_
 
 **History lives elsewhere:** `decisions.md` (why) and the phase records in `archive/phases/` (what shipped).
 

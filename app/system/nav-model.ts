@@ -23,7 +23,7 @@ export const GROUPS: SystemGroup[] = [
     blurb: "What needs to be done — phases in three modes, each run through its rituals.",
     pages: [
       { slug: "phase", label: "Active board", blurb: "The open board(s) in full.", hidden: true },
-      { slug: "roadmap", label: "Roadmap", blurb: "Where we are and what's queued — the compass.", hidden: true },
+      { slug: "roadmap", label: "Roadmap", blurb: "Where we are and what's queued.", hidden: true },
       { slug: "questions", label: "Questions", blurb: "Unresolved strategic questions, §-numbered by topic." },
       { slug: "punch-list", label: "Punch list", blurb: "Small fixes waiting for a sweep. Fixed rows are removed — commits are the record." },
       { slug: "future", label: "Future", blurb: "Known directions parked until a trigger fires, FC-numbered." },
