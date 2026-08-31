@@ -28,7 +28,7 @@ read-when: When any task is completed or blocked
 >
 > List below ONLY what's specific to THIS phase: how it serves the vision (checklist step 1), conflicts surfaced during the opening audit, docs re-checked, scope calls made at open.
 
-- **Session title(s):** _(`Phase name · mode` collapsed, or one line per role chat — `role · Phase name · mode` — as each opens)_
+- **Session title(s):** _(ask at each chat's open, then record the PO's answer here — `Phase name · mode` collapsed, one line per role chat when split: `role · Phase name · mode`)_
 - **Serves the vision by:** _(one line — from `strategy/Vision.md`, read at open)_
 - _(other phase-specific open notes go here — delete this line)_
 

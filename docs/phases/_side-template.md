@@ -13,7 +13,7 @@ read-when: "board close (deleted at close — the moved tracker rows + the commi
 
 **Project:** [the repo this board lives in — work outside it gets handed over, not done]
 
-**Session title:** _(`Phase name · mode` — the PO's answer at open; side phases never split)_
+**Session title:** _(ask at open, then record the PO's answer here — `Phase name · mode`; side phases never split)_
 
 ## Items
 

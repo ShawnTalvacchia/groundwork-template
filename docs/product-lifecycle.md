@@ -35,7 +35,7 @@ Before writing any code for a new phase, complete the **Opening Checklist** on t
 - Work only on tasks from the **current phase board**.
 - **Decide-and-flag — bias toward action.** Make reasonable design and implementation calls during the build instead of stopping at every fork to ask. Two things still get raised mid-build:
   - **(a) True blockers** — you can't take the next step and can't unblock yourself.
-  - **(b) Scope or strategy shifts** — anything that contradicts the phase board, expands what the phase ships, affects another phase, or touches a paused phase.
+  - **(b) Scope or strategy shifts** — anything that contradicts the phase board, expands what the phase ships, affects another phase, or touches a paused phase. **Raise it with a proposed home and the reason**, not only as a shift: a punch row, a tracker item, a queue row and its seed, another board — the destinations are in `CONTRIBUTING.md` → Rules shared by all modes, and a queue row is written as the idea forms rather than held to the close. **Suggestions, never decisions** — the PO rules, and the ROADMAP is commitments-tier ground. **Verify before you park it:** an assertion parked unchecked becomes a fact the next phase inherits, so check the claim and write what survives it.
 
   Everything else — design choices, copy variants, structural picks where multiple answers are reasonable — gets MADE during the build and surfaced as an **"Open for your call"** item on the phase walkthrough. The reviewer ratifies or redirects there. "No feature sprawl" still applies: if the call would EXPAND scope, that's a scope shift and gets raised.
 - When you finish a task, update the phase board status immediately.

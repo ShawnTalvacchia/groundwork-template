@@ -13,7 +13,7 @@ read-when: "while this system phase is open (deleted at close — decisions.md c
 
 ## Session open — YYYY-MM-DD
 
-- **Session title(s):** [`Phase name · mode` collapsed, or one line per role chat — `role · Phase name · mode` — as each opens]
+- **Session title(s):** _(ask at each chat's open, then record the PO's answer here — `Phase name · mode` collapsed, one line per role chat when split: `role · Phase name · mode`)_
 - **Project:** [the repo this board lives in — work outside it gets handed over, not done]
 - **Levels:** [none — one chat, roles collapsed | planner: high · executor: [tier] · closer: [tier], fires: [the `Read when:` triggers its close is expected to fire] — see CONTRIBUTING → The phase pipeline]
 - **Friction named:** [what this phase fixes, in one or two sentences]

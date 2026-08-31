@@ -37,7 +37,7 @@ _(fill at kickoff — one or two short paragraphs: what's built, what's next, wh
 
 ## What's Next
 
-**The queue — upcoming planned work of any mode, one mode-tagged list.** Each row carries a seed (`planning/queued/`, badged by its `mode:` — that's where context accumulates); boards are created when a phase opens. The queue is a staging area, never a gate: urgent work opens a board directly.
+**The queue — upcoming planned work of any mode, one mode-tagged list.** Each row carries a seed (`planning/queued/`, badged by its `mode:` — that's where context accumulates); boards are created when a phase opens.
 
 | Phase | Goal | Key refs |
 |-------|------|----------|
