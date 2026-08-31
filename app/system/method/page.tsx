@@ -1,24 +1,44 @@
 import { BookOpen, Check, Eye, Lock } from "@phosphor-icons/react/dist/ssr";
-import { getPhasePipeline, getWorkModel } from "@/lib/system";
-import { MdInline, SourceNote, StarterRows } from "../ui";
+import { getPhasePipeline, getWorkModel, type RitualStep, type WorkTrigger } from "@/lib/system";
+import { InsetNote, MdInline, SourceNote, StarterRows } from "../ui";
 
 // Method = how we work. The flow ARE this page, rendered from CONTRIBUTING —
-// not a link to a wall of text. Teaching order: the arc and its roles first
-// (that is the flow a session actually lives), then the modes, then the
-// reference layers folded away — starters, shared rules, and the kit
-// (parts + adjustments) at the foot. Reference content collapses; only the
-// flow stays expanded.
-
-/** "The planner" → "planner": a pill wants the role's bare name. */
-function stripLeadingThe(name: string): string {
-  return name.replace(/^The\s+/i, "").toLowerCase();
-}
+// not a link to a wall of text.
+//
+// Teaching order follows how people actually arrive, which is also the canon's
+// own order for the sections it owns: starters (the front door) → the modes
+// and their rituals → the triggers those rituals hang off → the role layer,
+// which only a split phase uses. The one deliberate departure from doc order
+// is the shared rules, which the canon states first and this page demotes to
+// the foot: they are consulted, not read, and leading with them buries the
+// door. Everything after the modes is reference and folds.
+//
+// The role layer sits last and inside its own section rather than opening the
+// page, and it pins no role pills to the mode rituals: a collapsed phase has
+// no planner, and a side phase never splits at all. That is the third axis the
+// rituals carry (a step's condition), and the page honours it by placement —
+// conditional content lives in the conditional section, under the canon's own
+// `Read when:` gate.
 
 const MODE_ACCENT: Record<string, string> = {
   product: "sys-mode--product",
   system: "sys-mode--system",
   side: "sys-mode--side",
 };
+
+// The two moments a mode's own rituals hang off, by the canon's names for
+// them. Matching a trigger by name is the same bargain the mode headings make
+// (`getWorkModel` matches product|system|side literally): a canon that renames
+// its moments renders the rituals untagged rather than wrong, and § Adjustments
+// states that cost outright.
+const OPEN_TRIGGER = "phase open";
+const CLOSE_TRIGGER = "phase close";
+
+// The glossary's term for the human a ritual step reaches for. The step's own
+// wording is what `RitualStep.withPO` derives from; this is the page's label
+// for that fact, held here for the same reason BAND_META holds the band names
+// — one constant, next to the vocabulary it mirrors.
+const PO_TERM = "PO";
 
 // The three touch bands — they gate pens, not eyes (reading is never gated).
 // "Gated" renders a lock, not a prohibit sign: another mode holds the key.
@@ -47,29 +67,39 @@ function Scope({ kind, text }: { kind: keyof typeof BAND_META; text: string }) {
   );
 }
 
+/** A ritual's numbered steps. Two things ride on each step beyond its text:
+ *  the moment the whole list fires (the trigger pill, once, on the label) and
+ *  whether the individual step stops for a human (the marker, per step). Both
+ *  are the canon's own — the trigger from § The parts, the actor from the
+ *  step's own register (`RitualStep.withPO`). A step that names nobody is the
+ *  session acting alone, which is most of them, and stays unmarked: marking
+ *  the default would be noise on every row. */
 function Steps({
   label,
-  pill,
+  trigger,
   steps,
   anchors,
 }: {
   label: string;
-  pill?: string;
-  steps: string[];
+  trigger?: WorkTrigger;
+  steps: RitualStep[];
   anchors?: Record<string, string>;
 }) {
   return (
     <div className="flex flex-col gap-sm">
       <span className="flex items-baseline gap-sm text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">
         {label}
-        {pill && <span className="sys-pill normal-case tracking-normal">{pill}</span>}
+        {trigger && (
+          <span className="sys-pill normal-case tracking-normal">fires at {trigger.name}</span>
+        )}
       </span>
       <ol className="flex flex-col gap-sm">
         {steps.map((step, i) => (
           <li key={i} className="flex gap-md text-sm text-fg-secondary leading-snug">
             <span className="sys-step-num">{i + 1}</span>
             <span>
-              <MdInline text={step} anchors={anchors} />
+              {step.withPO && <span className="sys-actor">with the {PO_TERM}</span>}
+              <MdInline text={step.text} anchors={anchors} />
             </span>
           </li>
         ))}
@@ -109,21 +139,24 @@ export default function MethodPage() {
   // § references become in-page links only for sections this page renders;
   // the rest stay plain text rather than linking to nowhere.
   const anchors = pipeline ? { "The phase pipeline": "#phase-pipeline" } : undefined;
-  const { lede, arc, sharedRules, modes, startersLede, starters, partsLede, parts, adjustmentsLede, adjustments } =
-    getWorkModel();
+  const {
+    lede, arc, sharedRules, modes, startersLede, starters,
+    partsLede, parts, adjustmentsLede, adjustments, triggers,
+  } = getWorkModel();
 
   // Role cards carry a step tag only for the canonical shape — four arc
   // steps, three roles, the middle role running build + review. Any other
   // counts render untagged: the join is layout, and the doc encodes no
   // general step↔role mapping for the page to derive.
   const canonicalSpan = arc.length === 4 && pipeline?.roles.length === 3;
-  // The rituals' role pills use the same canonical join: opening = the first
-  // role, during = the second, the close = the third. Names come from the
-  // pipeline's own bullets, shortened for a pill.
-  const roleNames =
-    pipeline && pipeline.roles.length === 3
-      ? pipeline.roles.map((r) => stripLeadingThe(r.name))
-      : null;
+
+  const byName = (n: string) => triggers.find((t) => t.name.toLowerCase() === n);
+  const openTrigger = byName(OPEN_TRIGGER);
+  const closeTrigger = byName(CLOSE_TRIGGER);
+  // The Trigger part's sentence opens by saying what a trigger is, then lists
+  // them. The first sentence is this section's lede; the list is its content.
+  const triggerPart = parts.find((p) => p.name.toLowerCase() === "trigger");
+  const triggersLede = triggerPart ? `${triggerPart.is.split(".")[0]}.` : "";
 
   return (
     <>
@@ -134,40 +167,155 @@ export default function MethodPage() {
         </p>
       </header>
 
-      {/* The roles that carry the arc, each tagged with the steps it runs —
-          the arc's step names come from the lede's own sentence, so the tags
-          derive rather than restate. */}
-      {pipeline && pipeline.roles.length > 0 && (
-        <section className="sys-arc-roles" aria-label="The roles that carry the arc">
-          {pipeline.roles.map((r, i) => (
-            <div key={r.name} className="sys-arc-role">
-              {canonicalSpan && (
-                <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">
-                  {i === 0 ? arc[0] : i === 1 ? `${arc[1]} · ${arc[2]}` : arc[3]}
-                </span>
-              )}
-              <span className="flex flex-wrap items-baseline gap-sm">
-                <span className="text-sm font-semibold text-fg-primary">
-                  <MdInline text={r.name} />
-                </span>
-                <span className="sys-pill">{r.level}</span>
-              </span>
-              <span className="text-xs text-fg-secondary leading-snug">
-                <MdInline text={r.text} anchors={anchors} />
-              </span>
+      {/* The front door, first — every session starts by someone arriving with
+          something, so the page starts where they do. */}
+      {starters.length > 0 && (
+        <section id="session-starters" className="flex flex-col gap-md scroll-mt-2xl">
+          <h2 className="text-lg font-semibold text-fg-primary">Session starters</h2>
+          {startersLede && (
+            <p className="text-sm text-fg-secondary max-w-[64ch]">
+              <MdInline text={startersLede} anchors={anchors} />
+            </p>
+          )}
+          <div className="sys-starters">
+            <div className="sys-starters-body flex flex-col">
+              <StarterRows starters={starters} />
             </div>
-          ))}
+          </div>
         </section>
       )}
 
-      {/* The pipeline's prose: the level-per-chat rule and its standing
-          rules, folded. The roles live in the strip above, not repeated. */}
+      {/* The three modes — the flavors the arc runs in, and where a session
+          that has picked its shape reads what it may touch and what it runs. */}
+      <section className="flex flex-col gap-md">
+        <h2 className="text-lg font-semibold text-fg-primary">The three modes</h2>
+        <div className="flex flex-col gap-lg">
+          {modes.map((m) => {
+            const stops = [...m.open, ...m.close].filter((s) => s.withPO).length;
+            return (
+              <article key={m.key} className={`sys-mode ${MODE_ACCENT[m.key] ?? ""}`}>
+                <div className="flex items-baseline gap-sm flex-wrap">
+                  <h3 className="text-lg font-semibold text-fg-primary">{m.label}</h3>
+                  <span className="text-sm text-fg-tertiary">{m.tagline}</span>
+                </div>
+
+                {/* What it is (left) · what it may touch (right) */}
+                <div className="grid gap-lg lg:grid-cols-[1.4fr_1fr]">
+                  <div className="flex flex-col gap-md">
+                    <p className="text-sm text-fg-secondary leading-normal">
+                      <MdInline text={m.purpose} anchors={anchors} />
+                    </p>
+                    <Scope kind="reads" text={m.reads} />
+                  </div>
+                  <div className="flex flex-col gap-sm">
+                    <Scope kind="home" text={m.homeGround} />
+                    <Scope kind="careful" text={m.careful} />
+                    <Scope kind="gated" text={m.gated} />
+                  </div>
+                </div>
+
+                {/* The ritual — folded away. The summary counts what is inside
+                    and says how much of it stops for a human. Both counts name
+                    which list they are, and all three numbers derive. */}
+                <details className="sys-ritual">
+                  <summary>
+                    <span className="sys-caret" aria-hidden>
+                      ›
+                    </span>
+                    <span className="text-sm font-semibold text-fg-primary">The built-in ritual</span>
+                    <span className="text-xs text-fg-tertiary">
+                      {m.open.length} opening + {m.close.length} closing
+                      {stops > 0 && ` · ${stops} stop for the ${PO_TERM}`}
+                    </span>
+                  </summary>
+                  <div className="flex flex-col gap-lg pt-lg">
+                    <Steps label="Opening ritual" trigger={openTrigger} steps={m.open} anchors={anchors} />
+                    <div className="flex flex-col gap-sm">
+                      <span className="flex items-baseline gap-sm text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">
+                        During
+                      </span>
+                      <p className="text-sm text-fg-secondary leading-snug">
+                        <MdInline text={m.during} anchors={anchors} />
+                      </p>
+                    </div>
+                    <Steps label="Closing ritual" trigger={closeTrigger} steps={m.close} anchors={anchors} />
+                  </div>
+                </details>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* The moments rituals hang off. Two of these are the open and close
+          above, tagged in place; the other four fire outside a phase
+          altogether, and had no home on this page until now. */}
+      {triggers.length > 0 && (
+        <section className="flex flex-col gap-md">
+          <h2 className="text-lg font-semibold text-fg-primary">{triggerPart?.name ?? "Triggers"}</h2>
+          {triggersLede && (
+            <p className="text-sm text-fg-secondary max-w-[64ch]">
+              <MdInline text={triggersLede} />
+            </p>
+          )}
+          <div className="sys-trigger-grid">
+            {triggers.map((t) => (
+              <div key={t.name} className="sys-scope">
+                <span className="sys-scope-head">{t.name}</span>
+                {t.fires && (
+                  <span className="text-xs text-fg-secondary leading-snug">
+                    <MdInline text={t.fires} anchors={anchors} />
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* The role layer — the heavy path, and the last thing the page teaches
+          rather than the first. Its own `Read when:` line leads it, because
+          that line is the condition under which any of it applies: a collapsed
+          board has no planner, and a side phase never splits at all. */}
       {pipeline && (
         <section id="phase-pipeline" className="flex flex-col gap-md scroll-mt-2xl">
           <h2 className="text-lg font-semibold text-fg-primary">The phase pipeline</h2>
+          {pipeline.readWhen && (
+            <InsetNote label="Read when">
+              <span className="text-xs text-fg-secondary leading-snug">
+                <MdInline text={pipeline.readWhen} />
+              </span>
+            </InsetNote>
+          )}
           <p className="text-sm text-fg-secondary max-w-[64ch]">
             <MdInline text={pipeline.lede} />
           </p>
+
+          {/* One card per role, tagged with the arc steps it runs — the tags
+              are the arc; there is no separate step strip. */}
+          {pipeline.roles.length > 0 && (
+            <div className="sys-arc-roles">
+              {pipeline.roles.map((r, i) => (
+                <div key={r.name} className="sys-arc-role">
+                  {canonicalSpan && (
+                    <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">
+                      {i === 0 ? arc[0] : i === 1 ? `${arc[1]} · ${arc[2]}` : arc[3]}
+                    </span>
+                  )}
+                  <span className="flex flex-wrap items-baseline gap-sm">
+                    <span className="text-sm font-semibold text-fg-primary">
+                      <MdInline text={r.name} />
+                    </span>
+                    <span className="sys-pill">{r.level}</span>
+                  </span>
+                  <span className="text-xs text-fg-secondary leading-snug">
+                    <MdInline text={r.text} anchors={anchors} />
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {pipeline.rules.length > 0 && (
             <div className="flex flex-col gap-sm">
               {pipeline.rules.map((r) => (
@@ -189,82 +337,6 @@ export default function MethodPage() {
               ))}
             </div>
           )}
-        </section>
-      )}
-
-      {/* The three modes — the flavors the arc runs in. */}
-      <section className="flex flex-col gap-md">
-        <h2 className="text-lg font-semibold text-fg-primary">The three modes</h2>
-        <div className="flex flex-col gap-lg">
-          {modes.map((m) => (
-            <article key={m.key} className={`sys-mode ${MODE_ACCENT[m.key] ?? ""}`}>
-              <div className="flex items-baseline gap-sm flex-wrap">
-                <h3 className="text-lg font-semibold text-fg-primary">{m.label}</h3>
-                <span className="text-sm text-fg-tertiary">{m.tagline}</span>
-              </div>
-
-              {/* What it is (left) · what it may touch (right) */}
-              <div className="grid gap-lg lg:grid-cols-[1.4fr_1fr]">
-                <div className="flex flex-col gap-md">
-                  <p className="text-sm text-fg-secondary leading-normal">
-                    <MdInline text={m.purpose} anchors={anchors} />
-                  </p>
-                  <Scope kind="reads" text={m.reads} />
-                </div>
-                <div className="flex flex-col gap-sm">
-                  <Scope kind="home" text={m.homeGround} />
-                  <Scope kind="careful" text={m.careful} />
-                  <Scope kind="gated" text={m.gated} />
-                </div>
-              </div>
-
-              {/* The ritual — folded away. The summary states its nature (the
-                  session runs it; the canon's pipeline lede is the source of
-                  that claim) so the step list reads as adjustable
-                  configuration, not instructions to recite. */}
-              <details className="sys-ritual">
-                <summary>
-                  <span className="sys-caret" aria-hidden>
-                    ›
-                  </span>
-                  <span className="text-sm font-semibold text-fg-primary">The built-in ritual</span>
-                  <span className="text-xs text-fg-tertiary">
-                    runs on its own at this mode&apos;s open and close · {m.open.length} steps + {m.close.length}
-                  </span>
-                </summary>
-                <div className="flex flex-col gap-lg pt-lg">
-                  <Steps label="Opening ritual" pill={roleNames?.[0]} steps={m.open} anchors={anchors} />
-                  <div className="flex flex-col gap-sm">
-                    <span className="flex items-baseline gap-sm text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">
-                      During
-                      {roleNames && <span className="sys-pill normal-case tracking-normal">{roleNames[1]}</span>}
-                    </span>
-                    <p className="text-sm text-fg-secondary leading-snug">
-                      <MdInline text={m.during} anchors={anchors} />
-                    </p>
-                  </div>
-                  <Steps label="Closing ritual" pill={roleNames?.[2]} steps={m.close} anchors={anchors} />
-                </div>
-              </details>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* Session starters — the front door, as the hub's collapsed rows. */}
-      {starters.length > 0 && (
-        <section id="session-starters" className="flex flex-col gap-md scroll-mt-2xl">
-          <h2 className="text-lg font-semibold text-fg-primary">Session starters</h2>
-          {startersLede && (
-            <p className="text-sm text-fg-secondary max-w-[64ch]">
-              <MdInline text={startersLede} anchors={anchors} />
-            </p>
-          )}
-          <div className="sys-starters">
-            <div className="sys-starters-body flex flex-col">
-              <StarterRows starters={starters} />
-            </div>
-          </div>
         </section>
       )}
 

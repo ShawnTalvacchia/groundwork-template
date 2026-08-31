@@ -745,6 +745,50 @@
   padding-top: 3px;
 }
 
+/* A ritual step that stops for a human. It leads the step rather than
+   trailing it, because the question it answers ("do I need someone for
+   this?") is asked before the step is read, not after. Only the steps that
+   reach for the PO carry it: the session acting alone is the default, and a
+   marker on every row would mark nothing. Borrowed weight, not colour —
+   the surface spends brand on "alive" and amber on "stale". */
+.sys-actor {
+  display: inline-block;
+  margin-right: var(--space-2);
+  padding: 1px var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+/* The trigger grid — the moments rituals fire at. Reuses the band cards'
+   inset so a trigger reads as the same weight of fact as a touch band. */
+.sys-trigger-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 700px) {
+  .sys-trigger-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+/* A trigger's name is the canon's own lowercase phrase, not a label the page
+   wrote — so it keeps its case rather than inheriting the scope head's
+   uppercasing, which would restyle the doc's words into something else. */
+.sys-trigger-grid .sys-scope-head {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+}
+
 /* Tiers — the left rail thickens with how guarded the tier is. No indent:
    a tier isn't a rung to climb, it's what the doc is about. Rail colours
    match the tier pills so the two readings agree. */

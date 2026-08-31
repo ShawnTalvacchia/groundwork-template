@@ -113,6 +113,17 @@ export function getDriftAlarms(): DriftAlarm[] {
   if (wm.adjustments.length < 3) {
     alarm("getWorkModel", "CONTRIBUTING.md § The Work Model", `parsed ${wm.adjustments.length} adjustments, expected 3+`);
   }
+  // The triggers ride inside § The parts' own Trigger card, so presence is
+  // already guaranteed by the five-parts assertion above: a Trigger card that
+  // exists while its list parses to nothing is the hollow render this catches
+  // — the method page would tag no ritual with the moment that fires it. No
+  // count of six: the moments are the project's own, like the roles. And no
+  // assertion on the steps' actor — a ritual reshaped to run unattended names
+  // no human legitimately (§ Adjustments), so a floor there would fire on a
+  // correct canon.
+  if (wm.parts.some((p) => p.name.toLowerCase() === "trigger") && wm.triggers.length === 0) {
+    alarm("getWorkModel", "CONTRIBUTING.md § The Work Model", "the Trigger part parsed no triggers");
+  }
 
   // § The phase pipeline — presence, not count. A project that reshapes the
   // model may delete the section (silent), but a section that exists and

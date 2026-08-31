@@ -17,9 +17,12 @@ Rules for humans and agents working in this repo. Read before building. This is 
 
 <!-- PARSED by lib/system.ts (getWorkModel) -> /system/method + the hub. Changing this section's SHAPE
      (the three '### The <product|system|side> phase — tagline' headings, the bold 'Purpose/Home ground/Careful/Gated/During' labels, the numbered ritual lists, the 'Session starters' table, the '#### <Part>' blocks under '### The parts' carrying bold 'Is/Properties' fields, and the 'Adjustments' arrow bullets) breaks that page silently - the /system drift banner will name it.
+     Two shapes inside that are easy to miss, because they read as ordinary prose:
+     - The Trigger part's 'Is:' sentence lists the moments as 'name (what it fires)', separated by '·'. The method page tags each ritual with the moment that fires it by reading that list.
+     - A ritual step that reaches for a human names 'the PO'. That is how the page knows which steps stop and which the session runs alone - so 'the user' for the same person silently un-marks a step. Naming is not reaching: a purpose clause ('...so the PO can spot overlap') is stripped before the match, because the session still runs that step alone.
      Check /system after editing. Spec: docs/implementation/system-surface.md -->
 
-**Work here happens in phases. A phase is any chunk of work — a feature, a rules change, a sweep of small fixes — and its arc is open → build → review → close.** Three **roles** carry that arc across separate chats (the cards below), the phase's plan riding between them on its **board**, a doc any chat can pick up. Every step of opening, orienting and closing is a **ritual** — built into the phase, run by the session on its own, yours to reshape. The **mode** — product · system · side — sets a phase's focus: what it reads before editing, and what it may touch. Can't name the mode? Just describe what you're holding — the session names the shape with you (§ Session starters). No phase is ritual-free.
+**Work here happens in phases. A phase is any chunk of work — a feature, a rules change, a sweep of small fixes — and its arc is open → build → review → close.** Three **roles** carry that arc across separate chats (§ The phase pipeline), the phase's plan riding between them on its **board**, a doc any chat can pick up. Every step of opening, orienting and closing is a **ritual** — built into the phase, run by the session and stopping for you where a step says so, yours to reshape. The **mode** — product · system · side — sets a phase's focus: what it reads before editing, and what it may touch. Can't name the mode? Just describe what you're holding — the session names the shape with you (§ Session starters). No phase is ritual-free.
 
 **Rules shared by all modes:**
 
@@ -73,7 +76,7 @@ Every session starts with someone arriving with something, and your part is two 
 1. Open the board from `_product-template.md` (`mode: product`) with its thesis stated; fold the phase's **seed** into the board, and remove row + seed per the shared rule (§ Rules shared by all modes). Update the ROADMAP's Where-We-Are current-phase line instead. Declare the Levels line — the open is the **planner's** work, and the executor and closer arrive at what it declares (§ The phase pipeline). **A product phase opens from its seed.** Arriving without one, shape the seed first — a fresh planner chat opens from it.
 2. **Then name the chat** — ask the PO to rename it, as its own prompt, and record the answer on the board (§ Rules shared by all modes).
 3. Orient — run the **Opening Checklist** (`product-lifecycle.md` → Opening a Product Phase): Ring 1 reads the strategy shelf whole, Ring 2 actively aligns to the docs this phase answers to; align or challenge. (`product-lifecycle.md` → Opening a Product Phase): Ring 1 reads the strategy shelf whole, Ring 2 actively aligns to the docs this phase answers to; align or challenge.
-4. Confirm thesis + scope with the user — no task moves to in-progress before this.
+4. Confirm thesis + scope with the PO — no task moves to in-progress before this.
 
 **During:** work only from the board; decide-and-flag; keep the walkthrough doc current as you build (`product-lifecycle.md` → During a Phase). When the build commits, the executor hosts the **walkthrough** — the PO walks every O/V point, point by point (`product-lifecycle.md` → Walkthrough); review is the build chat's last stretch, not the close's first.
 
@@ -81,7 +84,8 @@ Every session starts with someone arriving with something, and your part is two 
 
 1. Confirm the **walkthrough** passed — the executor hosted it when the build committed (`product-lifecycle.md` → Walkthrough); the close does not begin until its O list is empty and every V point holds.
 2. The **Closing Checklist** (`product-lifecycle.md` → Closing a Phase) — decisions propagated to home docs and the load-bearing ones lifted to `decisions.md`, feature docs updated, trackers pruned, ROADMAP re-oriented. Here the **closer** takes over: fresh eyes at the declared level (§ The phase pipeline).
-3. **Distill + delete** — a compact record replaces the board and walkthrough.
+3. Walk the PO through the **canon diff** (§ Rules shared by all modes).
+4. **Distill + delete** — a compact record replaces the board and walkthrough.
 
 ### The system phase — Tends the rules
 
@@ -97,7 +101,7 @@ Every session starts with someone arriving with something, and your part is two 
 
 **Opening ritual:**
 
-1. **Name the friction** this phase fixes, and agree the scope with the user — system work is always done *with* the user, never solo.
+1. **Name the friction** this phase fixes, and agree the scope with the PO — system work is always done *with* the PO, never solo.
 2. **Open a board** from `_system-template.md` (`mode: system`) sized to the friction — a few lines for a small fix, workstreams for a build. Max one open; may run alongside a product phase, but never opens mid-walkthrough (doc churn collides with phase edits). **Declare the Levels line in the same breath** — the open is the **planner's** work, and the executor and closer arrive at what it declares (§ The phase pipeline). **Declaring levels means this phase opens from a seed;** collapsed, it opens direct from the friction.
 3. **Then name the chat** — ask the PO to rename it, as its own prompt, and record the answer on the board (§ Rules shared by all modes).
 4. **Orient by trigger, not by list.** Read this file whole *except* the sections carrying a **`Read when:`** line — those are read only when their moment fires, and this work's may (§ Frontmatter maintenance). Every other governance doc is read when its own frontmatter `read-when` matches the work, `implementation/system-surface.md` included; CLAUDE.md was read at session start, which is its ritual, and is not read twice. Then **scan `decisions.md` by its headings**, deep-reading only the entries this work touches, and check the doc tiers — the log is lookup context, not standing context, and reading every settled call cold is not what aligns a phase. Both scans carry the same honest-index caveat as queue-shaping's (§ Queue-shaping). Reopening a settled call is a structured challenge (§ Doc Tiers), not a silent rewrite. **Queue-shaping is cheaper still**, scanning the rules rather than reading the standing ones, because it edits one row and one seed rather than the rules themselves.
@@ -129,9 +133,9 @@ Every session starts with someone arriving with something, and your part is two 
 
 1. **Open a light board** from `_side-template.md` (`mode: side`) listing the tracker items pulled — e.g. "Sweep — P87 · P88 · P92" or "Explore §5". **Then name the chat** — ask the PO to rename it, as its own prompt, and record the answer on the board (§ Rules shared by all modes). Orient: read each pulled item's refs and the feature docs of what it touches before acting.
 2. **Check file-level overlap with the active phases' in-flight edits.** If they collide: defer the item, let the other phase settle those files first, or brief the session on the concurrent changes. (A side sweep and an open product phase editing the same file is the failure mode this prevents.)
-3. **Spawned tasks only:** declare the files it expects to touch in the spawn prompt (Files: list) so the user can spot overlap before spawning.
+3. **Spawned tasks only:** declare the files it expects to touch in the spawn prompt (Files: list) so the PO can spot overlap before spawning.
 
-**During:** stay on the pulled items. Meaningful new scope → surface it, don't expand silently. If an item grows a thesis or cross-surface coupling → stop; it's product-shaped — propose resuming a paused phase, opening a new one, or deferring the rest; the user picks.
+**During:** stay on the pulled items. Meaningful new scope → surface it, don't expand silently. If an item grows a thesis or cross-surface coupling → stop; it's product-shaped — propose resuming a paused phase, opening a new one, or deferring the rest; the PO picks.
 
 **Closing ritual:**
 
@@ -162,7 +166,7 @@ This model is built from five parts, and every one of them is yours to reshape. 
 
 #### Trigger
 
-**Is:** The moment a ritual fires. Six exist here: phase open · phase close · session start (reading `CLAUDE.md` — that *is* its ritual) · session end (commit the board — see the shared rules) · push (the publish — see the shared rules) · the run-once kickoff.
+**Is:** The moment a ritual fires. Six exist here, each naming what it fires: phase open (the mode's opening ritual) · phase close (the mode's closing ritual) · session start (reading `CLAUDE.md` — that *is* its ritual) · session end (commit the board — see the shared rules) · push (the publish — see the shared rules) · kickoff (the run-once bootstrap — § The Kickoff).
 **Properties:** The event · the ritual bound to it · who runs it — you, the agent, or the build.
 
 #### Band
@@ -186,10 +190,12 @@ None of these are things you should do. They're things the model won't break und
 
 ## The phase pipeline — one phase across chats
 
-<!-- PARSED by lib/system.ts (getPhasePipeline) -> /system/method (the arc's role layer + § The phase pipeline).
-     Shape: the lede paragraph after the Read when: line, `- **Role name** (level) text` bullets, and the
-     trailing bold-led rule paragraphs. Deleting the whole section is allowed — the page then renders the
-     arc without the role layer; a present section whose lede or bullets parse empty trips the drift banner.
+<!-- PARSED by lib/system.ts (getPhasePipeline) -> /system/method (§ The phase pipeline, the page's role layer).
+     Shape: the Read when: line, the lede paragraph after it, `- **Role name** (level) text` bullets, and the
+     trailing bold-led rule paragraphs. The Read when: line renders as the section's gate on the page — it is
+     the condition under which the role layer applies at all, so it is content here, not just a reader's cue.
+     Deleting the whole section is allowed — the page then renders the arc without the role layer; a present
+     section whose lede or bullets parse empty trips the drift banner.
      Spec: docs/implementation/system-surface.md -->
 
 **Read when:** a board carries a **Levels** line — you're writing one at a phase open, or you're the planner, executor or closer chat of a phase running split.

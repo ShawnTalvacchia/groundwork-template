@@ -306,9 +306,32 @@ export interface WorkMode {
   homeGround: string; // edit freely, per the board
   careful: string; // update deliberately when the work bears on it
   gated: string; // another mode's ground — suggest, don't edit
-  open: string[];
+  open: RitualStep[];
   during: string;
-  close: string[];
+  close: RitualStep[];
+}
+
+/** One numbered ritual step, with the actor the canon's own register encodes.
+ *
+ *  The convention: a step is written imperative to the session running it,
+ *  and a step that reaches for a human names them. So "who acts" is already
+ *  in the prose — `withPO` reads it rather than asking the canon for new
+ *  syntax. The term is `the PO`, which the glossary names and the ritual
+ *  steps use throughout; a step that names no human is the session acting
+ *  alone, which is the common case and stays unmarked. */
+export interface RitualStep {
+  text: string; // markdown kept — render with MdInline
+  /** The step stops for the PO rather than running unattended. */
+  withPO: boolean;
+}
+
+/** One of § The parts → Trigger's `name (what it fires)` items — the join
+ *  between a moment and the ritual bound to it. The canon writes all six in
+ *  that one form, so the join derives; a trigger written without its
+ *  parenthetical simply carries an empty `fires`. */
+export interface WorkTrigger {
+  name: string;
+  fires: string; // markdown kept
 }
 
 /** One `#### <Part>` block under `### The parts` — the concept layer that
@@ -354,15 +377,58 @@ export interface WorkModel {
   /** Lede paragraph of `### Adjustments`. */
   adjustmentsLede: string;
   adjustments: Adjustment[];
+  /** The six moments rituals fire at, parsed from § The parts → Trigger's
+   *  own sentence. Empty when that part states none — the method page then
+   *  renders its rituals untagged rather than authoring a trigger name. */
+  triggers: WorkTrigger[];
 }
 
 /** Numbered list items directly under a `**Label:**` heading line. */
-function numberedUnder(body: string, label: string): string[] {
+/** A purpose clause — "so the PO can spot overlap before spawning" — names
+ *  the PO without reaching for them: it says why the step is worth doing, and
+ *  the session still runs it alone. Stripped before the match, because naming
+ *  and reaching are what the register rule distinguishes and a bare
+ *  name-anywhere test conflates them. The clause runs to the next sentence or
+ *  clause boundary; a step that reaches for the PO *and* explains why keeps
+ *  its mark, since only the trailing clause goes. */
+const PO_PURPOSE_CLAUSE = /\bso (?:that )?the PO\b[^.;:]*/g;
+
+/** The canon's own register, read back out: a ritual step that *reaches for*
+ *  the PO is marked; one that names no human is imperative to the session
+ *  running it. One term, because the ritual steps use one — the glossary's
+ *  `PO`. Widening this to a second word for the same person would re-open the
+ *  alternation the canon closed. */
+function stepReachesForPO(text: string): boolean {
+  return /\bthe PO\b/.test(text.replace(PO_PURPOSE_CLAUSE, ""));
+}
+
+/** Numbered list items directly under a `**Label:**` heading line, each
+ *  carrying the actor its own wording encodes. */
+function numberedUnder(body: string, label: string): RitualStep[] {
   const start = body.search(new RegExp(`^\\*\\*${label}:\\*\\*\\s*$`, "m"));
   if (start === -1) return [];
   const rest = body.slice(start);
   const block = rest.slice(rest.indexOf("\n") + 1).split(/\n\n(?=\*\*)/)[0];
-  return (block.match(/^\d+\.\s+.*$/gm) ?? []).map((l) => l.replace(/^\d+\.\s+/, "").trim());
+  return (block.match(/^\d+\.\s+.*$/gm) ?? []).map((l) => {
+    const text = l.replace(/^\d+\.\s+/, "").trim();
+    return { text, withPO: stepReachesForPO(text) };
+  });
+}
+
+/** § The parts → Trigger's `Is:` sentence: the six moments, each with the
+ *  ritual it fires. The list is whatever follows the sentence's colon, split
+ *  on the same `·` the canon uses for every other inline set in this section. */
+function parseTriggers(is: string): WorkTrigger[] {
+  const list = is.slice(is.indexOf(":") + 1);
+  if (!is.includes(":")) return [];
+  return list
+    .split("·")
+    .map((t) => t.trim().replace(/\.$/, "").trim())
+    .filter(Boolean)
+    .map((t) => {
+      const m = t.match(/^(.+?)\s*\(([\s\S]+)\)$/);
+      return m ? { name: m[1].trim(), fires: m[2].trim() } : { name: t, fires: "" };
+    });
 }
 
 export function getWorkModel(): WorkModel {
@@ -370,7 +436,7 @@ export function getWorkModel(): WorkModel {
   const empty: WorkModel = {
     lede: "", arc: [], sharedRules: [], modes: [],
     startersLede: "", starters: [], partsLede: "", parts: [],
-    adjustmentsLede: "", adjustments: [],
+    adjustmentsLede: "", adjustments: [], triggers: [],
   };
   if (!parsed) return empty;
   const section = sectionOf(parsed.body, "The Work Model — every phase runs in one of three modes");
@@ -447,7 +513,17 @@ export function getWorkModel(): WorkModel {
       while ((m = re.exec(body))) adjustments.push({ when: m[1].trim(), what: m[2].trim() });
     }
   }
-  return { lede, arc, sharedRules, modes, startersLede, starters, partsLede, parts, adjustmentsLede, adjustments };
+  // The trigger list rides inside § The parts' own Trigger card rather than a
+  // section of its own: the canon states the six there, and a second home for
+  // them would be two descriptions of one thing, drifting apart by
+  // construction. A canon that renames or drops that part parses to no
+  // triggers, and the method page renders its rituals untagged.
+  const triggerPart = parts.find((p) => p.name.toLowerCase() === "trigger");
+  const triggers = triggerPart ? parseTriggers(triggerPart.is) : [];
+  return {
+    lede, arc, sharedRules, modes, startersLede, starters,
+    partsLede, parts, adjustmentsLede, adjustments, triggers,
+  };
 }
 
 /** One role bullet of § The phase pipeline: `- **The planner** (runs high) …`.
@@ -461,6 +537,12 @@ export interface PipelineRole {
 
 export interface PhasePipeline {
   lede: string; // markdown kept
+  /** The section's own `**Read when:**` line — the condition under which any
+   *  of this applies. It was parsed away as noise until the method page had a
+   *  place to put it: the role layer is the split phase's, and a page that
+   *  renders it unconditionally tells a collapsed phase it has three chats.
+   *  Empty when the section states no trigger. */
+  readWhen: string;
   roles: PipelineRole[];
   /** The trailing bold-led paragraphs — the pipeline's standing rules. */
   rules: { title: string; text: string }[];
@@ -487,6 +569,7 @@ export function getPhasePipeline(): PhasePipeline | null {
   const section = sectionByPrefix(parsed.body, "The phase pipeline");
   if (section === null) return null;
   const lede = ledeOf(section);
+  const readWhen = section.match(/^\*\*Read when:\*\*\s*([\s\S]+?)$/m)?.[1].trim() ?? "";
   const roles: PipelineRole[] = [];
   const roleRe = /^- \*\*(.+?)\*\*\s*\(([^)]+)\)\s*(.+)$/gm;
   let m;
@@ -500,7 +583,7 @@ export function getPhasePipeline(): PhasePipeline | null {
     const rm = p.match(/^\*\*(.+?)\*\*\s*([\s\S]+)$/);
     if (rm) rules.push({ title: rm[1].trim().replace(/[.:]$/, ""), text: rm[2].trim() });
   }
-  return { lede, roles, rules };
+  return { lede, readWhen, roles, rules };
 }
 
 export interface TrackerRow {
