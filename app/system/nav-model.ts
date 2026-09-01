@@ -20,7 +20,7 @@ export const GROUPS: SystemGroup[] = [
   {
     slug: "work",
     label: "Work",
-    blurb: "What needs to be done — phases in three modes, each run through its rituals.",
+    blurb: "What needs to be done — phases, each in one mode and run through its rituals.",
     pages: [
       { slug: "phase", label: "Active board", blurb: "The open board(s) in full.", hidden: true },
       { slug: "roadmap", label: "Roadmap", blurb: "Where we are and what's queued.", hidden: true },
@@ -45,7 +45,7 @@ export const GROUPS: SystemGroup[] = [
   {
     slug: "method",
     label: "Method",
-    blurb: "How we work — the three modes and their rituals, the trackers that feed them, and the physics that keep the docs honest.",
+    blurb: "How we work — the modes and their rituals, the trackers that feed them, and the physics that keep the docs honest.",
     pages: [
       { slug: "trackers", label: "Trackers", blurb: "The three standing lists, what each holds, and how work flows between them." },
       { slug: "tiers", label: "Tiers", blurb: "Review physics — how docs settle, sink, and get reopened." },

@@ -24,11 +24,13 @@ const MODE_ACCENT: Record<string, string> = {
   product: "sys-mode--product",
   system: "sys-mode--system",
   side: "sys-mode--side",
+  "queue-shaping": "sys-mode--queue-shaping",
 };
 
 // The two moments a mode's own rituals hang off, by the canon's names for
 // them. Matching a trigger by name is the same bargain the mode headings make
-// (`getWorkModel` matches product|system|side literally): a canon that renames
+// (`getWorkModel` matches product|system|side|queue-shaping literally): a canon
+// that renames
 // its moments renders the rituals untagged rather than wrong, and § Adjustments
 // states that cost outright.
 const OPEN_TRIGGER = "phase open";
@@ -185,10 +187,12 @@ export default function MethodPage() {
         </section>
       )}
 
-      {/* The three modes — the flavors the arc runs in, and where a session
-          that has picked its shape reads what it may touch and what it runs. */}
+      {/* The modes — the flavors the arc runs in, and where a session that has
+          picked its shape reads what it may touch and what it runs. No count in
+          the heading: each mount's docs declare their own modes, and the page
+          renders however many it finds. */}
       <section className="flex flex-col gap-md">
-        <h2 className="text-lg font-semibold text-fg-primary">The three modes</h2>
+        <h2 className="text-lg font-semibold text-fg-primary">The modes</h2>
         <div className="flex flex-col gap-lg">
           {modes.map((m) => {
             const stops = [...m.open, ...m.close].filter((s) => s.withPO).length;
@@ -200,7 +204,9 @@ export default function MethodPage() {
                 </div>
 
                 {/* What it is (left) · what it may touch (right) */}
-                <div className="grid gap-lg lg:grid-cols-[1.4fr_1fr]">
+                {/* Near-even split: the right column holds three band cards and
+                  runs taller than the left at 1.4fr_1fr, stretching the card. */}
+              <div className="grid gap-lg lg:grid-cols-[1fr_1.1fr]">
                   <div className="flex flex-col gap-md">
                     <p className="text-sm text-fg-secondary leading-normal">
                       <MdInline text={m.purpose} anchors={anchors} />
@@ -302,12 +308,13 @@ export default function MethodPage() {
                       {i === 0 ? arc[0] : i === 1 ? `${arc[1]} · ${arc[2]}` : arc[3]}
                     </span>
                   )}
-                  <span className="flex flex-wrap items-baseline gap-sm">
-                    <span className="text-sm font-semibold text-fg-primary">
-                      <MdInline text={r.name} />
-                    </span>
-                    <span className="sys-pill">{r.level}</span>
+                  {/* Pill on its own line, always: two of the three level
+                      texts wrap below the name anyway, and one card inline
+                      while its siblings wrap reads as three layouts. */}
+                  <span className="text-sm font-semibold text-fg-primary">
+                    <MdInline text={r.name} />
                   </span>
+                  <span className="sys-pill self-start">{r.level}</span>
                   <span className="text-xs text-fg-secondary leading-snug">
                     <MdInline text={r.text} anchors={anchors} />
                   </span>

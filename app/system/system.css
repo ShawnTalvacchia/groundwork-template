@@ -664,7 +664,14 @@
   border-left-color: var(--text-primary);
 }
 
+/* Side runs solid and neutral — same weight as the others, gray rail. */
 .sys-mode--side {
+  border-left-color: var(--border-strong);
+}
+
+/* Queue-shaping carries the dashed rail: the phase that plans work
+   rather than doing it. */
+.sys-mode--queue-shaping {
   border-left-color: var(--border-strong);
   border-left-style: dashed;
 }

@@ -67,8 +67,17 @@ export function getDriftAlarms(): DriftAlarm[] {
   /* ── CONTRIBUTING.md ─────────────────────────────────────────────── */
 
   const wm = getWorkModel();
-  if (wm.modes.length !== 3) {
-    alarm("getWorkModel", "CONTRIBUTING.md § The Work Model", `parsed ${wm.modes.length} modes, expected 3`);
+  // Not a fixed count: a mount's docs declare their own modes, and the parser
+  // has no business asserting how many that is. The invariant is that every
+  // mode-shaped heading parsed — a renamed mode is counted but unparsed, which
+  // is the silent hollow render — plus a floor of three, since deleting a mode
+  // section outright removes its heading too.
+  if (wm.modes.length < 3 || wm.modes.length !== wm.modeHeadings) {
+    alarm(
+      "getWorkModel",
+      "CONTRIBUTING.md § The Work Model",
+      `parsed ${wm.modes.length} of ${wm.modeHeadings} mode heading(s), expected all of at least 3`,
+    );
   }
   for (const m of wm.modes) {
     const missing = [

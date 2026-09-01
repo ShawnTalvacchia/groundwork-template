@@ -4,7 +4,7 @@ status: queued
 tier: working
 last-reviewed: YYYY-MM-DD
 read-when: "when work touches this phase's territory — append a dated note; at phase open, fold into the board and delete this file"
-mode: product | system | side
+mode: product | system | side | queue-shaping
 phase: "Exact ROADMAP row name"
 queued: YYYY-MM-DD
 ---

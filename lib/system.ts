@@ -362,6 +362,11 @@ export interface Adjustment {
 
 export interface WorkModel {
   lede: string;
+  /** How many `### The <name> phase — tagline` headings the section carries,
+   *  whatever their names. A mount's docs declare their own mode count, so the
+   *  invariant is not a fixed number — it is that every heading present made
+   *  it into `modes`, which is what `lib/derivation.ts` checks. */
+  modeHeadings: number;
   /** The phase arc's step names, parsed from the lede's own "its arc is
    *  A → B → C" sentence. Empty when the lede states no arc — the method
    *  page then skips the role strip's tags rather than authoring them. */
@@ -434,12 +439,18 @@ function parseTriggers(is: string): WorkTrigger[] {
 export function getWorkModel(): WorkModel {
   const parsed = readDoc("CONTRIBUTING.md");
   const empty: WorkModel = {
-    lede: "", arc: [], sharedRules: [], modes: [],
+    lede: "", modeHeadings: 0, arc: [], sharedRules: [], modes: [],
     startersLede: "", starters: [], partsLede: "", parts: [],
     adjustmentsLede: "", adjustments: [], triggers: [],
   };
   if (!parsed) return empty;
-  const section = sectionOf(parsed.body, "The Work Model — every phase runs in one of three modes");
+  // Matched by prefix, not the full title: the H2 states the mode count in its
+  // own words ("…runs in one of four modes"), and that count is the doc's
+  // claim, not the parser's key — a project may declare three or four.
+  const wmHeading = /^## The Work Model\b.*$/m.exec(parsed.body);
+  const afterHeading = wmHeading ? parsed.body.slice(wmHeading.index + wmHeading[0].length) : "";
+  const nextH2 = afterHeading.search(/^## /m);
+  const section = nextH2 === -1 ? afterHeading : afterHeading.slice(0, nextH2);
   const lede = section.trim().split("\n\n")[0] ?? "";
   const arc = (stripMd(lede).match(/arc is ([^.]+)/)?.[1] ?? "")
     .split("→").map((s) => s.trim()).filter(Boolean);
@@ -447,6 +458,7 @@ export function getWorkModel(): WorkModel {
   const sharedRules = (sharedBlock.match(/^- .*$/gm) ?? []).map((b) => b.slice(2).trim());
 
   const modes: WorkMode[] = [];
+  let modeHeadings = 0;
   let startersLede = "";
   const starters: SessionStarter[] = [];
   let partsLede = "";
@@ -457,10 +469,13 @@ export function getWorkModel(): WorkModel {
     const header = block.slice(0, block.indexOf("\n"));
     const body = block.slice(block.indexOf("\n") + 1);
 
-    // The modes are named, not numbered: exactly these three headings.
+    // The modes are named, not numbered: exactly these four headings.
     // Adding a mode means widening this match — a cost § Adjustments
-    // states to adopters outright.
-    const hm = header.match(/^The (product|system|side) phase — (.+)$/);
+    // states to adopters outright. `modeHeadings` counts every heading in the
+    // mode shape whatever its name, so derivation can tell a renamed mode
+    // (counted, unparsed → alarm) from a mount that declares fewer modes.
+    if (/^The [\w-]+ phase — .+$/.test(header)) modeHeadings++;
+    const hm = header.match(/^The (product|system|side|queue-shaping) phase — (.+)$/);
     if (hm) {
       modes.push({
         key: hm[1] as BoardMode,
@@ -521,7 +536,7 @@ export function getWorkModel(): WorkModel {
   const triggerPart = parts.find((p) => p.name.toLowerCase() === "trigger");
   const triggers = triggerPart ? parseTriggers(triggerPart.is) : [];
   return {
-    lede, arc, sharedRules, modes, startersLede, starters,
+    lede, modeHeadings, arc, sharedRules, modes, startersLede, starters,
     partsLede, parts, adjustmentsLede, adjustments, triggers,
   };
 }
@@ -1171,7 +1186,7 @@ export interface Workstream {
   total: number;
 }
 
-export type BoardMode = "product" | "system" | "side";
+export type BoardMode = "product" | "system" | "side" | "queue-shaping";
 
 /** Short labels for board badges. Everything else about a mode — purpose,
  *  touch bands, rituals — is parsed from CONTRIBUTING (see getWorkModel). */
@@ -1179,12 +1194,13 @@ export const MODE_META: Record<BoardMode, { label: string }> = {
   product: { label: "Product" },
   system: { label: "System" },
   side: { label: "Side" },
+  "queue-shaping": { label: "Queue-shaping" },
 };
 
 /** Frontmatter `mode:` → BoardMode. Boards/seeds written before 2026-07-20
  *  may carry the legacy value "phase", which reads as "product". */
 function resolveMode(raw: string | undefined): BoardMode {
-  return raw === "system" || raw === "side" ? raw : "product";
+  return raw === "system" || raw === "side" || raw === "queue-shaping" ? raw : "product";
 }
 
 /**
