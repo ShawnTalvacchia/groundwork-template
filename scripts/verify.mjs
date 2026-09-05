@@ -20,9 +20,68 @@
  *
  * Run this before you push. `npm run check` (typecheck + lint) covers the code;
  * this covers the record.
+ *
+ * One more gate, run BEFORE the build starts: every .svg this repo serves as a
+ * file — app/icon.svg, anything under public/ — must parse as STRICT XML,
+ * because that is how a browser reads image/svg+xml. A single `--` inside a
+ * comment is enough to make the file undecodable and the favicon vanish from
+ * every page, silently: the same markup inlined into HTML by a component
+ * parses fine (the HTML parser is lenient), so nothing inside the app ever
+ * fails. Only the strict path fails, and this is the one place that walks it.
+ * `next build` does not.
  */
 
 import { spawn } from "node:child_process";
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { SaxesParser } from "saxes";
+
+/** Directories whose .svg files are served as files, and so parsed strictly. */
+const SVG_ROOTS = ["app", "public"];
+
+/** Every .svg under the served roots, walked in full — an icon can sit in any
+ *  route segment (`app/blog/icon.svg`), not only at the top. */
+function servedSvgs(dir) {
+  let out = [];
+  let entries = [];
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return out; // no such root here — public/ is optional
+  }
+  for (const e of entries) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) out = out.concat(servedSvgs(p));
+    else if (e.isFile() && e.name.endsWith(".svg")) out.push(p);
+  }
+  return out;
+}
+
+/** The parse error for a file, as `line:col: message`, or null when it is
+ *  well-formed. saxes is a well-formedness parser, not a lenient one: it
+ *  rejects `--` in a comment, which is the case this exists for and which
+ *  some validators wave through. */
+function svgError(file) {
+  let error = null;
+  const parser = new SaxesParser();
+  parser.on("error", (err) => {
+    error ??= err.message;
+  });
+  parser.write(readFileSync(file, "utf8")).close();
+  return error;
+}
+
+const broken = SVG_ROOTS.flatMap(servedSvgs)
+  .map((file) => [file, svgError(file)])
+  .filter(([, err]) => err !== null);
+if (broken.length > 0) {
+  console.error(
+    `verify: FAILED — ${broken.length} served SVG${broken.length === 1 ? "" : "s"} not well-formed XML (a browser reads image/svg+xml strictly, so the file is undecodable):`,
+  );
+  for (const [file, err] of broken) console.error(`  · ${file} — ${err}`);
+  console.error("\nFix the markup before building; a `--` inside a comment is the usual cause.");
+  process.exit(1);
+}
 
 const ALARM = "DRIFT [system-surface]";
 

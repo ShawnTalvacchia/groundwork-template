@@ -10,7 +10,7 @@
        fill-rule="evenodd", so the centre is unpainted and the browser's tab
        strip shows through it. Nothing to get backwards on a dark tab.
 
-       WHY THIS FILE USES --brand-400 AND THE OTHER TWO USE --brand-600:
+       WHY THIS FILE USES brand-400 AND THE OTHER TWO USE brand-600:
        a favicon is the one renderer whose backdrop we do not control. Mark.tsx
        sits on surfaces the stylesheet themes, and the link preview's card
        background is ours; browser chrome is somebody else's, and it is dark
@@ -32,7 +32,17 @@
        it measures 2.27:1 on a light tab strip and 2.98:1 on white, both under
        the 3:1 above. Deleting it is what restores the numbers this comment
        claims. If your own mark is a DARK brand, the trade can genuinely run
-       the other way; measure both backdrops before adding one back. -->
+       the other way; measure both backdrops before adding one back.
+
+       NOTE the token names in this comment are written WITHOUT their leading
+       double hyphen, and must stay that way. XML forbids "- -" (no space)
+       inside a comment. This file is served as image/svg+xml and is parsed
+       STRICTLY, so one double hyphen in here makes the whole file
+       undecodable as an image and the favicon vanishes from every page,
+       silently: the same markup inlined into HTML by Mark.tsx parses fine,
+       because the HTML parser is lenient, so the mark keeps rendering in the
+       app while the tab icon is dead. `npm run verify` checks this file
+       before every build for exactly that reason. -->
   <path
     d="M7 0H25A7 7 0 0 1 32 7V25A7 7 0 0 1 25 32H7A7 7 0 0 1 0 25V7A7 7 0 0 1 7 0Z M16 7.5L24.5 16L16 24.5L7.5 16Z"
     fill-rule="evenodd"
