@@ -37,7 +37,7 @@ Rules for humans and agents working in this repo. Read before building. This is 
 - **A phase belongs to one project — the repo its board lives in.** The board names that repo at open, and everything outside it is out of bounds for every mode: no edits, no commits, no "while I'm here." A sibling project's problem gets written down and handed to a session running *in* that project; re-scoping takes a new session there, not a note here.
 - **One phase per session is the default — and no board, no pen.** The pipeline multiplies sessions per phase, never phases per session: a role chat is still one phase's session. A session that legitimately runs several phases still gives each its own board; succession is fine — close one, open the next. A session that only reads or talks needs no phase at all — but the first edit is the line: before touching code or docs, stop, name the shape that fits (§ Session starters), and open its board. Filing a tracker row stays free — capture between phases is what trackers are for. A fix small enough not to earn a board is a punch item (≤30 min, any mode), swept later.
 - **Every chat serving a phase is named, and the board records each title.** A session cannot read or rename itself, so at the moment its title is known — right after the board is created, or at a role chat's open — ask the PO to rename the chat: yes, renamed · no, I named it: [title] · skip. **Ask it as its own prompt and wait for the answer** — never folded into other text, and carrying the proposed title in the question itself so it can be copied. A rename buried in a paragraph is a rename that gets skipped. The title is **`Phase name · mode`** for a collapsed board, and **`role · Phase name · mode`** for each chat of a split phase — the role leads because it is the PO's which-chat-am-I-in cue when several of one phase are open, and the mode trails because it matters most to the agent, which reads it from the board anyway. Whatever the answer, the board records the title beside the role that carried it. Session identity lives in the harness, not in git; the board's lines are the only place the record can say which chats ran the phase.
-- **Session end commits the board.** A session that ends mid-phase — deliberately or with the chat force-closed — commits the open board as it stands, code ready or not. A board is a doc: committing it is mode-pure and costs nothing, and it is the difference between a phase that survives its chat and work that strands. A session that finds stranded work commits the board before anything else.
+- **Session end commits the board, and pushes it.** A session that ends mid-phase — deliberately or with the chat force-closed — commits the open board as it stands, code ready or not, and pushes: a committed board nobody can see is still stranded work. A board is a doc: committing it is mode-pure and costs nothing, and it is the difference between a phase that survives its chat and work that strands. A session that finds stranded work commits and pushes the board before anything else.
 - **Push is the publish trigger.** The deploy rebuilds the record from every push, so pushing *is* publishing where things stand. The smallest push worth naming is the **status push**: commit the record alone — board, trackers, ROADMAP — and push. One gesture that puts the state of the work on the record without shipping half-finished code. Session end's board commit is its natural companion.
 - **Commits are mode-pure.** A commit serves exactly one board and names it in the message. Never mix product and system changes in one commit.
 - Boards work the main working tree — parallelism is *between* phases, not within one. (Spawned side tasks are the exception: they run in worktrees, per the side phase.)
@@ -83,7 +83,7 @@ Every session starts with someone arriving with something, and your part is two 
 
 1. **Hand off for verification** — present the shaped queue (the rows and their seeds) and the **canon diff** (§ Rules shared by all modes) for the PO's confirm; the ROADMAP is commitments-tier, so a shaped queue is nearly always a canon diff of one hunk. The board isn't deleted until the PO confirms.
 2. Log to `decisions.md` only when the *reasoning* would surprise someone in six months — the rows themselves speak.
-3. One mode-pure commit; **board deleted** (the rows and seeds are the record).
+3. One mode-pure commit, **pushed**; **board deleted** (the rows and seeds are the record).
 
 ### The product phase — Builds the thing
 
@@ -111,7 +111,7 @@ Every session starts with someone arriving with something, and your part is two 
 1. Confirm the **walkthrough** passed — the executor hosted it when the build committed (`product-lifecycle.md` → Walkthrough); the close does not begin until its O list is empty and every V point holds.
 2. The **Closing Checklist** (`product-lifecycle.md` → Closing a Phase) — decisions propagated to home docs and the load-bearing ones lifted to `decisions.md`, feature docs updated, trackers pruned, ROADMAP re-oriented. Here the **closer** takes over: fresh eyes at the declared level (§ The phase pipeline).
 3. Walk the PO through the **canon diff** (§ Rules shared by all modes).
-4. **Distill + delete** — a compact record replaces the board and walkthrough.
+4. **Distill + delete** — a compact record replaces the board and walkthrough, and the close lands as its own mode-pure commit, **pushed**.
 
 ### The system phase — Tends the rules
 
@@ -140,7 +140,7 @@ Every session starts with someone arriving with something, and your part is two 
 2. Every non-obvious call landed in `decisions.md` (challenges logged win or lose).
 3. `implementation/system-surface.md` and/or this file updated in the same change, if the system's behavior changed.
 4. `last-reviewed` bumped on every doc **reviewed** — not the ones only mechanically touched (§ Doc Tiers → Stamping `last-reviewed`).
-5. Lands as its **own commit** (or PR), described as system work — mode-pure.
+5. Lands as its **own commit** (or PR), described as system work — mode-pure, and **pushed**.
 6. **Board deleted** (git is the record; `decisions.md` carries the calls). A build-scale system phase that shipped something durable leaves a compact record in `archive/phases/`, like a product phase.
 
 ### The side phase — Sweeps the small stuff
@@ -168,7 +168,7 @@ Every session starts with someone arriving with something, and your part is two 
 1. **Hand off for verification** *(in-session closes; spawned/worktree tasks use the PR as the gate).* Before deleting anything, present the phase's durable output for the PO's check, shaped to what it produced: **code / UI work** → each changed surface as a pointer, `who's looking → /url → what to expect`; **research** → the doc's `summary:` + its load-bearing findings to sanity-check, and the tracker/question it answers. Plus the **canon diff** (§ Rules shared by all modes — "none" is the common case here), the tracker rows being moved, and anything flagged. The board isn't deleted until the PO confirms. (No walkthrough doc — side work is quick; this is its in-chat verification moment.)
 2. Feature docs whose described behavior changed → updated; `last-reviewed` bumped on those (§ Doc Tiers → Stamping `last-reviewed`). **Load-bearing calls → `decisions.md`** — a side phase leaves no archive record, so the log is the only place a call it made can survive its board.
 3. **Its tracker rows moved in the same PR** — punch rows removed, §N markers updated, FCs promoted/removed; research lands its doc in `strategy/research/` (frontmatter + `summary:`) and updates the spawning marker. Nothing ends without its trackers moving.
-4. One focused, mode-pure commit; **board deleted** (the moved rows + the commit are the record). **Spawned/worktree tasks additionally:** rebase onto current `main` before completing (conflicts are the side phase's problem, not the merger's — stale-vs-main work doesn't land), push a remote branch, open a PR as the merge surface.
+4. One focused, mode-pure commit, **pushed**; **board deleted** (the moved rows + the commit are the record). **Spawned/worktree tasks additionally:** rebase onto current `main` before completing (conflicts are the side phase's problem, not the merger's — stale-vs-main work doesn't land), push a remote branch, open a PR as the merge surface.
 
 
 ### The parts — the model is a kit
@@ -192,7 +192,7 @@ This model is built from five parts, and every one of them is yours to reshape. 
 
 #### Trigger
 
-**Is:** The moment a ritual fires. Six exist here, each naming what it fires: phase open (the mode's opening ritual) · phase close (the mode's closing ritual) · session start (reading `CLAUDE.md` — that *is* its ritual) · session end (commit the open board — see the shared rules) · push (the publish — see the shared rules) · kickoff (the run-once bootstrap — § The Kickoff).
+**Is:** The moment a ritual fires. Six exist here, each naming what it fires: phase open (the mode's opening ritual) · phase close (the mode's closing ritual) · session start (reading `CLAUDE.md` — that *is* its ritual) · session end (commit and push the open board — see the shared rules) · push (the publish — see the shared rules) · kickoff (the run-once bootstrap — § The Kickoff).
 **Properties:** The event · the ritual bound to it · who runs it — you, the agent, or the build.
 
 #### Band
