@@ -362,6 +362,24 @@
   border-bottom: 1px solid var(--border-light);
 }
 
+/* The line is a ROW separator. `.sys-details` was built for stacked folds —
+   StarterRows, the punch list, the method page's rule lists — where each row
+   needs a line under it and the last one closes the stack. A fold that stands
+   alone has nothing below it to separate, and inside a card it draws a second
+   line a few pixels above the card's own edge. Those opt out. */
+.sys-details--solo {
+  border-bottom: 0;
+}
+
+/* The summary's 12px of bottom padding is the other half of the row shape: it
+   sets the gap above the divider, and in a stack the next row's top padding
+   answers it. Closed and alone there is neither, so it lands on top of the
+   card's own padding as dead space. Open, it does real work again — the gap
+   between the summary and the block it reveals. */
+.sys-details--solo:not([open]) > summary {
+  padding-bottom: 0;
+}
+
 .sys-details > summary {
   cursor: pointer;
   list-style: none;

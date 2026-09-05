@@ -120,7 +120,10 @@ export interface SystemDoc {
   dir: string; // top-level bucket, e.g. "strategy", "features", "" for root
   status: string | null;
   tier: Tier | null;
-  category: string | null;
+  /* No `category` here. Every doc family declares one and no surface has ever
+     read it, so it was a parsed field answering to no call site. The field
+     stays in the docs and in the molds: it is an optional family field, and a
+     mold may offer a key for a reader's benefit with no parser behind it. */
   lastReviewed: string | null;
   readWhen: string | null;
   featureStatus: string | null;
@@ -164,7 +167,6 @@ function toSystemDoc(
     dir: relPath.includes(path.sep) ? relPath.split(path.sep)[0] : "",
     status: fm.status ?? null,
     tier,
-    category: fm.category ?? null,
     lastReviewed,
     readWhen: fm["read-when"] ?? null,
     featureStatus: fm["feature-status"] ?? null,
@@ -268,6 +270,151 @@ export function getAllDocPaths(): string[] {
   walkAll(DOCS_DIR);
   if (fs.existsSync(path.join(path.dirname(DOCS_DIR), BRIEFING_FILE))) out.push(BRIEFING_FILE);
   return out;
+}
+
+/* ── The molds (the `_`-prefixed templates) ───────────────────────────
+   A mold is only ever met as a file you are already filling in, so a field
+   the mold does not list is invisible by construction: `priority` was parsed
+   here, rendered as a pill on the roadmap card and named in the seed mold's
+   own parser comment, while the mold's frontmatter block never offered it.
+   Only the people who read the parser ever set it.
+
+   The molds were unreachable too. `walk` (the registry) skips `_`-prefixed
+   files, so no index listed them; the doc reader rendered them at a URL
+   nothing linked. This is the exact inverse of that skip — a mold IS what
+   the registry leaves out — so the set DERIVES rather than being enumerated,
+   and a project that adds a mold gets it rendered without touching this file.
+
+   A mount with no molds is legitimate (an example project has none), so the
+   page says that out loud rather than rendering a void. */
+
+/** A labelled value read off a doc: a frontmatter `key: value` pair, or a
+ *  body line led by a bold `**Label:**`. One type for both because the reader
+ *  meets them the same way — a name and what sits after it — and three
+ *  surfaces now render them: a mold's two field lists and the doc reader's
+ *  frontmatter block. On a real doc the value is a value; on a mold it is the
+ *  placeholder the mold offers. */
+export interface DocField {
+  key: string;
+  value: string;
+}
+
+export interface MoldSection {
+  heading: string;
+  /** Bold labels of the inset cards under this heading — a mold's explainer
+   *  blockquotes (CONTRIBUTING.md → "A mold explains itself in one card"). */
+  cards: string[];
+}
+
+export interface Mold {
+  relPath: string; // "phases/_system-template.md"
+  name: string; // the h1, scaffolding and all — it is what the mold offers
+  /** From `mode:`. Null where the field names no single mode: the walkthrough
+   *  mold has none, and the seed mold offers the whole set to choose from. */
+  mode: BoardMode | null;
+  /** The frontmatter block, in the mold's own declaration order. */
+  fields: DocField[];
+  /** The bold-led lines between the h1 and the first `##` — the fields the
+   *  filled-in doc wears on its face (`Mode:` `Project:` `Exports:` `Goal:`
+   *  `Levels:` …). The frontmatter list alone was half the answer: those
+   *  lines are most of what a board author fills in, and they are where an
+   *  adopter's molds differ from ours, so a card without them rendered two
+   *  mounts identically while their molds genuinely differed. Empty for the
+   *  seed and walkthrough molds, which carry no such lines. */
+  bodyFields: DocField[];
+  /** Cards above the first `##` — the mold's own opening explainer. */
+  cards: string[];
+  sections: MoldSection[];
+}
+
+/** Every `**Label:** value` in a region, in order.
+ *
+ *  A line may carry more than one — the system and side molds put `Project`
+ *  and `Exports` on one line separated by `·` — so each field's value runs to
+ *  the start of the next label rather than to the end of the line, and the
+ *  separator left dangling is trimmed. */
+function boldFields(region: string): DocField[] {
+  const out: DocField[] = [];
+  for (const line of region.split("\n")) {
+    if (!line.startsWith("**")) continue;
+    const re = /\*\*([^*]+?):\*\*/g;
+    const hits: { key: string; at: number; after: number }[] = [];
+    let m;
+    while ((m = re.exec(line))) hits.push({ key: m[1].trim(), at: m.index, after: re.lastIndex });
+    hits.forEach((hit, i) => {
+      const end = i + 1 < hits.length ? hits[i + 1].at : line.length;
+      out.push({ key: hit.key, value: line.slice(hit.after, end).replace(/\s*·\s*$/, "").trim() });
+    });
+  }
+  return out;
+}
+
+/** The bold label leading each blockquote in a region. A mold's explainer is
+ *  one blockquote led by a bold label, so the label is the card's name; a
+ *  blockquote without one is prose in a quote and is not a card. */
+function insetCardLabels(region: string): string[] {
+  const out: string[] = [];
+  let inQuote = false;
+  for (const line of region.split("\n")) {
+    if (line.startsWith(">")) {
+      if (!inQuote) {
+        const m = line.match(/^>\s*\*\*(.+?)\*\*/);
+        if (m) out.push(m[1].trim());
+      }
+      inQuote = true;
+      // A blank line inside a blockquote is written as a bare ">", so only a
+      // genuinely empty line closes the block.
+    } else inQuote = false;
+  }
+  return out;
+}
+
+/** Every mold the mount holds: the `_`-prefixed `.md` files under its docs
+ *  tree, whatever folder they sit in. Alphabetical by path ON PURPOSE — any
+ *  other order (mode order, a declared sequence) is a claim about which mold
+ *  matters most, and the molds are the project's own, not this file's. */
+export function getMolds(): Mold[] {
+  if (!fs.existsSync(DOCS_DIR)) return [];
+  const files: string[] = [];
+  const walkMolds = (dir: string) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name.startsWith(".") || entry.name === "archive") continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walkMolds(full);
+      else if (entry.name.startsWith("_") && entry.name.endsWith(".md")) files.push(full);
+    }
+  };
+  walkMolds(DOCS_DIR);
+
+  const molds: Mold[] = [];
+  for (const full of files.sort()) {
+    const relPath = path.relative(DOCS_DIR, full);
+    const parsed = readDoc(relPath);
+    if (!parsed) continue;
+    // Object keys keep insertion order, so this is the mold's own order —
+    // which is part of what it offers, not an accident of parsing.
+    const fields = Object.entries(parsed.fm).map(([key, value]) => ({ key, value }));
+    // `## ` split: [lede, heading, region, heading, region, …].
+    const parts = parsed.body.split(/^## (.+)$/m);
+    const sections: MoldSection[] = [];
+    for (let i = 1; i < parts.length; i += 2) {
+      sections.push({ heading: parts[i].trim(), cards: insetCardLabels(parts[i + 1] ?? "") });
+    }
+    const rawMode = parsed.fm.mode;
+    molds.push({
+      relPath,
+      name: stripMd(firstHeading(parsed.body) ?? path.basename(relPath, ".md")),
+      mode:
+        rawMode === "product" || rawMode === "system" || rawMode === "side" || rawMode === "queue-shaping"
+          ? rawMode
+          : null,
+      fields,
+      bodyFields: boldFields(parts[0] ?? ""),
+      cards: insetCardLabels(parts[0] ?? ""),
+      sections,
+    });
+  }
+  return molds;
 }
 
 /* ── The system, parsed from CONTRIBUTING.md ──────────────────────────
@@ -702,7 +849,9 @@ export function getTierPhysics(): TierPhysics {
 
 /** Reads any doc under docs/ (archive included) — used by the doc detail page.
  *  CLAUDE.md is the one special case outside docs/ (repo root). */
-export function getDocByPath(relPath: string): { doc: SystemDoc; body: string } | null {
+export function getDocByPath(
+  relPath: string,
+): { doc: SystemDoc; body: string; frontmatter: DocField[] } | null {
   const isBriefing = relPath === BRIEFING_FILE;
   const full = isBriefing
     ? path.join(path.dirname(DOCS_DIR), BRIEFING_FILE)
@@ -713,7 +862,17 @@ export function getDocByPath(relPath: string): { doc: SystemDoc; body: string } 
   const rel = isBriefing ? BRIEFING_FILE : path.relative(DOCS_DIR, full);
   // No stale limits: the detail page shows the doc, never a freshness verdict
   // on it — that judgement belongs to the index, which passes the real ones.
-  return { doc: toSystemDoc(rel, fm, body, {}), body };
+  //
+  // `frontmatter` is every key the file declares, in file order. `SystemDoc`
+  // carries the fixed set the registry needs; the reader shows the block as
+  // written, because a key nothing parses is still a key the author wrote and
+  // the next author will copy. Object keys preserve insertion order, so this
+  // is the file's own order rather than one this file chose.
+  return {
+    doc: toSystemDoc(rel, fm, body, {}),
+    body,
+    frontmatter: Object.entries(fm).map(([key, value]) => ({ key, value })),
+  };
 }
 
 /* ── Open Questions (planning/Open Questions & Assumptions Log.md) ──

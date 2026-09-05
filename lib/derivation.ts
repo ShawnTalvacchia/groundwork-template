@@ -5,6 +5,7 @@ import {
   getFeatureAreas,
   getFutureItems,
   getGlossary,
+  getMolds,
   getOpenQuestions,
   getPhasePipeline,
   getPunchItems,
@@ -313,6 +314,24 @@ export function getDriftAlarms(): DriftAlarm[] {
     "strategy doc missing summary",
     docs.filter((d) => d.dir === "strategy" && !d.summary).map((d) => d.relPath),
   );
+
+  /* ── The molds ───────────────────────────────────────────────────── */
+
+  // Presence-not-count: a project with no molds is legitimate, so there is no
+  // floor. What fires is a mold that PARSED hollow — no name or no
+  // frontmatter — because those two are the whole of what the Molds page
+  // shows per mold, and a mold rendering as an empty row is the same silent
+  // failure that page exists to end. The registry's `walk` skips `_`-prefixed
+  // files, so the frontmatter-coverage checks never see the molds — this is
+  // the only check that does.
+  for (const mold of getMolds()) {
+    const missing = [!mold.name && "no name (h1)", mold.fields.length === 0 && "no frontmatter"].filter(
+      Boolean,
+    );
+    if (missing.length) {
+      alarm("getMolds", `docs/${mold.relPath}`, `mold parsed hollow: ${missing.join(", ")}`);
+    }
+  }
 
   /* ── The surface speaks the project's language ───────────────────── */
 

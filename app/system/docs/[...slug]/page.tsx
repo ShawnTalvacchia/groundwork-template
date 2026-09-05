@@ -24,9 +24,8 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
   const relPath = slug.map((s) => decodeURIComponent(s)).join("/");
   const result = getDocByPath(relPath);
   if (!result) notFound();
-  const { doc, body } = result;
+  const { doc, body, frontmatter } = result;
   const docDir = path.dirname(relPath);
-
 
   return (
     <>
@@ -39,6 +38,36 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
           <StalePill staleDays={doc.staleDays} lastReviewed={doc.lastReviewed} />
         </span>
         {doc.readWhen && <span className="w-full text-2xs">Read when: {doc.readWhen}</span>}
+        {/* The pills above are a fixed four: tier, status, freshness, read-when.
+            That set answers "how guarded, is it live, how fresh, when do I read
+            it" and it does not grow when a doc declares more — so a seed's
+            `priority`, a board's `mode`, a feature's `area` reached no reader
+            here at all, on the one page that shows the file itself. The block
+            below is every key the file declares, in its own order, folded the
+            way the Docs page folds the tier physics: chrome stays chrome, and
+            the answer is one click away instead of absent. Derived whole — no
+            key list is written here, so a doc that invents a field shows it. */}
+        {frontmatter.length > 0 && (
+          <details className="sys-details sys-details--solo w-full">
+            <summary className="flex items-baseline gap-sm text-2xs text-fg-tertiary">
+              <span className="sys-caret" aria-hidden>
+                ›
+              </span>
+              Frontmatter · {frontmatter.length} {frontmatter.length === 1 ? "key" : "keys"}
+            </summary>
+            <dl className="flex flex-col">
+              {frontmatter.map((f) => (
+                <div
+                  key={f.key}
+                  className="flex flex-col gap-tiny border-b border-edge-light py-xs last:border-0 sm:flex-row sm:gap-md"
+                >
+                  <dt className="text-2xs font-mono text-fg-primary sm:w-40 sm:shrink-0">{f.key}</dt>
+                  <dd className="text-2xs text-fg-secondary leading-snug max-w-[64ch]">{f.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </details>
+        )}
       </div>
       <article className="sys-doc">
         <DocProse body={body} docDir={docDir} />

@@ -10,11 +10,11 @@ read-when: When any task is completed or blocked
 
 **Mode:** product · [the rituals this board runs](../CONTRIBUTING.md#the-product-phase-builds-the-thing)
 
+**Project:** *(the repo this board lives in — work outside it gets handed over, not done)*
+
 **Goal:** One sentence describing what "done" looks like.
 
-**Project:** [the repo this board lives in — work outside it gets handed over, not done]
-
-**Levels:** [none — one chat, roles collapsed | planner: high · executor: [tier] · closer: [tier], fires: [the `Read when:` triggers its close is expected to fire] — see CONTRIBUTING → The phase pipeline]
+**Levels:** *(none — one chat, roles collapsed | planner: high · executor: [tier] · closer: [tier], fires: [the `Read when:` triggers its close is expected to fire] — see CONTRIBUTING → The phase pipeline)*
 
 **Depends on:** Previous phases or conditions.
 
@@ -28,9 +28,9 @@ read-when: When any task is completed or blocked
 >
 > List below ONLY what's specific to THIS phase: how it serves the vision (checklist step 1), conflicts surfaced during the opening audit, docs re-checked, scope calls made at open.
 
-- **Session title(s):** _(ask at each chat's open, then record the PO's answer here — `Phase name · mode` collapsed, one line per role chat when split: `role · Phase name · mode`)_
-- **Serves the vision by:** _(one line — from `strategy/Vision.md`, read at open)_
-- _(other phase-specific open notes go here — delete this line)_
+- **Session title(s):** *(ask at each chat's open, then record the PO's answer here — `Phase name · mode` collapsed, one line per role chat when split: `role · Phase name · mode`)*
+- **Serves the vision by:** *(one line — from `strategy/Vision.md`, read at open)*
+- *(other phase-specific open notes go here — delete this line)*
 
 ---
 
@@ -68,4 +68,4 @@ read-when: When any task is completed or blocked
 >
 > List below ONLY what's specific to THIS phase: the feature docs it touched, outward-facing artifacts to graduate, punch-list items it closes, next-phase dependencies it satisfies. Per-decision doc targets live in the walkthrough's "Decisions surfaced" log.
 
-- _(phase-specific close notes go here — delete this line)_
+- *(phase-specific close notes go here — delete this line)*

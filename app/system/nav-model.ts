@@ -49,6 +49,7 @@ export const GROUPS: SystemGroup[] = [
     pages: [
       { slug: "trackers", label: "Trackers", blurb: "The three standing lists, what each holds, and how work flows between them." },
       { slug: "tiers", label: "Tiers", blurb: "Review physics — how docs settle, sink, and get reopened." },
+      { slug: "molds", label: "Molds", blurb: "The board, walkthrough and seed templates — what each one offers whoever fills it in." },
       { slug: "glossary", label: "Glossary", blurb: "The system's terms, defined once." },
     ],
   },

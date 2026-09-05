@@ -33,7 +33,7 @@ read-when: "Update as items are walked, edit as scope adjusts"
 
 ---
 
-## Surfaces to glance _(usually skip)_
+## Surfaces to glance *(usually skip)*
 
 - [ ] **G1.** {who's looking} → `/url` — one-line description of what should be there.
 

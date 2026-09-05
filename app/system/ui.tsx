@@ -286,7 +286,43 @@ export function SourceNote({ href, path, note }: { href: string; path: string; n
    strikethrough; links render as their text. Bold/italic content is parsed
    recursively so nested forms like **`code`** render cleanly. Block rendering
    (doc detail) uses react-markdown instead. */
-export function MdInline({ text, anchors }: { text: string; anchors?: Record<string, string> }) {
+/** A doc-relative `.md` href, resolved to a doc page.
+ *
+ *  `docDir` is the LINKING doc's own directory relative to the docs root, so
+ *  `../CONTRIBUTING.md` inside `phases/` resolves the way it reads in the
+ *  file. Absolute paths, fragments and external URLs pass through untouched.
+ *  One home for the two callers that need it — the inline renderer and the
+ *  block one — because they had drifted once already. */
+export function resolveDocHref(href: string, docDir: string): string {
+  if (/^(https?:)?\/\//.test(href) || href.startsWith("#") || href.startsWith("/")) return href;
+  const [clean, hash] = href.split("#");
+  if (!clean.endsWith(".md")) return href;
+  const segs = (docDir === "." || docDir === "" ? [] : docDir.split("/")).concat(clean.split("/"));
+  const out: string[] = [];
+  for (const seg of segs) {
+    if (seg === "" || seg === ".") continue;
+    if (seg === "..") out.pop();
+    else out.push(seg);
+  }
+  // A #fragment survives resolution — section links (e.g.
+  // CONTRIBUTING.md#closing-a-phase) land on the heading ids DocProse stamps.
+  return `/system/docs/${out.join("/")}${hash ? `#${hash}` : ""}`;
+}
+
+/** `docDir` is the directory the text was READ from, relative to the docs
+ *  root — needed only when the source doc is not at the root. The parsed
+ *  sources this renderer was built for (CONTRIBUTING, ROADMAP, decisions.md)
+ *  all sit there, so it defaults to the root and every existing call site is
+ *  unchanged; the molds page is the first caller reading from `phases/`. */
+export function MdInline({
+  text,
+  anchors,
+  docDir = ".",
+}: {
+  text: string;
+  anchors?: Record<string, string>;
+  docDir?: string;
+}) {
   const nodes: ReactNode[] = [];
   const re = /(\*\*[^*]+\*\*|\*[^*\n]+\*|`[^`]+`|~~[^~]+~~|\[\[[^\]]+\]\]|\[[^\]]+\]\([^)]*\))/g;
   let last = 0;
@@ -328,13 +364,13 @@ export function MdInline({ text, anchors }: { text: string; anchors?: Record<str
     if (tok.startsWith("**"))
       nodes.push(
         <strong key={key++}>
-          <MdInline text={tok.slice(2, -2)} anchors={anchors} />
+          <MdInline text={tok.slice(2, -2)} anchors={anchors} docDir={docDir} />
         </strong>
       );
     else if (tok.startsWith("~~"))
       nodes.push(
         <s key={key++}>
-          <MdInline text={tok.slice(2, -2)} anchors={anchors} />
+          <MdInline text={tok.slice(2, -2)} anchors={anchors} docDir={docDir} />
         </s>
       );
     else if (tok.startsWith("`")) nodes.push(<code key={key++} className="sys-code">{tok.slice(1, -1)}</code>);
@@ -342,13 +378,13 @@ export function MdInline({ text, anchors }: { text: string; anchors?: Record<str
     else if (tok.startsWith("[")) {
       // Markdown links render as real links: doc-relative `.md` targets (an
       // optional #fragment kept) resolve through the doc reader; absolute
-      // paths pass through; anything else stays plain text. Hrefs here are
-      // resolved against the docs ROOT — the parsed sources (CONTRIBUTING,
-      // ROADMAP, decisions.md) all live there.
+      // paths pass through; anything else stays plain text. Relative targets
+      // resolve against `docDir` — the docs root unless the caller says
+      // otherwise (see MdInline).
       const label = tok.slice(1, tok.indexOf("]"));
       const href = tok.slice(tok.indexOf("](") + 2, -1);
-      const [file, hash] = href.split("#");
-      const inner = <MdInline text={label} />;
+      const [file] = href.split("#");
+      const inner = <MdInline text={label} docDir={docDir} />;
       if (/^https?:\/\//.test(href))
         nodes.push(
           <a key={key++} href={href} target="_blank" rel="noreferrer" className="underline underline-offset-2">
@@ -363,11 +399,7 @@ export function MdInline({ text, anchors }: { text: string; anchors?: Record<str
         );
       else if (file.endsWith(".md"))
         nodes.push(
-          <Link
-            key={key++}
-            href={`/system/docs/${file}${hash ? `#${hash}` : ""}`}
-            className="underline underline-offset-2"
-          >
+          <Link key={key++} href={resolveDocHref(href, docDir)} className="underline underline-offset-2">
             {inner}
           </Link>
         );
@@ -376,7 +408,7 @@ export function MdInline({ text, anchors }: { text: string; anchors?: Record<str
     else
       nodes.push(
         <em key={key++}>
-          <MdInline text={tok.slice(1, -1)} anchors={anchors} />
+          <MdInline text={tok.slice(1, -1)} anchors={anchors} docDir={docDir} />
         </em>
       );
     last = m.index + tok.length;
@@ -412,21 +444,7 @@ function headingId(children: ReactNode): string {
  *  `docDir` is the doc's own directory relative to the docs root, so a link
  *  resolves the way it reads in the file: "phases" for a board, "." at root. */
 export function DocProse({ body, docDir }: { body: string; docDir: string }) {
-  const resolveHref = (href: string): string => {
-    if (/^(https?:)?\/\//.test(href) || href.startsWith("#") || href.startsWith("/")) return href;
-    const [clean, hash] = href.split("#");
-    if (!clean.endsWith(".md")) return href;
-    const segs = (docDir === "." || docDir === "" ? [] : docDir.split("/")).concat(clean.split("/"));
-    const out: string[] = [];
-    for (const seg of segs) {
-      if (seg === "" || seg === ".") continue;
-      if (seg === "..") out.pop();
-      else out.push(seg);
-    }
-    // A #fragment survives resolution — section links (e.g. CONTRIBUTING.md#closing-a-phase)
-    // land on the heading id stamped below.
-    return `/system/docs/${out.join("/")}${hash ? `#${hash}` : ""}`;
-  };
+  const resolveHref = (href: string) => resolveDocHref(href, docDir);
 
   return (
     <ReactMarkdown

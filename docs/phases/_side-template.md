@@ -11,9 +11,9 @@ read-when: "board close (deleted at close — the moved tracker rows + the commi
 
 **Mode:** side · [the rituals this board runs](../CONTRIBUTING.md#the-side-phase-sweeps-the-small-stuff)
 
-**Project:** [the repo this board lives in — work outside it gets handed over, not done]
+**Project:** *(the repo this board lives in — work outside it gets handed over, not done)*
 
-**Session title:** _(ask at open, then record the PO's answer here — `Phase name · mode`; side phases never split)_
+**Session title:** *(ask at open, then record the PO's answer here — `Phase name · mode`; side phases never split)*
 
 ## Items
 

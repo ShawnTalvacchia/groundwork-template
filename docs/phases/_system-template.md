@@ -11,11 +11,13 @@ read-when: "while this system phase is open (deleted at close — decisions.md c
 
 **Mode:** system · [the rituals this board runs](../CONTRIBUTING.md#the-system-phase-tends-the-rules)
 
+**Project:** *(the repo this board lives in — work outside it gets handed over, not done)*
+
+**Levels:** *(none — one chat, roles collapsed | planner: high · executor: [tier] · closer: [tier], fires: [the `Read when:` triggers its close is expected to fire] — see CONTRIBUTING → The phase pipeline)*
+
 ## Session open — YYYY-MM-DD
 
-- **Session title(s):** _(ask at each chat's open, then record the PO's answer here — `Phase name · mode` collapsed, one line per role chat when split: `role · Phase name · mode`)_
-- **Project:** [the repo this board lives in — work outside it gets handed over, not done]
-- **Levels:** [none — one chat, roles collapsed | planner: high · executor: [tier] · closer: [tier], fires: [the `Read when:` triggers its close is expected to fire] — see CONTRIBUTING → The phase pipeline]
+- **Session title(s):** *(ask at each chat's open, then record the PO's answer here — `Phase name · mode` collapsed, one line per role chat when split: `role · Phase name · mode`)*
 - **Friction named:** [what this phase fixes, in one or two sentences]
 - **Scope agreed with the PO:** [what's in, what's out]
 - **Settled calls this reopens:** [entries from `decisions.md` / tiered docs this work touches — each is a structured challenge, logged win or lose; "none" is a valid answer]

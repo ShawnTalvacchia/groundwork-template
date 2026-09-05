@@ -11,9 +11,9 @@ read-when: "while this queue-shaping phase is open (deleted at close — the row
 
 **Mode:** queue-shaping · [the rituals this board runs](../CONTRIBUTING.md#the-queue-shaping-phase-shapes-whats-next)
 
-**Project:** _(the repo this board lives in)_
+**Project:** *(the repo this board lives in)*
 
-**Session title:** _(ask at open, then record the PO's answer here — `Phase name · queue-shaping`; this mode never splits)_
+**Session title:** *(ask at open, then record the PO's answer here — `Phase name · queue-shaping`; this mode never splits)*
 
 ## Session open — YYYY-MM-DD
 
