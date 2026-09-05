@@ -66,6 +66,20 @@ function firstHeading(body: string): string | null {
 }
 
 /** Strips inline markdown for plain-text list surfaces. */
+/** GitHub-flavored heading id, so `#fragment` links into a rendered doc
+ *  resolve. One home: the doc renderer stamps ids with it and the inspector
+ *  builds deep links with it, and a mismatch between the two fails silently
+ *  by dropping the reader at the top of the page. Backticks need no special
+ *  handling — the character filter strips them, and they never sit beside a
+ *  space in a way that would collapse into a double hyphen. */
+export function headingSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
 export function stripMd(s: string): string {
   return s
     .replace(/\[\[([^\]|]+)(\|[^\]]+)?\]\]/g, "$1")
@@ -1396,7 +1410,11 @@ export interface ActivePhase {
 }
 
 /** All open boards — at most one per mode (Work Model concurrency rule).
- *  Product phase sorts first. Empty array = fully between boards. */
+ *  Ordered by mode in the order the Levels line and the starters use —
+ *  product · system · side · queue-shaping (MODE_META's own order) — so the
+ *  board a reader meets first is chosen, not whatever readdir returned; ties
+ *  (none, under the concurrency rule) fall back to the slug. Empty array =
+ *  fully between boards. */
 export function getActiveBoards(): ActivePhase[] {
   const dir = path.join(DOCS_DIR, "phases");
   if (!fs.existsSync(dir)) return [];
@@ -1441,7 +1459,10 @@ export function getActiveBoards(): ActivePhase[] {
       body: parsed.body,
     });
   }
-  return boards.sort((a, b) => (a.mode === "product" ? -1 : 0) - (b.mode === "product" ? -1 : 0));
+  const order = Object.keys(MODE_META) as BoardMode[];
+  return boards.sort(
+    (a, b) => order.indexOf(a.mode) - order.indexOf(b.mode) || a.slug.localeCompare(b.slug)
+  );
 }
 
 /* ── Shipped timeline (docs/archive/phases/*.md) ─────────────────────

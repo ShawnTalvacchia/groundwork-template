@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ReactNode } from "react";
 import type { BoardMode, Tier } from "@/lib/system";
-import { MODE_META, TIER_META } from "@/lib/system";
+import { MODE_META, TIER_META, headingSlug } from "@/lib/system";
 import type { DriftAlarm } from "@/lib/derivation";
 
 /* Shared server-side UI for /system. Presentation only — no content. */
@@ -95,16 +95,6 @@ export function Tile({
   );
 }
 
-/** The queue, condensed for a hub.
- *
- *  Replaces a tile whose entire content was a count: the rows themselves say
- *  more in the same space. Each card links to its seed exactly as the roadmap
- *  page's cards do, and a seedless row renders inert — that state is what the
- *  bidirectional seed invariant flags (lib/derivation.ts), not something the
- *  UI should paper over.
- *
- *  Presence-not-count, like the invariants: a fresh project has queued nothing,
- *  and the shelf still renders so the roadmap stays one click away on day one. */
 /** The hub's front door, folded away: a collapsed shelf naming the session
  *  starters, each row a collapsed card that expands to what you'd actually
  *  say or do. The method page holds the full table; the header link is the
@@ -184,6 +174,16 @@ export function StarterRows({
   );
 }
 
+/** The queue, condensed for a hub.
+ *
+ *  Replaces a tile whose entire content was a count: the rows themselves say
+ *  more in the same space. Each card links to its seed exactly as the roadmap
+ *  page's cards do, and a seedless row renders inert — that state is what the
+ *  bidirectional seed invariant flags (lib/derivation.ts), not something the
+ *  UI should paper over.
+ *
+ *  Presence-not-count, like the invariants: a fresh project has queued nothing,
+ *  and the shelf still renders so the roadmap stays one click away on day one. */
 export function QueueShelf({
   items,
   limit = 4,
@@ -418,8 +418,8 @@ export function MdInline({
 }
 
 
-/** GitHub-flavored heading id, so `#fragment` links into a doc resolve.
- *  Must stay in sync with the slugs used by section links in the docs. */
+/** The id a rendered heading gets: its text, slugged by the one shared
+ *  function (lib/system.ts → headingSlug), so the inspector's deep links land. */
 function headingId(children: ReactNode): string {
   const textOf = (n: ReactNode): string => {
     if (typeof n === "string" || typeof n === "number") return String(n);
@@ -428,11 +428,7 @@ function headingId(children: ReactNode): string {
       return textOf((n as { props: { children?: ReactNode } }).props.children);
     return "";
   };
-  return textOf(children)
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
+  return headingSlug(textOf(children));
 }
 
 /** Doc prose rendered from markdown, with relative `.md` links resolved to

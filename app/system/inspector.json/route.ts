@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { getComponentDetails, getStyleguide, utilityByRootToken } from "@/lib/styleguide";
 import { PROJECT_NAME } from "@/lib/project";
+import { headingSlug } from "@/lib/system";
 
 /**
  * The element inspector's data feed: token names with their authored chains
@@ -28,26 +29,6 @@ interface Pattern {
 
 /** Repo-relative path (for a session to open) and its rendered page. */
 const PATTERNS_DOC = "implementation/component-patterns.md";
-
-/**
- * GitHub-flavored heading id.
- *
- * Must match `headingId()` in `app/system/docs/[...slug]/page.tsx` — that
- * route stamps the ids these fragments land on, and a mismatch fails silently
- * by dropping the reader at the top of the page. Two copies on purpose —
- * keep them identical.
- *
- * Backticks in a heading need no special handling: they are stripped by the
- * same character filter, and they never sit adjacent to a space in a way that
- * would collapse into a double hyphen.
- */
-function headingSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
-}
 
 /** True when a doc exists under this project's `docs/`. Load-bearing for the
  *  export: `/system/docs/<path>` is statically generated with dynamicParams
