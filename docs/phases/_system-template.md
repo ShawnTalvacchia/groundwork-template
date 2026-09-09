@@ -1,7 +1,8 @@
 ---
 category: phase
-status: active
+status: active | waiting
 mode: system
+stage: open | build | close
 tier: working
 last-reviewed: YYYY-MM-DD
 read-when: "while this system phase is open (deleted at close — decisions.md carries the calls)"
@@ -13,11 +14,11 @@ read-when: "while this system phase is open (deleted at close — decisions.md c
 
 **Project:** *(the repo this board lives in — work outside it gets handed over, not done)*
 
-**Levels:** *(none — one chat, roles collapsed | planner: high · executor: [tier] · closer: [tier], fires: [the `Read when:` triggers its close is expected to fire] — see CONTRIBUTING → The phase pipeline)*
+**Levels:** *(none — one chat, kinds run in order | open high · build [tier] · close [tier], fires: [the `Read when:` triggers the close is expected to fire] — see CONTRIBUTING → The phase pipeline)*
 
 ## Session open — YYYY-MM-DD
 
-- **Session title(s):** *(ask at each chat's open, then record the PO's answer here — `Phase name · mode` collapsed, one line per role chat when split: `role · Phase name · mode`)*
+- **Session title(s):** *(ask at each chat's open, then record the PO's answer here — `Phase name · mode` collapsed, one line per kind's chat when split: `kind · Phase name · mode`)*
 - **Friction named:** [what this phase fixes, in one or two sentences]
 - **Scope agreed with the PO:** [what's in, what's out]
 - **Settled calls this reopens:** [entries from `decisions.md` / tiered docs this work touches — each is a structured challenge, logged win or lose; "none" is a valid answer]

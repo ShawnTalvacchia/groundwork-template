@@ -18,7 +18,7 @@ priority: low | medium | high
 
 # Phase Name — {product | system | side | queue-shaping} seed
 
-One-paragraph pitch: what this phase is and why it's queued.
+One-paragraph pitch: what this phase is and why it's queued. *(In a run, name the run and the bound here — "part of the [run name] run, by [date]" — and which kinds this board will pass through; the board's `run:` is set from this line at open.)*
 
 > **How this works**
 >
