@@ -30,7 +30,7 @@ read-when: When any task is completed or blocked
 >
 > List below ONLY what's specific to THIS phase: how it serves the vision (checklist step 1), conflicts surfaced during the opening audit, docs re-checked, scope calls made at open.
 
-- **Session title(s):** *(ask at each chat's open, then record the PO's answer here — `Phase name · mode` collapsed, one line per kind's chat when split: `kind · Phase name · mode`)*
+- **Session title(s):** *(set at each chat's open and recorded here — `Phase name · mode` collapsed, one line per kind's chat when split: `kind · Phase name · mode`; ask only when the title is not derivable)*
 - **Serves the vision by:** *(one line — from `strategy/Vision.md`, read at open)*
 - *(other phase-specific open notes go here — delete this line)*
 

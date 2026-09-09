@@ -18,7 +18,7 @@ read-when: "while this system phase is open (deleted at close — decisions.md c
 
 ## Session open — YYYY-MM-DD
 
-- **Session title(s):** *(ask at each chat's open, then record the PO's answer here — `Phase name · mode` collapsed, one line per kind's chat when split: `kind · Phase name · mode`)*
+- **Session title(s):** *(set at each chat's open and recorded here — `Phase name · mode` collapsed, one line per kind's chat when split: `kind · Phase name · mode`; ask only when the title is not derivable)*
 - **Friction named:** [what this phase fixes, in one or two sentences]
 - **Scope agreed with the PO:** [what's in, what's out]
 - **Settled calls this reopens:** [entries from `decisions.md` / tiered docs this work touches — each is a structured challenge, logged win or lose; "none" is a valid answer]

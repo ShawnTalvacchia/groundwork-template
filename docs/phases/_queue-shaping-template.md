@@ -13,7 +13,7 @@ read-when: "while this queue-shaping phase is open (deleted at close — the row
 
 **Project:** *(the repo this board lives in)*
 
-**Session title:** *(ask at open, then record the PO's answer here — `Phase name · queue-shaping`; this mode never splits)*
+**Session title:** *(set at open and recorded here — `Phase name · queue-shaping`; this mode never splits; ask only when the title is not derivable)*
 
 ## Session open — YYYY-MM-DD
 
