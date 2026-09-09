@@ -1,12 +1,18 @@
 import Link from "next/link";
-import { getActiveBoards, getRoadmap, MODE_META } from "@/lib/system";
+import { getActiveBoards, getRoadmap, groupBoards, MODE_META } from "@/lib/system";
 import { MdInline, PageIntro, DocProse } from "../ui";
 
 // The board in full — this IS its home. Work owns it; it isn't a summary
 // pointing at a doc page. (The breadcrumb row is the way back out.)
 
 export default function ActiveBoardPage() {
-  const boards = getActiveBoards();
+  // The same order the hub's cards show: by mode, a run's boards together
+  // with the run board leading, the active board first among a run's
+  // members — so a reader arriving from a card meets the boards in the
+  // order they were listed.
+  const boards = groupBoards(getActiveBoards()).flatMap((g) =>
+    g.runBoard ? [g.runBoard, ...g.boards] : g.boards,
+  );
   const roadmap = getRoadmap();
 
   if (boards.length === 0) {
@@ -57,6 +63,17 @@ export default function ActiveBoardPage() {
           >
             <div className="flex items-center gap-sm flex-wrap">
               <span className="sys-pill">{MODE_META[board.mode].label}</span>
+              {/* The board's place in its phase, from the fields it declares:
+                  the stage it sits at, whether a session is working it, and
+                  the run it belongs to. Brand on the active board's stage,
+                  the same mark the hub's cards carry. */}
+              {board.stage && (
+                <span className={`sys-pill${board.status === "active" ? " sys-pill-active" : ""}`}>
+                  {board.stage.replace(/-/g, " ")}
+                </span>
+              )}
+              <span className="text-2xs uppercase tracking-wide text-fg-tertiary">{board.status}</span>
+              {board.run && <span className="text-xs text-fg-tertiary">run · {board.run}</span>}
               <span className="text-xs text-fg-tertiary tabular-nums">
                 {board.done}/{board.total} tasks
               </span>

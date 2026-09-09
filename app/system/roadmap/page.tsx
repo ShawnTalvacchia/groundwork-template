@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getQueuedSeeds, getRoadmap, MODE_META, type RoadmapSection } from "@/lib/system";
-import { EmptyNote, MdInline, PageIntro } from "../ui";
+import { EmptyNote, MdInline, PageIntro, groupQueue } from "../ui";
 
 export default function RoadmapPage() {
   const roadmap = getRoadmap();
@@ -33,8 +33,14 @@ export default function RoadmapPage() {
           {roadmap.phases.length === 0 && (
             <EmptyNote>Nothing queued yet — planned work lands here before a board opens.</EmptyNote>
           )}
+          {/* A run's rows sit together (`groupQueue`), the first keeping the
+              ROADMAP's position and the rest following it, each carrying the
+              run's name — the row order otherwise stays the doc's. */}
           <div className="grid gap-md sm:grid-cols-2">
-            {roadmap.phases.map((p, i) => {
+            {groupQueue(
+              roadmap.phases.map((p) => ({ ...p, run: seedFor(p.name)?.run ?? null })),
+            ).map((p) => {
+              const i = roadmap.phases.findIndex((r) => r.name === p.name);
               const seed = seedFor(p.name);
               const inner = (
                 <>
@@ -48,6 +54,7 @@ export default function RoadmapPage() {
                       <span className="text-2xs uppercase tracking-wide text-fg-tertiary">{p.phaseStatus}</span>
                     )}
                     {seed?.priority && <span className="sys-pill">{seed.priority}</span>}
+                    {seed?.run && <span className="text-2xs text-fg-tertiary">run · {seed.run}</span>}
                     {seed && (
                       <span className="text-2xs text-fg-tertiary tabular-nums">
                         {seed.queued && `queued ${seed.queued}`}

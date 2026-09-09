@@ -340,6 +340,42 @@
   color: var(--status-warning-main);
 }
 
+/* The one board a session is working. Brand, like the working tier's pill,
+   because "active" and "working" are the same claim about a board; the
+   waiting boards around it keep the plain pill. */
+.sys-pill-active {
+  border-color: var(--brand-main);
+  color: var(--brand-strong);
+  background: var(--brand-subtle);
+}
+
+/* A waiting board's card sits back a step: the inset surface instead of the
+   top one, so the active board is the only card standing on the page. The
+   text keeps its colors — muted, not disabled. */
+.sys-tile-waiting {
+  background: var(--surface-inset);
+  border-color: var(--border-subtle);
+}
+
+/* A run's boards under the run board — the shelf, with its header row
+   carrying the run board's own tile at full width and the members in a grid
+   beneath. */
+.sys-run {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+}
+
+.sys-run .sys-tile-waiting {
+  background: var(--surface-top);
+  border-color: var(--border-light);
+  opacity: 0.72;
+}
+
 .sys-id {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: var(--text-2xs);

@@ -1,21 +1,20 @@
 import Link from "next/link";
 import {
-  boardName,
   getActiveBoards,
   getFutureItems,
   getOpenQuestions,
   getPunchItems,
   getQueuedSeeds,
   getRoadmap,
-  MODE_META,
+  groupBoards,
 } from "@/lib/system";
 import { GROUPS } from "../nav-model";
-import { QueueShelf, Tile } from "../ui";
+import { BoardCards, QueueShelf, Tile } from "../ui";
 
 const group = GROUPS.find((g) => g.slug === "work")!;
 
 export default function WorkPage() {
-  const boards = getActiveBoards();
+  const groups = groupBoards(getActiveBoards());
   const roadmap = getRoadmap();
   const questions = getOpenQuestions();
   const openItems = questions.reduce((n, t) => n + t.questions.length, 0);
@@ -24,7 +23,7 @@ export default function WorkPage() {
   const seeds = getQueuedSeeds();
   const queue = roadmap.phases.map((p) => {
     const seed = seeds.find((s) => s.phase === p.name);
-    return { name: p.name, mode: seed?.mode ?? null, seedPath: seed?.relPath ?? null };
+    return { name: p.name, mode: seed?.mode ?? null, seedPath: seed?.relPath ?? null, run: seed?.run ?? null };
   });
   const blurb = (slug: string) => group.pages.find((p) => p.slug === slug)?.blurb ?? "";
 
@@ -42,29 +41,11 @@ export default function WorkPage() {
       </header>
 
       <section className="flex flex-col gap-md">
-        <h2 className="text-lg font-semibold text-fg-primary">Active now</h2>
-        {/* Same shape as the hub: the board full width, then the queue itself
-            rather than a tile counting it. */}
-        <div className={`grid gap-md ${boards.length > 1 ? "sm:grid-cols-2" : ""}`}>
-          {boards.length === 0 ? (
-            <Tile
-              href="/system/phase"
-              label="Active board"
-              value="Between boards"
-              detail="no phase open — the queue below is what's next"
-            />
-          ) : (
-            boards.map((b) => (
-              <Tile
-                key={b.slug}
-                href={`/system/phase#${b.slug}`}
-                label={`Active board · ${MODE_META[b.mode].label}`}
-                value={boardName(b.title)}
-                detail={`${b.done}/${b.total} tasks`}
-              />
-            ))
-          )}
-        </div>
+        <h2 className="text-lg font-semibold text-fg-primary">Open boards</h2>
+        {/* Same shape as the hub: every open board — the active one per mode
+            standing, a run grouped under its run board — then the queue
+            itself rather than a tile counting it. */}
+        <BoardCards groups={groups} />
         <QueueShelf items={queue} />
       </section>
 

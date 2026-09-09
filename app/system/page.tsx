@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { BookOpenText, Hammer, TreeStructure } from "@phosphor-icons/react/dist/ssr";
 import {
-  boardName,
   getActiveBoards,
   getAllDocs,
   getArchivedPhases,
@@ -14,10 +13,11 @@ import {
   getRoadmap,
   getTrackerModel,
   getWorkModel,
+  groupBoards,
   TIER_ORDER,
 } from "@/lib/system";
 import { Mark } from "@/components/ui/Mark";
-import { QueueShelf, StartersStrip, Tile } from "./ui";
+import { BoardCards, QueueShelf, StartersStrip, Tile } from "./ui";
 
 function Cluster({
   title,
@@ -65,7 +65,7 @@ export default function SystemOverview() {
   const seeds = getQueuedSeeds();
   const queue = roadmap.phases.map((p) => {
     const seed = seeds.find((s) => s.phase === p.name);
-    return { name: p.name, mode: seed?.mode ?? null, seedPath: seed?.relPath ?? null };
+    return { name: p.name, mode: seed?.mode ?? null, seedPath: seed?.relPath ?? null, run: seed?.run ?? null };
   });
   const features = docs.filter((d) => d.featureStatus);
   const strategyDocs = docs.filter((d) => d.dir === "strategy");
@@ -115,26 +115,7 @@ export default function SystemOverview() {
             "what is happening right now", and it used to share a row with a tile
             whose whole content was a count. The queue shelf below replaced that
             tile with the rows it was counting. */}
-        <div className={`grid gap-md ${boards.length > 1 ? "sm:grid-cols-2" : ""}`}>
-          {boards.length === 0 ? (
-            <Tile
-              href="/system/phase"
-              label="Active board"
-              value="Between boards"
-              detail="no phase open — the queue below is what's next"
-            />
-          ) : (
-            boards.map((b) => (
-              <Tile
-                key={b.slug}
-                href={`/system/phase#${b.slug}`}
-                label={`Active board · ${modes.find((m) => m.key === b.mode)?.label ?? b.mode}`}
-                value={boardName(b.title)}
-                detail={`${b.done}/${b.total} tasks`}
-              />
-            ))
-          )}
-        </div>
+        <BoardCards groups={groupBoards(boards)} />
         <QueueShelf items={queue} />
         {/* The trackers — three peers, fill the row rather than auto-fill and
             leave a gap. */}

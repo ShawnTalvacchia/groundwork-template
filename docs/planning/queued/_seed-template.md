@@ -8,10 +8,11 @@ mode: product | system | side | queue-shaping
 phase: "Exact ROADMAP row name"
 queued: YYYY-MM-DD
 priority: low | medium | high
+run: "" | [the run name — rows sharing it read as one group on the roadmap]
 ---
 
 <!-- PARSED by lib/system.ts (getQueuedSeeds) -> /system/roadmap cards. The frontmatter
-     (mode/phase/queued/priority) is all the card takes from this file, plus a count of the
+     (mode/phase/queued/priority/run) is all the card takes from this file, plus a count of the
      `## Notes & finds` bullets; its sentence is the ROADMAP row's own Goal cell, never the
      pitch below. `phase` must match the ROADMAP row name exactly - the /system drift banner
      flags a mismatch. `mode` badges the card, `priority` sits beside it as a pill. -->

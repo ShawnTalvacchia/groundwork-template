@@ -1,4 +1,5 @@
 import {
+  getActiveBoards,
   getAllDocs,
   getArchivedPhases,
   getDecisions,
@@ -16,7 +17,9 @@ import {
   getTiers,
   getTrackerModel,
   getWorkModel,
+  MODE_KINDS,
   TIER_ORDER,
+  type BoardMode,
   type ReferenceKind,
 } from "@/lib/system";
 import { getComponentInventory, getStyleguide } from "@/lib/styleguide";
@@ -257,6 +260,47 @@ export function getDriftAlarms(): DriftAlarm[] {
         "getQueuedSeeds",
         "planning/queued/",
         `queued ROADMAP row "${p.name}" has no seed — its card has nothing to link to`,
+      );
+    }
+  }
+
+  /* ── The open boards ─────────────────────────────────────────────── */
+
+  // Boards declare `status`, `stage` and `run` (CONTRIBUTING § Frontmatter
+  // maintenance), and Work reads them: the active board is marked, a run is
+  // drawn by stage. Presence-not-count — a board written before the fields
+  // existed declares nothing and renders as active, which is what it was.
+  // What fires is a declared value the surface cannot read: an unknown
+  // status (the board renders active by default, silently), two active
+  // boards in one mode (the concurrency rule, and the surface marks both),
+  // or a stage that is not one of the mode's kinds (the run's lanes order by
+  // it, and an unknown one sorts last with no signal). Queue-shaping's kind
+  // has no name, so its stage is never checked (MODE_KINDS).
+  const boards = getActiveBoards();
+  for (const b of boards) {
+    if (b.statusRaw && b.statusRaw !== "active" && b.statusRaw !== "waiting") {
+      alarm(
+        "getActiveBoards",
+        `phases/${b.slug}.md`,
+        `status "${b.statusRaw}" is not active | waiting — the board renders as active`,
+      );
+    }
+    const kinds = MODE_KINDS[b.mode];
+    if (b.stage && kinds.length > 0 && !kinds.includes(b.stage)) {
+      alarm(
+        "getActiveBoards",
+        `phases/${b.slug}.md`,
+        `stage "${b.stage}" is not a ${b.mode} kind (${kinds.join(" · ")})`,
+      );
+    }
+  }
+  for (const mode of Object.keys(MODE_KINDS) as BoardMode[]) {
+    const active = boards.filter((b) => b.mode === mode && b.status === "active");
+    if (active.length > 1) {
+      alarm(
+        "getActiveBoards",
+        "phases/",
+        `${active.length} active ${mode} boards (${active.map((b) => b.slug).join(", ")}) — one active per mode`,
       );
     }
   }

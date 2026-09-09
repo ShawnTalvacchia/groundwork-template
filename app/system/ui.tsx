@@ -2,8 +2,8 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ReactNode } from "react";
-import type { BoardMode, Tier } from "@/lib/system";
-import { MODE_META, TIER_META, headingSlug } from "@/lib/system";
+import type { ActivePhase, BoardGroup, BoardMode, Tier } from "@/lib/system";
+import { boardName, MODE_META, TIER_META, headingSlug } from "@/lib/system";
 import type { DriftAlarm } from "@/lib/derivation";
 
 /* Shared server-side UI for /system. Presentation only — no content. */
@@ -66,6 +66,7 @@ export function Tile({
   value,
   detail,
   pill,
+  muted,
 }: {
   href: string;
   label: string;
@@ -75,11 +76,14 @@ export function Tile({
    *  briefing tile, whose whole job is to prompt a review, and the amber
    *  StalePill is the only thing on the surface that ever asks for one. */
   pill?: ReactNode;
+  /** Sets the tile back a step (`.sys-tile-waiting`) — a waiting board
+   *  beside the active one. Muted, never disabled: still a link. */
+  muted?: boolean;
 }) {
   // Numbers get the big stat treatment; text values sit a step smaller.
   const valueSize = typeof value === "number" ? "text-2xl" : "text-lg";
   return (
-    <Link href={href} className="sys-tile">
+    <Link href={href} className={`sys-tile${muted ? " sys-tile-waiting" : ""}`}>
       <span className="flex items-baseline justify-between gap-md">
         <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">{label}</span>
         {pill}
@@ -174,6 +178,89 @@ export function StarterRows({
   );
 }
 
+/** The stage a board sits at, as its label — the kind's name with the
+ *  hyphen the frontmatter needs read back out ("basic-layer" → "basic layer").
+ *  The active board's pill carries the brand. */
+function StagePill({ board }: { board: ActivePhase }) {
+  if (!board.stage) return null;
+  return (
+    <span className={`sys-pill${board.status === "active" ? " sys-pill-active" : ""}`}>
+      {board.stage.replace(/-/g, " ")}
+    </span>
+  );
+}
+
+function BoardTile({ board }: { board: ActivePhase }) {
+  const active = board.status === "active";
+  return (
+    <Tile
+      href={`/system/phase#${board.slug}`}
+      label={`${active ? "Active" : "Waiting"} · ${MODE_META[board.mode].label}`}
+      value={boardName(board.title)}
+      detail={`${board.done}/${board.total} tasks`}
+      pill={<StagePill board={board} />}
+      muted={!active}
+    />
+  );
+}
+
+/** The open boards, as the hub and Work show them: every board, the active
+ *  one per mode standing and the waiting ones set back, a run's members
+ *  grouped under the run board with their stage as the label (`groupBoards`).
+ *  One tile when nothing is open — "between boards" is a state the record
+ *  is allowed to be in, and the tile says what fills it. */
+export function BoardCards({ groups }: { groups: BoardGroup[] }) {
+  if (groups.length === 0) {
+    return (
+      <div className="grid gap-md">
+        <Tile
+          href="/system/phase"
+          label="Active board"
+          value="Between boards"
+          detail="no phase open — the queue below is what's next"
+        />
+      </div>
+    );
+  }
+  const standalone = groups.filter((g) => !g.run);
+  const runs = groups.filter((g) => g.run);
+  return (
+    <div className="flex flex-col gap-md">
+      {standalone.length > 0 && (
+        <div className={`grid gap-md ${standalone.length > 1 ? "sm:grid-cols-2" : ""}`}>
+          {standalone.map((g) => (
+            <BoardTile key={g.boards[0].slug} board={g.boards[0]} />
+          ))}
+        </div>
+      )}
+      {runs.map((g) => (
+        <div key={`${g.mode}:${g.run}`} className="sys-run">
+          <div className="flex items-baseline justify-between gap-md">
+            <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">
+              Run
+              <span className="ml-sm font-normal normal-case tracking-normal">{g.run}</span>
+            </span>
+            <span className="text-2xs text-fg-tertiary tabular-nums">
+              {g.boards.length} {g.boards.length === 1 ? "board" : "boards"}
+              {g.runBoard ? " + the run board" : ""}
+            </span>
+          </div>
+          {/* The run board first and full width: it holds the thesis of the
+              whole, so it heads the run the way the active board heads a mode. */}
+          {g.runBoard && <BoardTile board={g.runBoard} />}
+          {g.boards.length > 0 && (
+            <div className="grid gap-sm grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+              {g.boards.map((b) => (
+                <BoardTile key={b.slug} board={b} />
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** The queue, condensed for a hub.
  *
  *  Replaces a tile whose entire content was a count: the rows themselves say
@@ -184,14 +271,40 @@ export function StarterRows({
  *
  *  Presence-not-count, like the invariants: a fresh project has queued nothing,
  *  and the shelf still renders so the roadmap stays one click away on day one. */
+/** A queued row joined to its seed — what the hub and Work hand the shelf. */
+export interface QueueItem {
+  name: string;
+  mode: BoardMode | null;
+  seedPath: string | null;
+  run: string | null;
+}
+
+/** The queue with a run's rows pulled together: the ROADMAP's order stands
+ *  for the first row of each run, and the run's other rows follow it. The
+ *  roadmap page and the shelf both read this, so a run reads the same on
+ *  both. */
+export function groupQueue<T extends { run: string | null }>(items: T[]): T[] {
+  const out: T[] = [];
+  const seen = new Set<string>();
+  for (const it of items) {
+    if (it.run && seen.has(it.run)) continue;
+    out.push(it);
+    if (it.run) {
+      seen.add(it.run);
+      out.push(...items.filter((o) => o !== it && o.run === it.run));
+    }
+  }
+  return out;
+}
+
 export function QueueShelf({
   items,
   limit = 4,
 }: {
-  items: { name: string; mode: BoardMode | null; seedPath: string | null }[];
+  items: QueueItem[];
   limit?: number;
 }) {
-  const shown = items.slice(0, limit);
+  const shown = groupQueue(items).slice(0, limit);
   return (
     <div className="sys-shelf">
       <div className="flex items-baseline justify-between gap-md">
@@ -219,7 +332,10 @@ export function QueueShelf({
             const inner = (
               <>
                 <span className="text-sm font-semibold text-fg-primary leading-snug">{q.name}</span>
-                {q.mode && <span className="sys-pill self-start">{MODE_META[q.mode].label}</span>}
+                <span className="flex flex-wrap items-baseline gap-x-sm gap-y-xs">
+                  {q.mode && <span className="sys-pill self-start">{MODE_META[q.mode].label}</span>}
+                  {q.run && <span className="text-2xs text-fg-tertiary">run · {q.run}</span>}
+                </span>
               </>
             );
             return q.seedPath ? (

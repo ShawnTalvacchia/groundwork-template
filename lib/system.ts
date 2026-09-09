@@ -1169,6 +1169,9 @@ export interface QueuedSeed {
   mode: BoardMode; // badges the roadmap card
   queued: string | null;
   priority: string | null;
+  /** `run:` — the run this phase will join, or null. Rows sharing a run
+   *  read as one group on the roadmap and the queue shelf. */
+  run: string | null;
   noteCount: number;
 }
 
@@ -1195,6 +1198,7 @@ export function getQueuedSeeds(): QueuedSeed[] {
       mode: resolveMode(parsed.fm.mode),
       queued: parsed.fm.queued ?? null,
       priority: parsed.fm.priority ?? null,
+      run: parsed.fm.run?.trim() || null,
       noteCount: (notes.match(/^- /gm) ?? []).length,
     });
   }
@@ -1397,10 +1401,36 @@ export function boardName(title: string): string {
     .trim();
 }
 
+export type BoardStatus = "active" | "waiting";
+
+/** The kinds each mode's boards pass through, in sequence order — the
+ *  pipeline's own words (CONTRIBUTING § The phase pipeline), as a board
+ *  declares them in `stage:`. Hard-coded like MODE_META's labels: the canon
+ *  states the sequences in one prose sentence per mode, and a parser that
+ *  read them out of it would be the fragile prose-reading the declared
+ *  fields exist to avoid. The list orders a run's members and lets the drift
+ *  alarms check a declared stage. Queue-shaping runs one unnamed kind, so its
+ *  list is empty and a declared stage there is never checked. */
+export const MODE_KINDS: Record<BoardMode, string[]> = {
+  product: ["open", "build", "basic-layer", "survey", "deepen", "close"],
+  system: ["open", "build", "close"],
+  side: ["sweep", "research"],
+  "queue-shaping": [],
+};
+
 export interface ActivePhase {
   slug: string;
   title: string;
   mode: BoardMode;
+  /** `status:` as declared. A board with no field reads as active — boards
+   *  written before the field existed must render as they did; only an
+   *  unknown value is drift (`statusRaw` keeps it for the alarm). */
+  status: BoardStatus;
+  statusRaw: string | null;
+  /** `stage:` — the kind the board sits at, or null when undeclared. */
+  stage: string | null;
+  /** `run:` — the run this board belongs to, or null. */
+  run: string | null;
   workstreams: Workstream[];
   done: number;
   total: number;
@@ -1409,12 +1439,13 @@ export interface ActivePhase {
   body: string;
 }
 
-/** All open boards — at most one per mode (Work Model concurrency rule).
- *  Ordered by mode in the order the Levels line and the starters use —
- *  product · system · side · queue-shaping (MODE_META's own order) — so the
- *  board a reader meets first is chosen, not whatever readdir returned; ties
- *  (none, under the concurrency rule) fall back to the slug. Empty array =
- *  fully between boards. */
+/** All open boards — at most one *active* per mode (Work Model concurrency
+ *  rule; a run holds several waiting product boards). Ordered by mode in the
+ *  order the Levels line and the starters use — product · system · side ·
+ *  queue-shaping (MODE_META's own order) — so the board a reader meets first
+ *  is chosen, not whatever readdir returned; inside a mode the active board
+ *  leads, then the rest by slug. Grouping by run is `groupBoards`' job. Empty
+ *  array = fully between boards. */
 export function getActiveBoards(): ActivePhase[] {
   const dir = path.join(DOCS_DIR, "phases");
   if (!fs.existsSync(dir)) return [];
@@ -1448,10 +1479,15 @@ export function getActiveBoards(): ActivePhase[] {
     }
     const slug = file.replace(/\.md$/, "");
     const mode: BoardMode = resolveMode(parsed.fm.mode);
+    const statusRaw = parsed.fm.status?.trim() || null;
     boards.push({
       slug,
       title: stripMd(firstHeading(parsed.body) ?? slug),
       mode,
+      status: statusRaw === "waiting" ? "waiting" : "active",
+      statusRaw,
+      stage: parsed.fm.stage?.trim() || null,
+      run: parsed.fm.run?.trim() || null,
       workstreams,
       done,
       total,
@@ -1460,8 +1496,68 @@ export function getActiveBoards(): ActivePhase[] {
     });
   }
   const order = Object.keys(MODE_META) as BoardMode[];
+  const rank = (b: ActivePhase) => (b.status === "active" ? 0 : 1);
   return boards.sort(
-    (a, b) => order.indexOf(a.mode) - order.indexOf(b.mode) || a.slug.localeCompare(b.slug)
+    (a, b) =>
+      order.indexOf(a.mode) - order.indexOf(b.mode) || rank(a) - rank(b) || a.slug.localeCompare(b.slug)
+  );
+}
+
+/** Open boards, grouped for a surface that shows them together.
+ *
+ *  A standalone board is a group of one. Boards sharing a `run:` form one
+ *  group under the **run board** — the board whose name is the run's name
+ *  (the product mold's `run:` line names the run on every board of it, the
+ *  run board included, and a member's name is its chunk's, never the run's).
+ *  A run whose run board is not open still groups; the run name heads it.
+ *
+ *  Order: by mode, the group holding the active board first inside a mode,
+ *  then by name. Inside a run: active first, then by the mode's kind sequence
+ *  (MODE_KINDS) so a run reads as its pipeline, then by slug. */
+export interface BoardGroup {
+  mode: BoardMode;
+  /** The run's name, or null for a standalone board. */
+  run: string | null;
+  runBoard: ActivePhase | null;
+  /** The run's members (run board excluded), or the one standalone board. */
+  boards: ActivePhase[];
+}
+
+export function groupBoards(boards: ActivePhase[]): BoardGroup[] {
+  const order = Object.keys(MODE_META) as BoardMode[];
+  const groups: BoardGroup[] = [];
+  const byRun = new Map<string, BoardGroup>();
+  for (const b of boards) {
+    if (!b.run) {
+      groups.push({ mode: b.mode, run: null, runBoard: null, boards: [b] });
+      continue;
+    }
+    const key = `${b.mode}\u0000${b.run}`;
+    let g = byRun.get(key);
+    if (!g) {
+      g = { mode: b.mode, run: b.run, runBoard: null, boards: [] };
+      byRun.set(key, g);
+      groups.push(g);
+    }
+    if (boardName(b.title) === b.run && !g.runBoard) g.runBoard = b;
+    else g.boards.push(b);
+  }
+  const stageRank = (b: ActivePhase) => {
+    const i = b.stage ? MODE_KINDS[b.mode].indexOf(b.stage) : -1;
+    return i === -1 ? MODE_KINDS[b.mode].length : i;
+  };
+  const activeRank = (b: ActivePhase) => (b.status === "active" ? 0 : 1);
+  for (const g of groups) {
+    g.boards.sort((a, b) => activeRank(a) - activeRank(b) || stageRank(a) - stageRank(b) || a.slug.localeCompare(b.slug));
+  }
+  const holdsActive = (g: BoardGroup) =>
+    g.runBoard?.status === "active" || g.boards.some((b) => b.status === "active") ? 0 : 1;
+  const nameOf = (g: BoardGroup) => g.run ?? boardName(g.boards[0].title);
+  return groups.sort(
+    (a, b) =>
+      order.indexOf(a.mode) - order.indexOf(b.mode) ||
+      holdsActive(a) - holdsActive(b) ||
+      nameOf(a).localeCompare(nameOf(b))
   );
 }
 
