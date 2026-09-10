@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ReactNode } from "react";
 import type { ActivePhase, BoardGroup, BoardMode, Tier } from "@/lib/system";
-import { boardName, MODE_KINDS, MODE_META, TIER_META, headingSlug } from "@/lib/system";
+import { boardName, MODE_KINDS, MODE_META, TIER_META, headingSlug, stripMd } from "@/lib/system";
 import type { DriftAlarm } from "@/lib/derivation";
 
 /* Shared server-side UI for /system. Presentation only — no content. */
@@ -642,8 +642,18 @@ export function MdInline({
 
 
 /** The id a rendered heading gets: its text, slugged by the one shared
- *  function (lib/system.ts → headingSlug), so the inspector's deep links land. */
-function headingId(children: ReactNode): string {
+ *  function (lib/system.ts → headingSlug), so the inspector's deep links land.
+ *
+ *  `prefix` scopes the id to one document. /system/phase stacks every open
+ *  board — and, for a run, the run board's body plus every member board in
+ *  full — into a single document, so two boards with `## Items` emitted two
+ *  `id="items"` and every link to the second landed on the first. The docs
+ *  route renders one doc per page and passes no prefix, deliberately: its ids
+ *  are the destination of links written by hand across a project's docs (every
+ *  board mold's `../CONTRIBUTING.md#…`, `resolveDocHref`'s surviving #fragment,
+ *  the inspector's deep link into the patterns doc), and prefixing there would
+ *  break every one. */
+function headingId(children: ReactNode, prefix?: string): string {
   const textOf = (n: ReactNode): string => {
     if (typeof n === "string" || typeof n === "number") return String(n);
     if (Array.isArray(n)) return n.map(textOf).join("");
@@ -651,7 +661,120 @@ function headingId(children: ReactNode): string {
       return textOf((n as { props: { children?: ReactNode } }).props.children);
     return "";
   };
-  return headingSlug(textOf(children));
+  return scopedId(headingSlug(textOf(children)), prefix);
+}
+
+function scopedId(slug: string, prefix?: string): string {
+  return prefix ? `${prefix}-${slug}` : slug;
+}
+
+/** The `##` headings of a doc body, in order, each with the id DocProse will
+ *  stamp on it — the section index's source.
+ *
+ *  Two things this has to get right. It is **fence-aware**: a `## ` line inside
+ *  a code block is code, and the decisions log's Format block is the standing
+ *  instance — it holds a literal `## YYYY-MM-DD` example that is not a section.
+ *  And it slugs the SOURCE text where headingId slugs the RENDERED children, so
+ *  the two paths have to agree — stripMd is what makes them: it removes the
+ *  inline markup react-markdown would have turned into elements, leaving the
+ *  same plain text headingId sees. A link in a heading is the case that proves
+ *  it (`[a](b)` renders as "a", and stripMd yields "a"). Any inline form stripMd
+ *  does not know is a heading whose index entry will not land, so new inline
+ *  syntax in a heading belongs in that function, not in a second stripper. */
+export function docHeadings(body: string, prefix?: string): { id: string; text: string }[] {
+  const out: { id: string; text: string }[] = [];
+  let fence: string | null = null;
+  for (const line of body.split("\n")) {
+    const f = line.match(/^\s{0,3}(```+|~~~+)/);
+    if (f) {
+      if (fence === null) fence = f[1][0];
+      else if (f[1][0] === fence) fence = null;
+      continue;
+    }
+    if (fence !== null) continue;
+    // Exactly two hashes: `### foo` has no whitespace at position 2 and falls
+    // through. Trailing hashes are the closed-atx form markdown allows.
+    const m = line.match(/^##\s+(.*?)\s*#*\s*$/);
+    if (!m) continue;
+    const text = stripMd(m[1]);
+    if (!text) continue;
+    out.push({ id: scopedId(headingSlug(text), prefix), text });
+  }
+  return out;
+}
+
+/** What earns an index is LENGTH, and heading count is a bad proxy for it. The
+ *  first cut of this gated on `##` count alone and missed the docs the work was
+ *  named after — a roadmap or a lifecycle doc carrying four long sections lost
+ *  to a board mold carrying seven short ones. So the measure is the body, and
+ *  the heading count is only a floor: an index of two entries is not an index,
+ *  whatever the doc weighs.
+ *
+ *  The fold is the one threshold that IS a heading count, because what it sizes
+ *  is the index itself — a mature decisions log renders through here with
+ *  well over a hundred sections, and open, that index is the wall it exists to
+ *  fix. Folded it keeps its scannability and gives up being always-open, the
+ *  cheaper of the two.
+ *
+ *  All three are thresholds on DERIVED values, never an authored prop: the
+ *  surface's law is that a page renders what the docs say, and an opt-in flag
+ *  would leave every long doc one forgotten prop away from being a wall again. */
+const INDEX_MIN_BODY = 3000;
+const INDEX_MIN_HEADINGS = 3;
+const INDEX_FOLD_ABOVE = 20;
+
+/** The section index: the doc's own `##` headings as in-page links.
+ *
+ *  Inline and per-document, under whatever chrome the consumer puts above it —
+ *  the badge row on /system/phase, the frontmatter card on the docs route. Not
+ *  a sticky rail: `.sys-main` is a centred 880px column, so a rail means
+ *  breaking the column or overlaying it, and /system/phase stacks several
+ *  documents, so one rail would have to swap contents as the reader scrolls
+ *  between them.
+ *
+ *  A block list, never a flex one — a flex parent blockifies its children and
+ *  drops every marker. Markers are off here anyway, but the rule is about the
+ *  mechanism, not the bullet. */
+function DocIndex({
+  headings,
+  bodyLength,
+}: {
+  headings: { id: string; text: string }[];
+  bodyLength: number;
+}) {
+  if (headings.length < INDEX_MIN_HEADINGS || bodyLength < INDEX_MIN_BODY) return null;
+
+  const label = `Sections · ${headings.length}`;
+  const list = (
+    <ul className="sys-doc-index-list">
+      {headings.map((h) => (
+        <li key={h.id}>
+          <a href={`#${h.id}`}>{h.text}</a>
+        </li>
+      ))}
+    </ul>
+  );
+
+  return (
+    <nav className="sys-doc-index" aria-label="Sections">
+      {headings.length > INDEX_FOLD_ABOVE ? (
+        <details className="sys-details sys-details--solo">
+          <summary className="flex items-baseline gap-sm text-2xs text-fg-tertiary">
+            <span className="sys-caret" aria-hidden>
+              ›
+            </span>
+            {label}
+          </summary>
+          {list}
+        </details>
+      ) : (
+        <>
+          <p className="sys-doc-index-label">{label}</p>
+          {list}
+        </>
+      )}
+    </nav>
+  );
 }
 
 /** Doc prose rendered from markdown, with relative `.md` links resolved to
@@ -662,10 +785,20 @@ function headingId(children: ReactNode): string {
  *
  *  `docDir` is the doc's own directory relative to the docs root, so a link
  *  resolves the way it reads in the file: "phases" for a board, "." at root. */
-export function DocProse({ body, docDir }: { body: string; docDir: string }) {
+export function DocProse({
+  body,
+  docDir,
+  idPrefix,
+}: {
+  body: string;
+  docDir: string;
+  idPrefix?: string;
+}) {
   const resolveHref = (href: string) => resolveDocHref(href, docDir);
 
   return (
+    <>
+      <DocIndex headings={docHeadings(body, idPrefix)} bodyLength={body.length} />
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       // Raw HTML nodes hide instead of rendering as literal text — the
@@ -673,9 +806,9 @@ export function DocProse({ body, docDir }: { body: string; docDir: string }) {
       // Code spans/fences are unaffected (they aren't html nodes).
       skipHtml
       components={{
-        h2: ({ children }) => <h2 id={headingId(children)}>{children}</h2>,
-        h3: ({ children }) => <h3 id={headingId(children)}>{children}</h3>,
-        h4: ({ children }) => <h4 id={headingId(children)}>{children}</h4>,
+        h2: ({ children }) => <h2 id={headingId(children, idPrefix)}>{children}</h2>,
+        h3: ({ children }) => <h3 id={headingId(children, idPrefix)}>{children}</h3>,
+        h4: ({ children }) => <h4 id={headingId(children, idPrefix)}>{children}</h4>,
         a: ({ href, children }) => {
           const resolved = resolveHref(href ?? "");
           if (resolved.startsWith("/system/")) return <Link href={resolved}>{children}</Link>;
@@ -697,5 +830,6 @@ export function DocProse({ body, docDir }: { body: string; docDir: string }) {
     >
       {body}
     </ReactMarkdown>
+    </>
   );
 }

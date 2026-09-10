@@ -68,7 +68,7 @@ function BoardSection({ board, separated }: { board: ActivePhase; separated: boo
   return (
     <section
       id={board.slug}
-      className={`sys-board-anchor flex flex-col gap-md${separated ? " border-t border-edge-light pt-lg" : ""}`}
+      className={`flex flex-col gap-md${separated ? " border-t border-edge-light pt-lg" : ""}`}
     >
       <div className="flex items-center gap-sm flex-wrap">
         <span className="sys-pill">{MODE_META[board.mode].label}</span>
@@ -89,7 +89,11 @@ function BoardSection({ board, separated }: { board: ActivePhase; separated: boo
         </span>
       </div>
       <article className="sys-doc">
-        <DocProse body={board.body} docDir="phases" />
+        {/* `idPrefix` is the board's own slug: this page stacks every open
+            board into one document, so unprefixed heading ids collided —
+            two boards with `## Items` emitted two `id="items"` and the
+            section index of the second linked into the first. */}
+        <DocProse body={board.body} docDir="phases" idPrefix={board.slug} />
       </article>
     </section>
   );
@@ -153,14 +157,14 @@ export default function ActiveBoardPage() {
             key={`${g.mode}:${g.run}`}
             className={`flex flex-col gap-lg${separated ? " border-t border-edge-light pt-xl" : ""}`}
           >
-            <section id={g.runBoard?.slug} className="sys-board-anchor flex flex-col gap-md">
+            <section id={g.runBoard?.slug} className="flex flex-col gap-md">
               <RunHeader
                 group={g}
                 trailing={g.runBoard ? <WalkthroughLink board={g.runBoard} /> : null}
               />
               {g.runBoard && (
                 <article className="sys-doc">
-                  <DocProse body={g.runBoard.body} docDir="phases" />
+                  <DocProse body={g.runBoard.body} docDir="phases" idPrefix={g.runBoard.slug} />
                 </article>
               )}
             </section>

@@ -17,6 +17,19 @@
   overflow-y: auto;
   background: var(--surface-base);
   color: var(--text-primary);
+  /* Where a #fragment lands, set ONCE on the scroller rather than as
+     scroll-margin repeated on every anchorable thing. `.sys-chrome` above is
+     sticky at top: 0 inside this container, so anything landing above its
+     bottom edge is hidden underneath it. Measured: 164px at 375 and 1280,
+     167px at 768 — the nav and subtab rows, whose heights are content-driven.
+     176px clears the tallest with a little air.
+     This was two copies of `scroll-margin-top: 140px` — on the doc headings
+     and on a board-anchor class — and 140 was short of the real chrome by 24px
+     at every width, so every fragment landed tucked under the header. It stayed
+     invisible while jumping to a heading was rare; the section index made it a
+     hundred-plus links on one page. Change `.sys-chrome`'s rows and this number
+     is the thing to re-measure. */
+  scroll-padding-top: 176px;
 }
 
 .sys-layout h1,
@@ -539,19 +552,12 @@
   color: var(--text-primary);
 }
 
-/* A board section on /system/phase is a #fragment landing too — the Active
-   Board tiles link to their own board — and it sits outside .sys-doc, so it
-   needs the same clearance as the headings below. */
-.sys-board-anchor {
-  scroll-margin-top: 140px;
-}
-
 .sys-doc h1,
 .sys-doc h2,
 .sys-doc h3,
 .sys-doc h4 {
-  /* #fragment landings clear the sticky chrome (header + subtab band) */
-  scroll-margin-top: 140px;
+  /* Fragment clearance is the scroller's scroll-padding-top, not a margin
+     repeated here — see .sys-layout. */
   font-family: var(--font-heading), sans-serif;
   font-weight: var(--weight-semibold);
   margin: var(--space-6) 0 var(--space-2);
@@ -563,24 +569,110 @@
   margin-top: 0;
 }
 
+/* Three levels, three KINDS of mark — a band, a rule, an eyebrow — not three
+   sizes. Size alone had run out by the third level: h4 sat at --text-sm, the
+   body size, so a heading three levels down was indistinguishable from the
+   bold lead-ins docs open bullets with, and h2's 1px hairline lost to the list
+   rules and blockquote borders competing with it on a long board. */
+
+/* A boundary you can see without reading. --surface-chip is an overlay, so the
+   band steps off whatever surface it lands on. The negative inline margin keeps
+   the heading TEXT aligned with the body text while the band runs past it; the
+   hairline goes, because a band and a rule saying the same thing is the noise
+   this is fixing. */
 .sys-doc h2 {
   font-size: var(--text-xl);
+  padding: var(--space-2) var(--space-3);
+  margin-inline: calc(-1 * var(--space-3));
+  background: var(--surface-chip);
+  border-radius: var(--radius-sm);
+}
+
+/* The rule h2 gave up — right weight for a divider inside a section. */
+.sys-doc h3 {
+  font-size: var(--text-lg);
   padding-top: var(--space-2);
   border-top: 1px solid var(--border-light);
 }
 
-.sys-doc h3 {
-  font-size: var(--text-lg);
-}
-
+/* An eyebrow, not small bold body copy. Uppercase + tracking is a mark inline
+   `**bold**` cannot make, which is the whole problem at this level. */
 .sys-doc h4 {
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-secondary);
 }
 
 .sys-doc p,
 .sys-doc ul,
 .sys-doc ol {
   margin: 0 0 var(--space-3);
+}
+
+/* ── The section index (ui.tsx → DocIndex) ── */
+
+/* Chrome, not content: a label, the links, and a rule closing it off. No box —
+   a bordered panel at the top of an article reads as the first thing to READ,
+   and this is the thing you read INSTEAD of scrolling. Every selector carries
+   `.sys-doc` because the index renders inside it, and `.sys-doc ul`/`li + li`
+   would otherwise win on specificity and hand a nav list prose bullets. */
+.sys-doc .sys-doc-index {
+  margin: 0 0 var(--space-6);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.sys-doc .sys-doc-index-label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+}
+
+/* Two columns, because the index is scanned rather than read and one column of
+   a dozen board sections pushes the board itself below the fold. Block layout,
+   markers off, and the left padding that exists to make room for markers goes
+   with them (a flex parent would drop them anyway). */
+.sys-doc .sys-doc-index-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  columns: 2;
+  column-gap: var(--space-6);
+}
+
+@media (max-width: 640px) {
+  .sys-doc .sys-doc-index-list {
+    columns: 1;
+  }
+}
+
+.sys-doc .sys-doc-index-list li {
+  margin: 0;
+  break-inside: avoid;
+}
+
+.sys-doc .sys-doc-index-list a {
+  display: block;
+  padding: var(--space-1) 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.sys-doc .sys-doc-index-list a:hover {
+  color: var(--brand-main);
+  text-decoration: underline;
+}
+
+/* Folded, the list is the fold's body and the rule above it is the summary's
+   own — a second one would draw a line under a closed control. */
+.sys-doc .sys-doc-index > .sys-details .sys-doc-index-list {
+  margin-top: var(--space-2);
 }
 
 /* Block layout, not flex. A flex container blockifies its children, which drops
