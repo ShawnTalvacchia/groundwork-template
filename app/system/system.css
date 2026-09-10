@@ -304,13 +304,24 @@
   background: var(--surface-inset);
 }
 
+/* A filled chip, not an outlined one (2026-09-10). The outline shape could not
+   be saved by any token: `--border-regular` on `--surface-base` measured
+   1.07:1, `--border-stronger` 1.26, `--border-strongest` 2.83 — and an inset
+   FILL measured 1.07 too, because `--border-regular` and `--surface-inset` are
+   the same value. A fixed value can only separate from one surface, and these
+   pills sit on four. `--surface-chip` is an overlay instead, so the step is the
+   same wherever the chip lands: 1.45:1 in light, 1.58-1.69:1 in dark, against
+   1.07-1.57 before.
+   The 1px border stays in the box (transparent) so no pill changes size, and
+   the variants below still paint it — on the fill now, not on the page. */
 .sys-pill {
   display: inline-flex;
   align-items: center;
   padding: 0 var(--space-2);
   height: 20px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border-regular);
+  border: 1px solid transparent;
+  background: var(--surface-chip);
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
   color: var(--text-secondary);
@@ -320,14 +331,19 @@
 /* Tier ramp — solidity reads down the ladder without any pill jumping
    weight. (Bedrock previously used --text-primary: a near-black 1px line
    next to commitments' #e5e5e5 read as a *thicker* pill, not just a darker
-   one. Same 20px box, wildly different contrast.) */
+   one. Same 20px box, wildly different contrast.)
+   On the filled chip the FILL carries the neutral steps and the ring carries
+   only the coloured ones. A neutral ring cannot read at this scale: on the
+   chip's own fill, --border-strongest measures 1.15:1 and --border-stronger
+   1.07 — the same disappearance that killed the outline shape, one layer in.
+   So bedrock takes the heavy fill plus primary text (1.77:1 off the surface,
+   7.3-8.5 for its text) and commitments IS the regular chip — no rule of its
+   own, which is why `.sys-pill-tier-commitments` appears in the markup and
+   not here — while working and stale keep their rings, which read on the fill
+   at 4.4:1 and up. */
 .sys-pill-tier-bedrock {
-  border-color: var(--border-strongest);
+  background: var(--surface-chip-strong);
   color: var(--text-primary);
-}
-
-.sys-pill-tier-commitments {
-  border-color: var(--border-stronger);
 }
 
 .sys-pill-tier-working {

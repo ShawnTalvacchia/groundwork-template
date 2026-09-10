@@ -13,7 +13,13 @@ export type ButtonVariant = "primary" | "secondary" | "ghost";
 export type ButtonSize = "sm" | "md";
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: "bg-brand-main text-fg-white hover:bg-brand-strong border border-transparent",
+  // The primary label is fg-INVERSE, not fg-white. White on --brand-main
+  // measured 2.79:1 in dark, where the brand lifts to #d18a62 to stay readable
+  // AS text on dark surfaces — so darkening the ramp would break the brand's
+  // other job. fg-inverse already flips with the theme: it reads 6.38:1 on the
+  // light brand and 5.92:1 on the lifted dark one, hover states included
+  // (8.21 / 8.49).
+  primary: "bg-brand-main text-fg-inverse hover:bg-brand-strong border border-transparent",
   secondary:
     "bg-surface-top text-fg-primary border border-edge-stronger hover:bg-surface-inset",
   ghost: "bg-transparent text-fg-secondary border border-transparent hover:bg-surface-inset",

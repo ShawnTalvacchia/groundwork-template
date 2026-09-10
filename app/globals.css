@@ -265,6 +265,7 @@
   --transparent-light-4: rgba(255, 255, 255, 0.039);
   --transparent-light-8: rgba(255, 255, 255, 0.078);
   --transparent-light-16: rgba(255, 255, 255, 0.161);
+  --transparent-light-24: rgba(255, 255, 255, 0.239); /* the dark side of --transparent-dark-24 (added 2026-09-10 for --surface-chip-strong; the light ramp had no 24) */
   --transparent-light-32: rgba(255, 255, 255, 0.322);
   --transparent-light-40: rgba(255, 255, 255, 0.4);
   --transparent-light-64: rgba(255, 255, 255, 0.639);
@@ -282,6 +283,13 @@
   --surface-disabled: var(--neutral-300); /* #a7b0bb — disabled backgrounds */
   --surface-base-inverse: var(--neutral-800); /* #2c313a — dark inverse surfaces */
   --surface-neutral-dark: var(--neutral-900); /* #171b21 — deepest dark surfaces */
+  /* NEW 2026-09-10: a chip's fill, as a translucent step off whatever it sits
+     on rather than a fixed value. A solid token can only separate from ONE
+     surface — `--border-regular` and `--surface-inset` are the same value,
+     which is why the pill's outline vanished on inset cards. An overlay keeps
+     the same step on every surface it lands on. */
+  --surface-chip: var(--transparent-dark-16); /* 16% dark over the host surface */
+  --surface-chip-strong: var(--transparent-dark-24); /* the chip ladder's heavy step */
 
   /* ================================================
      SEMANTIC TOKENS — Brand
@@ -298,7 +306,7 @@
 
   --text-primary: var(--neutral-850); /* #21262e */
   --text-secondary: var(--neutral-700); /* #434a54 */
-  --text-tertiary: var(--neutral-500); /* #6b7280 */
+  --text-tertiary: var(--neutral-600); /* #565e6b — one rung down from neutral-500: 500 measured 4.08:1 on --surface-inset, under the 4.5 AA floor */
   --text-gray: var(--neutral-400); /* #8892a0 — inactive tabs, de-emphasized */
   --text-light: var(--neutral-300); /* #a7b0bb */
   --text-inverse: var(--neutral-25); /* #f7f8f9 */
@@ -566,6 +574,8 @@
   --surface-disabled: #282c32;
   --surface-base-inverse: #edeff2;
   --surface-neutral-dark: #090a0c;
+  --surface-chip: var(--transparent-light-16); /* lightens on dark, same step */
+  --surface-chip-strong: var(--transparent-light-24);
 
   /* ---- Text (light on dark) ---- */
   --text-primary: #edeff2;
