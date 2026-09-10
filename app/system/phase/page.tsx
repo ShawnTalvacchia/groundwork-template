@@ -80,19 +80,52 @@ export default function ActiveBoardPage() {
               {/* The walkthrough is where the PO's O and V items live, and
                   the board is long — a tertiary text link here was missed in
                   use (2026-09-10). A button, pushed to the row's end,
-                  carrying what it still asks. */}
+                  carrying what it still asks.
+                  Asking nothing, it stops being a button (2026-09-10): the
+                  counts are the whole reason for the emphasis, so at zero the
+                  loudest control on the row would be advertising that it
+                  wants nothing, beside boards that do. It keeps the href and
+                  the row-end position — an open board's walkthrough still
+                  holds the Decisions log the close reads, and the geometry
+                  staying put is what lets a reader scan several boards at
+                  once — and drops to the weight the link had before it
+                  earned the box. */}
               {board.walkthrough && (
                 <Link
                   href={`/system/docs/phases/${board.slug}-walkthrough.md`}
-                  className="sys-button ml-auto"
+                  className={
+                    board.walkthrough.calls + board.walkthrough.checks > 0
+                      ? "sys-button ml-auto"
+                      : "ml-auto text-xs text-fg-tertiary underline underline-offset-2"
+                  }
                 >
-                  Walkthrough
-                  <span className="font-normal text-fg-tertiary tabular-nums">
-                    {" · "}
-                    {board.walkthrough.calls} {board.walkthrough.calls === 1 ? "call" : "calls"} ·{" "}
-                    {board.walkthrough.checks} {board.walkthrough.checks === 1 ? "check" : "checks"}
-                  </span>
-                  {" →"}
+                  {board.walkthrough.calls + board.walkthrough.checks > 0 ? (
+                    <>
+                      Walkthrough
+                      <span className="font-normal text-fg-tertiary tabular-nums">
+                        {" · "}
+                        {board.walkthrough.calls} {board.walkthrough.calls === 1 ? "call" : "calls"} ·{" "}
+                        {board.walkthrough.checks} {board.walkthrough.checks === 1 ? "check" : "checks"}
+                      </span>
+                      {" →"}
+                    </>
+                  ) : (
+                    <>
+                      {/* `walked` is what makes this sentence worth writing:
+                          a walkthrough that passed nine checks says so, one
+                          that never asked anything says only its own name. */}
+                      walkthrough
+                      {board.walkthrough.walked > 0 && (
+                        <span className="tabular-nums">
+                          {" · walked ("}
+                          {board.walkthrough.walked}{" "}
+                          {board.walkthrough.walked === 1 ? "check" : "checks"}
+                          {")"}
+                        </span>
+                      )}
+                      {" →"}
+                    </>
+                  )}
                 </Link>
               )}
             </div>

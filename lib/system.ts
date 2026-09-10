@@ -1434,11 +1434,16 @@ export interface ActivePhase {
   workstreams: Workstream[];
   done: number;
   total: number;
-  /** What the walkthrough still asks of the PO: `calls` is its open O
-   *  items (`- **O1.` lines), `checks` its unwalked V items (`- [ ] **V`).
+  /** What the walkthrough still asks of the PO, and what it already got:
+   *  `calls` is its open O items (`- **O1.` lines), `checks` its unwalked V
+   *  items (`- [ ] **V`), `walked` the V items already passed (`- [x] **V`).
    *  Null when no walkthrough sibling exists. The counts are why the link
-   *  exists — the board is long and the O items are not on it. */
-  walkthrough: { calls: number; checks: number } | null;
+   *  exists — the board is long and the O items are not on it — so a
+   *  walkthrough asking nothing has no claim on the reader's attention, and
+   *  `walked` is what separates "walked clean" from "never asked": both
+   *  leave `calls` and `checks` at zero, and only one of them is worth
+   *  saying out loud. */
+  walkthrough: { calls: number; checks: number; walked: number } | null;
   /** The board in full — Work renders it here; it isn't a doc-page pointer. */
   body: string;
 }
@@ -1533,6 +1538,7 @@ function readWalkthroughCounts(file: string): ActivePhase["walkthrough"] {
   return {
     calls: (body.match(/^- \*\*O\d+\./gm) ?? []).length,
     checks: (body.match(/^- \[ \] \*\*V\d+/gm) ?? []).length,
+    walked: (body.match(/^- \[x\] \*\*V\d+/gim) ?? []).length,
   };
 }
 

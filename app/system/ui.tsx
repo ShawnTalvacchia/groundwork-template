@@ -190,6 +190,20 @@ function StagePill({ board }: { board: ActivePhase }) {
   );
 }
 
+/** A tile's second line: the tasks, and what the walkthrough still wants.
+ *  A walkthrough asking nothing drops the clause rather than printing a pair
+ *  of zeros — the card is a summary, and a summary that reports absence
+ *  costs the same glance as one that reports work. Its link is still on the
+ *  board's own page, at tertiary weight, which is where reachable belongs. */
+function boardDetail(board: ActivePhase): string {
+  const tasks = `${board.done}/${board.total} tasks`;
+  const w = board.walkthrough;
+  if (!w) return tasks;
+  if (w.calls + w.checks > 0)
+    return `${tasks} · walkthrough: ${w.calls} to call, ${w.checks} to check`;
+  return w.walked > 0 ? `${tasks} · walkthrough: walked` : tasks;
+}
+
 function BoardTile({ board }: { board: ActivePhase }) {
   const active = board.status === "active";
   return (
@@ -197,11 +211,7 @@ function BoardTile({ board }: { board: ActivePhase }) {
       href={`/system/phase#${board.slug}`}
       label={`${active ? "Active" : "Waiting"} · ${MODE_META[board.mode].label}`}
       value={boardName(board.title)}
-      detail={
-        board.walkthrough
-          ? `${board.done}/${board.total} tasks · walkthrough: ${board.walkthrough.calls} to call, ${board.walkthrough.checks} to check`
-          : `${board.done}/${board.total} tasks`
-      }
+      detail={boardDetail(board)}
       pill={<StagePill board={board} />}
       muted={!active}
     />
