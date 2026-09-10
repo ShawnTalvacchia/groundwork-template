@@ -77,12 +77,22 @@ export default function ActiveBoardPage() {
               <span className="text-xs text-fg-tertiary tabular-nums">
                 {board.done}/{board.total} tasks
               </span>
-              {board.hasWalkthrough && (
+              {/* The walkthrough is where the PO's O and V items live, and
+                  the board is long — a tertiary text link here was missed in
+                  use (2026-09-10). A button, pushed to the row's end,
+                  carrying what it still asks. */}
+              {board.walkthrough && (
                 <Link
                   href={`/system/docs/phases/${board.slug}-walkthrough.md`}
-                  className="text-xs text-fg-tertiary underline underline-offset-2"
+                  className="sys-button ml-auto"
                 >
-                  walkthrough →
+                  Walkthrough
+                  <span className="font-normal text-fg-tertiary tabular-nums">
+                    {" · "}
+                    {board.walkthrough.calls} {board.walkthrough.calls === 1 ? "call" : "calls"} ·{" "}
+                    {board.walkthrough.checks} {board.walkthrough.checks === 1 ? "check" : "checks"}
+                  </span>
+                  {" →"}
                 </Link>
               )}
             </div>

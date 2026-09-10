@@ -1434,7 +1434,11 @@ export interface ActivePhase {
   workstreams: Workstream[];
   done: number;
   total: number;
-  hasWalkthrough: boolean;
+  /** What the walkthrough still asks of the PO: `calls` is its open O
+   *  items (`- **O1.` lines), `checks` its unwalked V items (`- [ ] **V`).
+   *  Null when no walkthrough sibling exists. The counts are why the link
+   *  exists — the board is long and the O items are not on it. */
+  walkthrough: { calls: number; checks: number } | null;
   /** The board in full — Work renders it here; it isn't a doc-page pointer. */
   body: string;
 }
@@ -1491,7 +1495,7 @@ export function getActiveBoards(): ActivePhase[] {
       workstreams,
       done,
       total,
-      hasWalkthrough: fs.existsSync(path.join(dir, `${slug}-walkthrough.md`)),
+      walkthrough: readWalkthroughCounts(path.join(dir, `${slug}-walkthrough.md`)),
       body: parsed.body,
     });
   }
@@ -1521,6 +1525,15 @@ export interface BoardGroup {
   runBoard: ActivePhase | null;
   /** The run's members (run board excluded), or the one standalone board. */
   boards: ActivePhase[];
+}
+
+function readWalkthroughCounts(file: string): ActivePhase["walkthrough"] {
+  if (!fs.existsSync(file)) return null;
+  const body = fs.readFileSync(file, "utf-8");
+  return {
+    calls: (body.match(/^- \*\*O\d+\./gm) ?? []).length,
+    checks: (body.match(/^- \[ \] \*\*V\d+/gm) ?? []).length,
+  };
 }
 
 export function groupBoards(boards: ActivePhase[]): BoardGroup[] {
