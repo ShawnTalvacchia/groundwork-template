@@ -276,12 +276,33 @@ export function BoardCards({ groups }: { groups: BoardGroup[] }) {
   );
 }
 
-/** A run, as a shelf: the run board as the header — it holds the thesis, the
- *  survey's table and the roster, and is read at the survey and the close, the
- *  one board a reader does not open between, so it gets the name, its stage
- *  and a link, and no task count — then the members in a grid, which are the
- *  run's progress. */
-function RunShelf({ group: g }: { group: BoardGroup }) {
+/** A run's header row — the run board as the spine of its members.
+ *
+ *  Shared by the shelf on Overview and Work and by the run's section on
+ *  /system/phase, because the shape of a board is the same class of claim as
+ *  the order of one, and a second surface may not restate it differently.
+ *  /system/phase rendered the run board as a full peer section until this was
+ *  extracted, so the same run read as a shelf on two surfaces and as a stack
+ *  on the third.
+ *
+ *  It holds the thesis, the survey's table and the roster, and is read at the
+ *  survey and the close and never between — so it gets the name, its stage and
+ *  the count line, and **no task count**: its checkboxes are not the run's
+ *  progress. The member spread is.
+ *
+ *  `href` links the name (the shelf, pointing at the board page); omitted, the
+ *  name is plain text — on the board page the reader is already there.
+ *  `trailing` is where a surface adds its own control: the board page hangs
+ *  the walkthrough button there, and the shelf passes nothing. */
+export function RunHeader({
+  group: g,
+  href,
+  trailing,
+}: {
+  group: BoardGroup;
+  href?: string;
+  trailing?: ReactNode;
+}) {
   const active = g.boards.filter((b) => b.status === "active").length + (g.runBoard?.status === "active" ? 1 : 0);
   // The members by stage, in the mode's kind order — where the run
   // stands, which is what the run board's own task count never said.
@@ -293,22 +314,25 @@ function RunShelf({ group: g }: { group: BoardGroup }) {
     .join(" · ");
   const runActive = g.runBoard?.status === "active";
   return (
-    <div className="sys-run">
-      <div className="flex items-baseline justify-between gap-md flex-wrap">
-        <span className="flex items-baseline gap-sm flex-wrap">
-          <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">Run</span>
-          {g.runBoard ? (
-            <Link href={`/system/phase#${g.runBoard.slug}`} className="sys-run-head">
-              {g.run}
-            </Link>
-          ) : (
-            <span className="text-sm font-semibold text-fg-primary">{g.run}</span>
-          )}
-          {g.runBoard && <StagePill board={g.runBoard} />}
-          {runActive && (
-            <span className="text-2xs font-semibold uppercase tracking-wide text-brand-strong">active</span>
-          )}
-        </span>
+    <div className="flex items-center justify-between gap-md flex-wrap">
+      <span className="flex items-baseline gap-sm flex-wrap">
+        <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">Run</span>
+        {g.runBoard && href ? (
+          <Link href={href} className="sys-run-head">
+            {g.run}
+          </Link>
+        ) : (
+          /* Not .sys-run-head: that class carries a hover colour, and text
+             that changes on hover without going anywhere reads as a dead
+             link. Same size and weight, no hover. */
+          <span className="text-sm font-semibold text-fg-primary">{g.run}</span>
+        )}
+        {g.runBoard && <StagePill board={g.runBoard} />}
+        {runActive && (
+          <span className="text-2xs font-semibold uppercase tracking-wide text-brand-strong">active</span>
+        )}
+      </span>
+      <span className="flex items-center gap-md flex-wrap">
         {/* "none active" is said, not implied. A run whose members are all
             waiting is a real state — the run board can release the mode's
             active slot before any member takes it — and it used to render as
@@ -321,7 +345,18 @@ function RunShelf({ group: g }: { group: BoardGroup }) {
           {` · ${active > 0 ? `${active} active` : "none active"}`}
           {spread && ` · ${spread}`}
         </span>
-      </div>
+        {trailing}
+      </span>
+    </div>
+  );
+}
+
+/** A run, as a shelf: the header, then the members in a grid, which are the
+ *  run's progress. */
+function RunShelf({ group: g }: { group: BoardGroup }) {
+  return (
+    <div className="sys-run">
+      <RunHeader group={g} href={g.runBoard ? `/system/phase#${g.runBoard.slug}` : undefined} />
       {g.boards.length > 0 && (
         <div className="grid gap-sm grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
           {g.boards.map((b) => (
