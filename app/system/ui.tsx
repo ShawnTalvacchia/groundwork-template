@@ -237,67 +237,98 @@ export function BoardCards({ groups }: { groups: BoardGroup[] }) {
       </div>
     );
   }
-  const standalone = groups.filter((g) => !g.run);
-  const runs = groups.filter((g) => g.run);
+  // Groups render in `groupBoards`' order and nothing re-partitions them.
+  // Splitting standalone boards from runs and drawing all the tiles first
+  // discarded the mode order the parser had just established: on a project
+  // with a product run and an active system board, Work led with the system
+  // board while /system/phase led with the run, so a reader arriving from a
+  // card met the boards in a different order than the card listed them.
+  // Consecutive standalone groups still share one grid so two small tiles sit
+  // side by side; a run breaks the run of tiles, and the next tile starts a
+  // new grid.
+  const rows: ({ kind: "tiles"; groups: BoardGroup[] } | { kind: "run"; group: BoardGroup })[] = [];
+  for (const g of groups) {
+    if (g.run) {
+      rows.push({ kind: "run", group: g });
+      continue;
+    }
+    const last = rows[rows.length - 1];
+    if (last?.kind === "tiles") last.groups.push(g);
+    else rows.push({ kind: "tiles", groups: [g] });
+  }
   return (
     <div className="flex flex-col gap-md">
-      {standalone.length > 0 && (
-        <div className={`grid gap-md ${standalone.length > 1 ? "sm:grid-cols-2" : ""}`}>
-          {standalone.map((g) => (
-            <BoardTile key={g.boards[0].slug} board={g.boards[0]} />
+      {rows.map((row) =>
+        row.kind === "tiles" ? (
+          <div
+            key={`tiles:${row.groups[0].boards[0].slug}`}
+            className={`grid gap-md ${row.groups.length > 1 ? "sm:grid-cols-2" : ""}`}
+          >
+            {row.groups.map((g) => (
+              <BoardTile key={g.boards[0].slug} board={g.boards[0]} />
+            ))}
+          </div>
+        ) : (
+          <RunShelf key={`${row.group.mode}:${row.group.run}`} group={row.group} />
+        )
+      )}
+    </div>
+  );
+}
+
+/** A run, as a shelf: the run board as the header — it holds the thesis, the
+ *  survey's table and the roster, and is read at the survey and the close, the
+ *  one board a reader does not open between, so it gets the name, its stage
+ *  and a link, and no task count — then the members in a grid, which are the
+ *  run's progress. */
+function RunShelf({ group: g }: { group: BoardGroup }) {
+  const active = g.boards.filter((b) => b.status === "active").length + (g.runBoard?.status === "active" ? 1 : 0);
+  // The members by stage, in the mode's kind order — where the run
+  // stands, which is what the run board's own task count never said.
+  const kinds = MODE_KINDS[g.mode];
+  const spread = kinds
+    .map((k) => ({ k, n: g.boards.filter((b) => b.stage === k).length }))
+    .filter(({ n }) => n > 0)
+    .map(({ k, n }) => `${n} at ${k.replace(/-/g, " ")}`)
+    .join(" · ");
+  const runActive = g.runBoard?.status === "active";
+  return (
+    <div className="sys-run">
+      <div className="flex items-baseline justify-between gap-md flex-wrap">
+        <span className="flex items-baseline gap-sm flex-wrap">
+          <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">Run</span>
+          {g.runBoard ? (
+            <Link href={`/system/phase#${g.runBoard.slug}`} className="sys-run-head">
+              {g.run}
+            </Link>
+          ) : (
+            <span className="text-sm font-semibold text-fg-primary">{g.run}</span>
+          )}
+          {g.runBoard && <StagePill board={g.runBoard} />}
+          {runActive && (
+            <span className="text-2xs font-semibold uppercase tracking-wide text-brand-strong">active</span>
+          )}
+        </span>
+        {/* "none active" is said, not implied. A run whose members are all
+            waiting is a real state — the run board can release the mode's
+            active slot before any member takes it — and it used to render as
+            the absence of a clause beside a shelf of uniformly faded tiles,
+            which reads as a styling accident rather than a fact about the
+            run. Muting is relative, and relative to nothing it says nothing;
+            the count line is where the run already reports itself. */}
+        <span className="text-2xs text-fg-tertiary tabular-nums">
+          {g.boards.length} {g.boards.length === 1 ? "board" : "boards"}
+          {` · ${active > 0 ? `${active} active` : "none active"}`}
+          {spread && ` · ${spread}`}
+        </span>
+      </div>
+      {g.boards.length > 0 && (
+        <div className="grid gap-sm grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+          {g.boards.map((b) => (
+            <BoardTile key={b.slug} board={b} />
           ))}
         </div>
       )}
-      {runs.map((g) => {
-        const active = g.boards.filter((b) => b.status === "active").length + (g.runBoard?.status === "active" ? 1 : 0);
-        // The members by stage, in the mode's kind order — where the run
-        // stands, which is what the run board's own task count never said.
-        const kinds = MODE_KINDS[g.mode];
-        const spread = kinds
-          .map((k) => ({ k, n: g.boards.filter((b) => b.stage === k).length }))
-          .filter(({ n }) => n > 0)
-          .map(({ k, n }) => `${n} at ${k.replace(/-/g, " ")}`)
-          .join(" · ");
-        const runActive = g.runBoard?.status === "active";
-        return (
-          <div key={`${g.mode}:${g.run}`} className="sys-run">
-            {/* The run board is the shelf's header, not a tile among the
-                members: it holds the thesis, the survey's table and the
-                roster, and is read at the survey and the close — the one
-                board a reader does not open between. So it gets the name,
-                its stage and a link, and no task count; the members are
-                the run's progress. */}
-            <div className="flex items-baseline justify-between gap-md flex-wrap">
-              <span className="flex items-baseline gap-sm flex-wrap">
-                <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">Run</span>
-                {g.runBoard ? (
-                  <Link href={`/system/phase#${g.runBoard.slug}`} className="sys-run-head">
-                    {g.run}
-                  </Link>
-                ) : (
-                  <span className="text-sm font-semibold text-fg-primary">{g.run}</span>
-                )}
-                {g.runBoard && <StagePill board={g.runBoard} />}
-                {runActive && (
-                  <span className="text-2xs font-semibold uppercase tracking-wide text-brand-strong">active</span>
-                )}
-              </span>
-              <span className="text-2xs text-fg-tertiary tabular-nums">
-                {g.boards.length} {g.boards.length === 1 ? "board" : "boards"}
-                {active > 0 && ` · ${active} active`}
-                {spread && ` · ${spread}`}
-              </span>
-            </div>
-            {g.boards.length > 0 && (
-              <div className="grid gap-sm grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
-                {g.boards.map((b) => (
-                  <BoardTile key={b.slug} board={b} />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
     </div>
   );
 }
