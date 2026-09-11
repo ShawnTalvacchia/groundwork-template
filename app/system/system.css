@@ -317,24 +317,39 @@
   background: var(--surface-inset);
 }
 
-/* A filled chip, not an outlined one (2026-09-10). The outline shape could not
-   be saved by any token: `--border-regular` on `--surface-base` measured
-   1.07:1, `--border-stronger` 1.26, `--border-strongest` 2.83 — and an inset
-   FILL measured 1.07 too, because `--border-regular` and `--surface-inset` are
-   the same value. A fixed value can only separate from one surface, and these
-   pills sit on four. `--surface-chip` is an overlay instead, so the step is the
-   same wherever the chip lands: 1.45:1 in light, 1.58-1.69:1 in dark, against
-   1.07-1.57 before.
-   The 1px border stays in the box (transparent) so no pill changes size, and
-   the variants below still paint it — on the fill now, not on the page. */
+/* A chip that sits UP off its ground, not down into it (2026-09-11,
+   overturning P33's overlay of 2026-09-10 — see `decisions.md`).
+
+   P33 was right that no fixed BORDER value alone survives three surfaces,
+   and wrong to conclude the fill had to be an overlay. A dark overlay reads
+   recessed, and recessed plus muted text is the disabled signature: the chip
+   was seen and dismissed on a real board the day after it shipped. P33 had
+   named and rejected a stronger ring — "a dark ring on a 20px chip reads as
+   a heavier pill rather than a clearer one" — but judged it on an UNFILLED
+   chip, where the ring is the only mark. Bounding a raised fill it is an
+   edge, not an outline.
+
+   Fill and ring fail on opposite grounds and cover for each other, which is
+   what the overlay was reaching for and got by flattening both. The fill
+   vanishes on `--surface-top` (1.00:1) where the ring is 3.15; the ring
+   vanishes into `--surface-inset` where the fill carries. Strongest edge per
+   ground: 3.15 / 2.83 / 2.66 in light and 3.50 / 3.87 / 4.03 in dark,
+   against the overlay's flat 1.45 and 1.58-1.69 — plus a 3.15:1 (3.50 dark)
+   ring-against-fill edge that exists on every ground and that the overlay
+   had none of.
+
+   The text needs no token: `--text-secondary` reads 8.95:1 on this fill
+   against 5.22-6.16 on the overlay. Raising it was the fix for the symptom;
+   this is the fix for the cause. The 1px border keeps the box the same size
+   it has been — it is painted now rather than transparent. */
 .sys-pill {
   display: inline-flex;
   align-items: center;
   padding: 0 var(--space-2);
   height: 20px;
   border-radius: var(--radius-pill);
-  border: 1px solid transparent;
-  background: var(--surface-chip);
+  border: 1px solid var(--border-strongest);
+  background: var(--surface-top);
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
   color: var(--text-secondary);
@@ -342,20 +357,37 @@
 }
 
 /* Tier ramp — solidity reads down the ladder without any pill jumping
-   weight. (Bedrock previously used --text-primary: a near-black 1px line
-   next to commitments' #e5e5e5 read as a *thicker* pill, not just a darker
-   one. Same 20px box, wildly different contrast.)
-   On the filled chip the FILL carries the neutral steps and the ring carries
-   only the coloured ones. A neutral ring cannot read at this scale: on the
-   chip's own fill, --border-strongest measures 1.15:1 and --border-stronger
-   1.07 — the same disappearance that killed the outline shape, one layer in.
-   So bedrock takes the heavy fill plus primary text (1.77:1 off the surface,
-   7.3-8.5 for its text) and commitments IS the regular chip — no rule of its
-   own, which is why `.sys-pill-tier-commitments` appears in the markup and
-   not here — while working and stale keep their rings, which read on the fill
-   at 4.4:1 and up. */
+   weight. (Bedrock once used --text-primary as a near-black 1px line beside
+   commitments' #e5e5e5 ring: a 10x jump that read as a *thicker* pill, not a
+   darker one. That gap is what P33 closed by moving the neutral steps into
+   the fill, and it is gone for a different reason now — commitments' ring is
+   `--border-strongest` at 3.15:1, so a heavier bedrock ring is a step, not a
+   leap.)
+
+   The raised chip lets the RING carry every step again, neutral ones
+   included. P33 had to put the neutral steps in the fill because on its grey
+   overlay `--border-strongest` measured 1.15:1 and died one layer in; on
+   this fill the same token is 3.15:1 and `--text-tertiary` 6.54 (8.62 dark).
+   So bedrock is a heavier ring plus primary text (15.20:1 on the fill), and
+   commitments IS the regular chip — no rule of its own, which is why
+   `.sys-pill-tier-commitments` appears in the markup and not here.
+
+   Stale splits its ring from its text, the way working already splits
+   `--brand-main` from `--brand-strong`. P33's note claimed the coloured rings
+   read "at 4.4:1 and up" on its fill; that held for working's brand and never
+   for stale, whose amber measured **1.33:1** on the grey chip — invisible,
+   and unnoticed because nothing re-measured it. The raised fill alone takes
+   it to 2.15 and `--status-warning-strong` to 3.19: over the 3:1 floor for a
+   ring, under the 4.5 one for text. So the ring stays amber and the label
+   takes `--text-primary` (15.20:1).
+   The darker ramp step would have passed as text and was rejected on a
+   palette argument, not a contrast one: `--warning-850` is #78350f and
+   `--brand-strong` is #7a3818 — the same colour to the eye, so stale's label
+   would have been indistinguishable from working's. Amber in the ring is
+   independent of whatever brand an adopter sets; amber-dark text is not.
+   Working needs no change and gains anyway: 6.79 light, 5.92 dark. */
 .sys-pill-tier-bedrock {
-  background: var(--surface-chip-strong);
+  border-color: var(--text-tertiary);
   color: var(--text-primary);
 }
 
@@ -365,8 +397,8 @@
 }
 
 .sys-pill-stale {
-  border-color: var(--status-warning-main);
-  color: var(--status-warning-main);
+  border-color: var(--status-warning-strong);
+  color: var(--text-primary);
 }
 
 /* A small control that goes somewhere — the walkthrough link on a board's
@@ -409,7 +441,15 @@
 
 /* The one board a session is working. Brand, like the working tier's pill,
    because "active" and "working" are the same claim about a board; the
-   waiting boards around it keep the plain pill. */
+   waiting boards around it keep the plain pill.
+
+   Its RING is what out-ranks the plain chip, not its fill — and that is the
+   fix for the inversion the raised chip inherited. Against the old overlay
+   this pill was *fainter* than the neutral one it was meant to emphasize:
+   `--brand-subtle` is a ~4% tint and the chip under it was 16% dark. The
+   fill is kept for the tint (1.08:1 over the chip, a warmth rather than an
+   edge) and the brand ring carries the emphasis at 6.28:1 against it, twice
+   the neutral ring's 3.15. Its text reads 8.07:1. */
 .sys-pill-active {
   border-color: var(--brand-main);
   color: var(--brand-strong);

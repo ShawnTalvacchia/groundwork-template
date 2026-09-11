@@ -265,7 +265,7 @@
   --transparent-light-4: rgba(255, 255, 255, 0.039);
   --transparent-light-8: rgba(255, 255, 255, 0.078);
   --transparent-light-16: rgba(255, 255, 255, 0.161);
-  --transparent-light-24: rgba(255, 255, 255, 0.239); /* the dark side of --transparent-dark-24 (added 2026-09-10 for --surface-chip-strong; the light ramp had no 24) */
+  --transparent-light-24: rgba(255, 255, 255, 0.239); /* the dark side of --transparent-dark-24 — added 2026-09-10 for --surface-chip-strong, which is gone; kept because the two ramps are ladders and a missing rung is the defect it was added to fix */
   --transparent-light-32: rgba(255, 255, 255, 0.322);
   --transparent-light-40: rgba(255, 255, 255, 0.4);
   --transparent-light-64: rgba(255, 255, 255, 0.639);
@@ -289,7 +289,6 @@
      which is why the pill's outline vanished on inset cards. An overlay keeps
      the same step on every surface it lands on. */
   --surface-chip: var(--transparent-dark-16); /* 16% dark over the host surface */
-  --surface-chip-strong: var(--transparent-dark-24); /* the chip ladder's heavy step */
 
   /* ================================================
      SEMANTIC TOKENS — Brand
@@ -575,7 +574,6 @@
   --surface-base-inverse: #edeff2;
   --surface-neutral-dark: #090a0c;
   --surface-chip: var(--transparent-light-16); /* lightens on dark, same step */
-  --surface-chip-strong: var(--transparent-light-24);
 
   /* ---- Text (light on dark) ---- */
   --text-primary: #edeff2;
