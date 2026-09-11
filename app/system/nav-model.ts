@@ -23,6 +23,15 @@ export const GROUPS: SystemGroup[] = [
     blurb: "What needs to be done — phases, each in one mode and run through its rituals.",
     pages: [
       { slug: "phase", label: "Active board", blurb: "The open board(s) in full.", hidden: true },
+      {
+        slug: "walkthrough",
+        label: "Walkthrough",
+        // Under Work, not Structure: it is read during the build, as the
+        // phase's main action, and its way in is the board's callout. The
+        // file stays a doc like any other under Structure → Docs.
+        blurb: "A board's review doc, point by point — the calls waiting on you and the checks to drive.",
+        hidden: true,
+      },
       { slug: "roadmap", label: "Roadmap", blurb: "Where we are and what's queued.", hidden: true },
       { slug: "questions", label: "Questions", blurb: "Unresolved strategic questions, §-numbered by topic." },
       { slug: "punch-list", label: "Punch list", blurb: "Small fixes waiting for a sweep. Fixed rows are removed — commits are the record." },

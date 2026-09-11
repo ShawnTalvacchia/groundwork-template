@@ -5,11 +5,13 @@
 /* Standalone routes clip the document to the viewport (html/body height
    100%), so this layout is its own scroll container — same pattern as the
    styleguide's .sg-scroll. */
-/* Phosphor `Info`, regular weight, inlined as a mask source. Lives here rather
-   than in a component because the surfaces that need it are markdown, not JSX
-   (see .sys-doc blockquote below). */
+/* Phosphor `Info` and `Check`, regular weight, inlined as mask sources. They
+   live here rather than in a component because the surfaces that need them are
+   markdown or CSS-drawn, not JSX (see .sys-doc blockquote and .sys-wt-box
+   below) — the doc routes run `skipHtml`, so an inline <svg> is not an option. */
 .sys-layout {
   --sys-icon-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z'/%3E%3C/svg%3E");
+  --sys-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E");
 }
 
 .sys-layout {
@@ -441,6 +443,140 @@
 .sys-button:hover {
   background: var(--brand-strong);
   color: var(--text-inverse);
+}
+
+/* ── The walkthrough ── */
+
+/* The board's callout — the page's main action, as a card rather than the last
+   control on its densest row.
+
+   It sits UNDER the badge row for a reason the row itself proved: that strip
+   carries four labels, it sits directly above a section index, the board below
+   it runs several screens, and a run stacks those. A 24px button at the end of
+   that is the strongest control on the row and still too weak for what it is.
+   Full width is the change — the card cannot be scanned past at the one scroll
+   position where every board begins.
+
+   The brand LEFT EDGE is what marks it, not a brand fill: the card holds the
+   canon's own prose, and prose on a brand field is a banner. A 3px rule reads
+   as "this belongs to the thing beside it" at any width, and it is the same
+   mark the active pill makes with its ring — emphasis by edge, this surface's
+   settled answer. The button inside keeps the app's primary skin, so the
+   card's own weight and its control's do not compete.
+
+   Asking nothing, none of this renders: the callout drops to a tertiary line
+   (ui.tsx → WalkthroughCallout), because the counts are what earn the box. */
+.sys-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  padding: var(--space-4);
+  background: var(--surface-top);
+  border: 1px solid var(--border-light);
+  border-left: 3px solid var(--brand-main);
+  border-radius: var(--radius-panel);
+}
+
+/* Items, on the walkthrough page. A list that is a list of THINGS TO DO, so it
+   carries no markers: each row states its own state in its box, and a bullet
+   beside a checkbox is two marks for one row. */
+.sys-wt-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sys-wt-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--surface-top);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-panel);
+}
+
+/* A call is the loudest item on the page, and it earns that: it is a decision
+   the agent made alone, and the phase cannot close while one is open. Same
+   brand edge as the callout — one mark, used for one meaning. */
+.sys-wt-item--call {
+  border-left: 3px solid var(--brand-main);
+}
+
+/* A passed check sits back the way a waiting board's tile does: done is not
+   gone (the close reads it), it is just no longer the thing you are here for.
+   Muted, never disabled — the text keeps its colors. */
+.sys-wt-item[data-walked] {
+  background: var(--surface-inset);
+  border-color: var(--border-subtle);
+}
+
+/* The doc's own `[ ]` / `[x]`, drawn. The checkbox is a render of the file, not
+   a control: the PO walks items with the agent and the agent writes the file,
+   so a clickable box here would be a second, lying source of truth. */
+.sys-wt-box {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  /* --radius-tiny, not --radius-xs: 6px on a 14px box is a pill, and a round
+     checkbox is a radio button. The ramp's smallest step is the only one that
+     reads as a square this size. */
+  border-radius: var(--radius-tiny);
+  border: 1px solid var(--border-strongest);
+  background: var(--surface-top);
+}
+
+.sys-wt-box[data-on] {
+  position: relative;
+  border-color: var(--brand-main);
+  background: var(--brand-main);
+}
+
+/* The tick, masked from the same inlined Phosphor source the inset card's info
+   glyph uses — one home for both, at the top of this file. */
+.sys-wt-box[data-on]::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  background-color: var(--text-inverse);
+  -webkit-mask: var(--sys-icon-check) center / contain no-repeat;
+  mask: var(--sys-icon-check) center / contain no-repeat;
+}
+
+/* An O item has no box by rule — it is open, or it is gone. A dot holds the
+   box's column so a mixed list still reads as one ladder, and being round is
+   the point: it is the shape a checkbox is not. Smaller than the box, because
+   it marks rather than contains. */
+.sys-wt-open {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-main);
+}
+
+.sys-wt-note {
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--border-light);
+}
+
+/* Item bodies and the folded mold card: doc prose without a doc's vertical
+   rhythm, since here it is the inside of a row rather than the page. */
+.sys-doc--tight {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.sys-doc--tight p:last-child,
+.sys-doc--tight ul:last-child,
+.sys-doc--tight ol:last-child {
+  margin-bottom: 0;
 }
 
 /* The one board a session is working. Brand, like the working tier's pill,

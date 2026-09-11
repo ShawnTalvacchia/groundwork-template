@@ -67,10 +67,20 @@ export function SystemSubtabs() {
   if (!group) return null;
 
   const isDocDetail = pathname.startsWith("/system/docs/") && pathname !== "/system/docs";
+  // A walkthrough's way out is the BOARD, not the group overview: the board's
+  // callout is what sent the reader here, and it is where the two are walked
+  // side by side.
+  const isWalkthrough =
+    pathname.startsWith("/system/walkthrough/") && pathname !== "/system/walkthrough";
   const trail = isDocDetail
     ? {
         parent: { href: "/system/docs", label: "Docs" },
         current: decodeURIComponent(pathname.split("/").pop() ?? "").replace(/\.md$/, ""),
+      }
+    : isWalkthrough
+    ? {
+        parent: { href: "/system/phase", label: "Active board" },
+        current: "Walkthrough",
       }
     : page?.hidden
       ? {

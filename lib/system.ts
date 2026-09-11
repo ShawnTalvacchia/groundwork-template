@@ -452,6 +452,31 @@ export function getGlossary(): GlossaryTerm[] {
   return terms;
 }
 
+/** One glossary term's definition, first sentence only.
+ *
+ *  The canon's own one-line answer to "what is this?", for a surface that has
+ *  to say it somewhere other than the glossary page. Derivation, not chrome:
+ *  the board page's walkthrough callout renders this rather than an authored
+ *  restatement of the same rule, so a canon that changes changes the card.
+ *  Null when the term is absent — your glossary is yours, and a caller that can
+ *  render without the line should. */
+export function glossaryLede(term: string): string | null {
+  const found = getGlossary().find((t) => t.term === term);
+  if (!found) return null;
+  // The definitions are single-clause sentences with no abbreviations; the
+  // first `. ` is the sentence end, and a one-sentence definition has none.
+  const i = found.def.indexOf(". ");
+  const s = (i === -1 ? found.def : found.def.slice(0, i + 1)).trim();
+  if (!s) return null;
+  // A glossary definition continues its own term ("Walkthrough — a
+  // collaborative review doc…"), so it starts lowercase by convention. Lifted
+  // out of the list and set under a heading it is a sentence, and a lowercase
+  // first letter there reads as a typo. Casing one letter is formatting a
+  // value the doc supplied, the same move `areaLabel` makes on a doc's own
+  // area word — not the page supplying a word of its own.
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export interface WorkMode {
   key: BoardMode;
   label: string; // "The product phase"
@@ -1443,7 +1468,7 @@ export interface ActivePhase {
    *  `walked` is what separates "walked clean" from "never asked": both
    *  leave `calls` and `checks` at zero, and only one of them is worth
    *  saying out loud. */
-  walkthrough: { calls: number; checks: number; walked: number } | null;
+  walkthrough: WalkthroughCounts | null;
   /** The board in full — Work renders it here; it isn't a doc-page pointer. */
   body: string;
 }
@@ -1532,14 +1557,217 @@ export interface BoardGroup {
   boards: ActivePhase[];
 }
 
+/* ── The walkthrough, parsed ───────────────────────────────────────────────
+ *
+ * A walkthrough is read by someone *walking* it, not by someone reading a
+ * file, so it gets a parse and a page of its own rather than the generic doc
+ * viewer's flat prose.
+ *
+ * **It keys on the identifiers, never on the section headings.** `O##`,
+ * `V#.#` and `G##` are load-bearing across the docs, the molds, this code and
+ * the record — the same bargain the `P##` / `§N` / `FC##` schemes make — while
+ * "Open for your call" is a heading an adopter may rename. So the items are
+ * found by their ids wherever they sit, and the *page's* section headings are
+ * the doc's own `##` lines in the doc's own order. Renaming a section moves
+ * its name on the page and nothing else; deleting one (G, which the mold says
+ * to delete when a phase has none) renders nothing, correctly.
+ */
+
+/** One walked item, or an unidentified bullet in a section that has none
+ *  (the Decisions log, whose lines carry no scheme). */
+export interface WalkthroughItem {
+  /** `O1` · `V1.1` · `G1`, or null for a bullet carrying no identifier. */
+  id: string | null;
+  kind: "call" | "check" | "glance" | "note";
+  /** The rest of the bold run after the id — the item's one-line framing. */
+  title: string;
+  /** Everything after the bold run, markdown kept (URLs, Expect, evidence). */
+  body: string;
+  /** `[x]` vs `[ ]`. Null for O items and notes: an O item is a bullet, not a
+   *  checkbox — it is open, or it is gone (the mold's own rule). */
+  walked: boolean | null;
+}
+
+/** Items under one `### V1 — workstream` heading, or directly under the `##`. */
+export interface WalkthroughGroup {
+  heading: string | null;
+  items: WalkthroughItem[];
+}
+
+export interface WalkthroughSection {
+  /** The doc's own `##` text. */
+  heading: string;
+  id: string;
+  groups: WalkthroughGroup[];
+  /** Whatever in the section is neither a parsed bullet nor a `###` — the
+   *  mold's author card lands here rather than being silently dropped. */
+  prose: string;
+}
+
+export interface Walkthrough {
+  /** The BOARD's slug — the file is `<slug>-walkthrough.md`. */
+  slug: string;
+  title: string;
+  /** Everything between the h1 and the first `##` — the mold's "How this
+   *  works" card. Markdown kept. */
+  intro: string;
+  sections: WalkthroughSection[];
+  counts: WalkthroughCounts;
+}
+
+export interface WalkthroughCounts {
+  calls: number;
+  checks: number;
+  walked: number;
+  glances: number;
+}
+
+const ITEM_RE = /^\s*-\s+(?:\[([ xX])\]\s+)?\*\*(.+?)\*\*\s*(.*)$/;
+const ID_RE = /^(O\d+|V\d+(?:\.\d+)?|G\d+)[.:]?\s*/;
+
+function itemKind(id: string | null): WalkthroughItem["kind"] {
+  if (!id) return "note";
+  return id[0] === "O" ? "call" : id[0] === "V" ? "check" : "glance";
+}
+
+/** The counts the board surfaces quote, derived from the parse rather than
+ *  from a second pass of regexes over the same file: `calls` is the open O
+ *  items (they only leave the list by being deleted), `checks` the unwalked V
+ *  items, `walked` the passed ones. `walked` is what separates "walked clean"
+ *  from "never asked" — both leave calls and checks at zero, and only one of
+ *  them is worth saying out loud. */
+function countWalkthrough(sections: WalkthroughSection[]): WalkthroughCounts {
+  const c: WalkthroughCounts = { calls: 0, checks: 0, walked: 0, glances: 0 };
+  for (const s of sections)
+    for (const g of s.groups)
+      for (const it of g.items) {
+        if (it.kind === "call") c.calls += 1;
+        else if (it.kind === "check") it.walked ? (c.walked += 1) : (c.checks += 1);
+        else if (it.kind === "glance") c.glances += 1;
+      }
+  return c;
+}
+
+function parseWalkthrough(slug: string, raw: string): Walkthrough {
+  const { body } = parseFrontmatter(raw);
+  const title = stripMd(firstHeading(body) ?? slug);
+  const sections: WalkthroughSection[] = [];
+  let intro: string[] = [];
+  let section: WalkthroughSection | null = null;
+  let group: WalkthroughGroup | null = null;
+  let prose: string[] = [];
+  let fence: string | null = null;
+
+  const flushProse = () => {
+    if (section) section.prose = prose.join("\n").trim();
+    prose = [];
+  };
+
+  for (const line of body.split("\n")) {
+    // Fence-aware for the same reason docHeadings is: a `## ` or a `- **…**`
+    // inside a code block is code, and a walkthrough's evidence is often a
+    // fenced command output.
+    const f = line.match(/^\s{0,3}(```+|~~~+)/);
+    if (f) {
+      if (fence === null) fence = f[1][0];
+      else if (f[1][0] === fence) fence = null;
+      (section ? prose : intro).push(line);
+      continue;
+    }
+    if (fence !== null) {
+      (section ? prose : intro).push(line);
+      continue;
+    }
+
+    const h2 = line.match(/^##\s+(.*?)\s*#*\s*$/);
+    if (h2) {
+      flushProse();
+      const heading = stripMd(h2[1]);
+      section = { heading, id: headingSlug(heading), groups: [], prose: "" };
+      sections.push(section);
+      group = null;
+      continue;
+    }
+    if (!section) {
+      if (!/^#\s/.test(line)) intro.push(line);
+      continue;
+    }
+
+    const h3 = line.match(/^###\s+(.*?)\s*#*\s*$/);
+    if (h3) {
+      group = { heading: stripMd(h3[1]), items: [] };
+      section.groups.push(group);
+      continue;
+    }
+
+    const m = line.match(ITEM_RE);
+    if (m) {
+      const box = m[1];
+      const bold = m[2].trim();
+      const idm = bold.match(ID_RE);
+      const id = idm ? idm[1] : null;
+      if (!group) {
+        group = { heading: null, items: [] };
+        section.groups.push(group);
+      }
+      const kind = itemKind(id);
+      group.items.push({
+        id,
+        kind,
+        title: idm ? bold.slice(idm[0].length).trim() : bold,
+        body: m[3].trim(),
+        // An O item is a bullet by rule, so it has no box even if someone
+        // writes one; a note never had one.
+        walked: kind === "call" || kind === "note" ? null : box?.toLowerCase() === "x",
+      });
+      continue;
+    }
+
+    // A continuation line belongs to the item above it — evidence hung under
+    // a check is the case that matters, and dropping it would drop the proof.
+    const last = group?.items.at(-1);
+    if (last && /^\s+\S/.test(line)) {
+      last.body = `${last.body}\n${line.trim()}`.trim();
+      continue;
+    }
+    prose.push(line);
+  }
+  flushProse();
+  if (!section) intro = intro.concat(prose);
+
+  return {
+    slug,
+    title,
+    intro: intro.join("\n").replace(/^\s*-{3,}\s*$/gm, "").trim(),
+    sections,
+    counts: countWalkthrough(sections),
+  };
+}
+
+/** The walkthrough sibling of one board, or null when the board has none.
+ *  Absence is a legitimate state — most boards have no walkthrough until the
+ *  build commits, and an example project may have none at all. */
+export function getWalkthrough(slug: string): Walkthrough | null {
+  const file = path.join(DOCS_DIR, "phases", `${slug}-walkthrough.md`);
+  if (!fs.existsSync(file)) return null;
+  return parseWalkthrough(slug, fs.readFileSync(file, "utf-8"));
+}
+
+/** The board slugs that have a walkthrough — the walkthrough route's params.
+ *  Templates are excluded the same way `getActiveBoards` excludes them. */
+export function getWalkthroughSlugs(): string[] {
+  const dir = path.join(DOCS_DIR, "phases");
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith("-walkthrough.md") && !f.startsWith("_"))
+    .map((f) => f.replace(/-walkthrough\.md$/, ""))
+    .sort();
+}
+
 function readWalkthroughCounts(file: string): ActivePhase["walkthrough"] {
   if (!fs.existsSync(file)) return null;
-  const body = fs.readFileSync(file, "utf-8");
-  return {
-    calls: (body.match(/^- \*\*O\d+\./gm) ?? []).length,
-    checks: (body.match(/^- \[ \] \*\*V\d+/gm) ?? []).length,
-    walked: (body.match(/^- \[x\] \*\*V\d+/gim) ?? []).length,
-  };
+  return parseWalkthrough("", fs.readFileSync(file, "utf-8")).counts;
 }
 
 export function groupBoards(boards: ActivePhase[]): BoardGroup[] {

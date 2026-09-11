@@ -297,11 +297,9 @@ export function BoardCards({ groups }: { groups: BoardGroup[] }) {
 export function RunHeader({
   group: g,
   href,
-  trailing,
 }: {
   group: BoardGroup;
   href?: string;
-  trailing?: ReactNode;
 }) {
   const active = g.boards.filter((b) => b.status === "active").length + (g.runBoard?.status === "active" ? 1 : 0);
   // The members by stage, in the mode's kind order — where the run
@@ -345,8 +343,79 @@ export function RunHeader({
           {` · ${active > 0 ? `${active} active` : "none active"}`}
           {spread && ` · ${spread}`}
         </span>
-        {trailing}
       </span>
+    </div>
+  );
+}
+
+/** The walkthrough, as the board's own callout — the page's main action.
+ *
+ *  It is a full-width card under the badge row, not a control *on* it. The
+ *  badge row carried it as a 24px button at the end of a strip of four labels,
+ *  sitting above a section index, above a board that runs several screens —
+ *  and this page stacks every open board, so a run puts five of those in a
+ *  column. The page's main action cannot be the last item of its densest row.
+ *
+ *  **The lede is the canon's own, not ours.** It is the Glossary's Walkthrough
+ *  entry, first sentence, parsed by `glossaryLede` — so the card says why to
+ *  click in your project's own words and changes when your canon does. An
+ *  authored line here would be the surface restating a rule it does not own,
+ *  which is the failure the derived-never-authored law names.
+ *
+ *  **Asking nothing, it is not a card.** A walkthrough with no open calls and
+ *  no unwalked checks is not a button: the counts are the whole reason for the
+ *  emphasis, so at zero the loudest thing on the page would be advertising
+ *  that it wants nothing. It keeps the href and the slot, because an open
+ *  board's walkthrough still holds the Decisions log the close reads, and drops
+ *  to the weight the link had before it earned the box.
+ *
+ *  A board with no walkthrough sibling renders nothing at all. Most boards have
+ *  none until the build commits — absence is a state, not a gap. */
+export function WalkthroughCallout({
+  board,
+  lede,
+}: {
+  board: ActivePhase;
+  lede: string | null;
+}) {
+  const w = board.walkthrough;
+  if (!w) return null;
+  const href = `/system/walkthrough/${board.slug}`;
+  const asks = w.calls + w.checks > 0;
+
+  if (!asks) {
+    return (
+      <p className="text-xs text-fg-tertiary">
+        <Link href={href} className="underline underline-offset-2">
+          {/* `walked` is what makes this sentence worth writing: a walkthrough
+              that passed nine checks says so, one that never asked anything
+              says only its own name. */}
+          walkthrough
+          {w.walked > 0 && (
+            <span className="tabular-nums">
+              {` · walked (${w.walked} ${w.walked === 1 ? "check" : "checks"})`}
+            </span>
+          )}
+          {" →"}
+        </Link>
+      </p>
+    );
+  }
+
+  return (
+    <div className="sys-callout">
+      <div className="flex flex-col gap-tiny">
+        <p className="text-sm font-semibold text-fg-primary">Walkthrough</p>
+        {lede && <p className="max-w-[60ch] text-xs text-fg-secondary leading-snug">{lede}</p>}
+        <p className="text-xs text-fg-secondary tabular-nums">
+          {w.calls} {w.calls === 1 ? "call" : "calls"} open · {w.checks}{" "}
+          {w.checks === 1 ? "check" : "checks"} to walk
+          {w.walked > 0 && ` · ${w.walked} walked`}
+        </p>
+      </div>
+      <Link href={href} className="sys-button">
+        Walk it →
+      </Link>
     </div>
   );
 }
