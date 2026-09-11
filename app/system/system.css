@@ -380,11 +380,15 @@
    it to 2.15 and `--status-warning-strong` to 3.19: over the 3:1 floor for a
    ring, under the 4.5 one for text. So the ring stays amber and the label
    takes `--text-primary` (15.20:1).
-   The darker ramp step would have passed as text and was rejected on a
-   palette argument, not a contrast one: `--warning-850` is #78350f and
-   `--brand-strong` is #7a3818 — the same colour to the eye, so stale's label
-   would have been indistinguishable from working's. Amber in the ring is
-   independent of whatever brand an adopter sets; amber-dark text is not.
+   The darker ramp step passes as text and is still not where the colour
+   belongs, for a reason that depends on the ramp you set: on a warm brand
+   ramp `--warning-850` lands within a hair of `--brand-strong`, and stale's
+   label stops being distinguishable from the working tier's. On the indigo
+   this template ships they are far apart, so the darker label would read
+   fine here — the point is that it is not safe to assume either way. Amber
+   in the ring is independent of the brand; a dark amber label is not.
+   **If you change the brand ramp, measure `--warning-850` against
+   `--brand-strong` before moving stale's label onto it.**
    Working needs no change and gains anyway: 6.79 light, 5.92 dark. */
 .sys-pill-tier-bedrock {
   border-color: var(--text-tertiary);
