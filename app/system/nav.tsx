@@ -69,9 +69,19 @@ export function SystemSubtabs() {
   const isDocDetail = pathname.startsWith("/system/docs/") && pathname !== "/system/docs";
   // A walkthrough's way out is the BOARD, not the group overview: the board's
   // callout is what sent the reader here, and it is where the two are walked
-  // side by side.
+  // side by side. That is the board's own page, so the exit lands on the board
+  // itself rather than on a fragment in a stack of them.
   const isWalkthrough =
     pathname.startsWith("/system/walkthrough/") && pathname !== "/system/walkthrough";
+  // A board page's way out is Work's overview, the same parent every other
+  // hidden page under Work returns to — NOT `/phase`, which redirects back to
+  // this very board whenever it is the only one open. Work's Open boards
+  // section is also what "back from a board" should show: the rest of the set.
+  // The slug is the board's filename stem, shown verbatim the way a doc page
+  // shows its own — a title-cased version would be this component authoring a
+  // label, and it cannot read the board's h1 anyway (client component).
+  const isBoard = pathname.startsWith("/system/phase/") && pathname !== "/system/phase";
+  const slug = decodeURIComponent(pathname.split("/")[3] ?? "");
   const trail = isDocDetail
     ? {
         parent: { href: "/system/docs", label: "Docs" },
@@ -79,8 +89,13 @@ export function SystemSubtabs() {
       }
     : isWalkthrough
     ? {
-        parent: { href: "/system/phase", label: "Active board" },
+        parent: { href: `/system/phase/${slug}`, label: "Active board" },
         current: "Walkthrough",
+      }
+    : isBoard
+    ? {
+        parent: { href: `/system/${group.slug}`, label: "Overview" },
+        current: slug,
       }
     : page?.hidden
       ? {

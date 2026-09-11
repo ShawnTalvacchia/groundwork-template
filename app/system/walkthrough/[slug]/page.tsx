@@ -12,6 +12,7 @@ import {
   type WalkthroughSection,
 } from "@/lib/system";
 import { InsetNote, EmptyNote, MdInline, resolveDocHref } from "../../ui";
+import { slugParams } from "../../slug-params";
 
 /* The walkthrough, scoped for the person walking it.
  *
@@ -33,30 +34,13 @@ import { InsetNote, EmptyNote, MdInline, resolveDocHref } from "../../ui";
  * section without this page rendering a heading over nothing. Nothing on the
  * page names a section of the mold. */
 
-/** The slug that stands in for "this project has no walkthroughs yet."
- *
- *  A project on day one has none — the first one is written when the first
- *  build commits — and `generateStaticParams` returning `[]` prerenders the
- *  route for nothing at all, so it does not exist until a rebuild. One entry
- *  keeps the route real from the start; the page `notFound()`s it like any
- *  unknown slug.
- *
- *  It matters more than it looks wherever this route sits under another
- *  dynamic segment: Next composes a nested `generateStaticParams` across its
- *  parent's params, and a child returning `[]` for **any one** parent
- *  prerenders the route for **none** of them. `dynamicParams = true` does not
- *  rescue that — a statically enumerated parent has no fallback shell, so the
- *  request dies as `NoFallbackError`. A floor entry is what does.
- *
- *  It is a real path, so it must be one no board can claim: a board slug is a
- *  filename stem, and `__` is not a character `phases/*.md` ever starts with. */
-const NO_WALKTHROUGHS = "__none";
-
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  const slugs = getWalkthroughSlugs();
-  return (slugs.length > 0 ? slugs : [NO_WALKTHROUGHS]).map((slug) => ({ slug }));
+  // A project with no walkthroughs yet still yields one param — the sentinel
+  // this page `notFound()`s. `slug-params.ts` carries why: an empty result
+  // prerenders the route for nothing at all, and day one has no walkthroughs.
+  return slugParams(getWalkthroughSlugs());
 }
 
 /** Markdown inside one item — its evidence, its URL, its Expect line.
@@ -215,7 +199,7 @@ export default async function WalkthroughPage({
             what sent the reader here. The file stays reachable too: it is a doc
             like any other, and the doc route renders it as one. */}
         <p className="text-xs text-fg-tertiary">
-          <Link href={`/system/phase#${slug}`} className="underline underline-offset-2">
+          <Link href={`/system/phase/${slug}`} className="underline underline-offset-2">
             ← the board
           </Link>
           {" · "}

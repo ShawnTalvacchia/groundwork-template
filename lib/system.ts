@@ -1456,6 +1456,14 @@ export interface ActivePhase {
   stage: string | null;
   /** `run:` — the run this board belongs to, or null. */
   run: string | null;
+  /** V items sitting unwalked under the board's `## Deepening` section —
+   *  written by the basic layer and moved there at its close, walked by the
+   *  deepen kind. A **board** fact, not a walkthrough one: the items have left
+   *  the walkthrough by the time they are counted here, which is exactly why
+   *  a board whose walkthrough asks nothing can still have work outstanding.
+   *  Zero when the section is absent or holds no `V#.#` bullets — presence,
+   *  not count. */
+  deferred: number;
   workstreams: Workstream[];
   done: number;
   total: number;
@@ -1522,6 +1530,7 @@ export function getActiveBoards(): ActivePhase[] {
       statusRaw,
       stage: parsed.fm.stage?.trim() || null,
       run: parsed.fm.run?.trim() || null,
+      deferred: countDeferredV(parsed.body),
       workstreams,
       done,
       total,
@@ -1620,6 +1629,15 @@ export interface WalkthroughCounts {
   checks: number;
   walked: number;
   glances: number;
+  /** Bullets carrying no identifier — which is what the Decisions log is, and
+   *  in practice the only place they occur (the page already renders them
+   *  unornamented on exactly that reading). It is the count that makes a
+   *  walkthrough asking nothing worth a card: a basic layer that passed leaves
+   *  calls, checks and walked at zero and its decisions on the file, and
+   *  without this count the board said nothing over all of them. The limit is
+   *  the reading: an unidentified bullet written anywhere else counts here
+   *  too. */
+  notes: number;
 }
 
 const ITEM_RE = /^\s*-\s+(?:\[([ xX])\]\s+)?\*\*(.+?)\*\*\s*(.*)$/;
@@ -1630,6 +1648,30 @@ function itemKind(id: string | null): WalkthroughItem["kind"] {
   return id[0] === "O" ? "call" : id[0] === "V" ? "check" : "glance";
 }
 
+/** The V items a board is holding under `## Deepening` — written by the basic
+ *  layer, moved there unwalked at its close, walked by the deepen kind.
+ *
+ *  It lives here, beside the walkthrough parse, because what it recognises is
+ *  a **walkthrough item**: the same `- [ ] **V1.1 …**` line, read after it has
+ *  moved onto the board. Only the section is the board's, and that part is
+ *  keyed on the mold's heading rather than on an identifier — the one place
+ *  this file reads a board by heading other than `## Workstream` and the
+ *  closing checklist, which `getActiveBoards` already does for progress.
+ *
+ *  Presence-not-count, like the invariants: a standalone board deletes the
+ *  section (the mold says to), a member board carries it empty until the
+ *  survey writes it, and both read zero rather than firing anything. */
+function countDeferredV(body: string): number {
+  let n = 0;
+  for (const line of sectionOf(body, "Deepening").split("\n")) {
+    const m = line.match(ITEM_RE);
+    if (!m) continue;
+    const id = m[2].trim().match(ID_RE)?.[1];
+    if (id && itemKind(id) === "check") n += 1;
+  }
+  return n;
+}
+
 /** The counts the board surfaces quote, derived from the parse rather than
  *  from a second pass of regexes over the same file: `calls` is the open O
  *  items (they only leave the list by being deleted), `checks` the unwalked V
@@ -1637,13 +1679,14 @@ function itemKind(id: string | null): WalkthroughItem["kind"] {
  *  from "never asked" — both leave calls and checks at zero, and only one of
  *  them is worth saying out loud. */
 function countWalkthrough(sections: WalkthroughSection[]): WalkthroughCounts {
-  const c: WalkthroughCounts = { calls: 0, checks: 0, walked: 0, glances: 0 };
+  const c: WalkthroughCounts = { calls: 0, checks: 0, walked: 0, glances: 0, notes: 0 };
   for (const s of sections)
     for (const g of s.groups)
       for (const it of g.items) {
         if (it.kind === "call") c.calls += 1;
         else if (it.kind === "check") it.walked ? (c.walked += 1) : (c.checks += 1);
         else if (it.kind === "glance") c.glances += 1;
+        else c.notes += 1;
       }
   return c;
 }

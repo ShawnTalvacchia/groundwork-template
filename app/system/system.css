@@ -445,6 +445,43 @@
   color: var(--text-inverse);
 }
 
+/* The same box with none of the pull, for a control that is a destination
+   rather than an ask. It takes the raised chip's pair — `--surface-top` under
+   a painted `--border-strongest` ring, `--text-secondary` label — which is
+   `.sys-pill` exactly, so the two neutral marks on a board agree. Geometry
+   stays `.sys-button`'s: the slot is the same slot, and only its weight
+   changes with what it is asking for.
+
+   Source order is load-bearing: `.sys-button:hover` above matches at the same
+   specificity, so these must follow it. */
+.sys-button--quiet {
+  background: var(--surface-top);
+  border-color: var(--border-strongest);
+  color: var(--text-secondary);
+}
+
+.sys-button--quiet:hover {
+  background: var(--surface-top);
+  border-color: var(--text-tertiary);
+  color: var(--text-primary);
+}
+
+/* The tick, from the same inlined Phosphor source the checkbox and the inset
+   card's info glyph use — one home for all three, at the top of this file. It
+   takes `currentColor` rather than a token, so it travels with the label
+   through hover instead of needing its own pair. */
+.sys-button-check::before {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: var(--space-1);
+  vertical-align: -0.15em;
+  background-color: currentColor;
+  -webkit-mask: var(--sys-icon-check) center / contain no-repeat;
+  mask: var(--sys-icon-check) center / contain no-repeat;
+}
+
 /* ── The walkthrough ── */
 
 /* The board's callout — the page's main action, as a card rather than the last
@@ -464,8 +501,8 @@
    settled answer. The button inside keeps the app's primary skin, so the
    card's own weight and its control's do not compete.
 
-   Asking nothing, none of this renders: the callout drops to a tertiary line
-   (ui.tsx → WalkthroughCallout), because the counts are what earn the box. */
+   Asking nothing, the card stays and the brand goes — `.sys-callout--done`
+   below (ui.tsx → WalkthroughCallout). */
 .sys-callout {
   display: flex;
   align-items: center;
@@ -477,6 +514,17 @@
   border: 1px solid var(--border-light);
   border-left: 3px solid var(--brand-main);
   border-radius: var(--radius-panel);
+}
+
+/* A walkthrough that is done keeps the card and drops the brand.
+   The 3px brand edge is emphasis-by-edge for a card that WANTS the reader —
+   the same mark `.sys-pill-active` makes with its ring — and a walkthrough
+   with nothing left to walk is asking for nothing. It still reports (it holds
+   the decisions the close reads, and the V items the board deferred), so it
+   stays a card at the same size on the same ground, marked by the neutral ring
+   the rest of the board's chrome is drawn in. */
+.sys-callout--done {
+  border-left-color: var(--border-strongest);
 }
 
 /* Items, on the walkthrough page. A list that is a list of THINGS TO DO, so it

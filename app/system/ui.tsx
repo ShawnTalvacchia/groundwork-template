@@ -2,7 +2,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ReactNode } from "react";
-import type { ActivePhase, BoardGroup, BoardMode, Tier } from "@/lib/system";
+import type { ActivePhase, BoardGroup, BoardMode, Tier, WalkthroughCounts } from "@/lib/system";
 import { boardName, MODE_KINDS, MODE_META, TIER_META, headingSlug, stripMd } from "@/lib/system";
 import type { DriftAlarm } from "@/lib/derivation";
 
@@ -190,25 +190,54 @@ function StagePill({ board }: { board: ActivePhase }) {
   );
 }
 
-/** A tile's second line: the tasks, and what the walkthrough still wants.
- *  A walkthrough asking nothing drops the clause rather than printing a pair
- *  of zeros — the card is a summary, and a summary that reports absence
- *  costs the same glance as one that reports work. Its link is still on the
- *  board's own page, at tertiary weight, which is where reachable belongs. */
+/** Where a walkthrough stands, as one of four states — the classification the
+ *  board's callout and the cards' detail line both read, so the two can say it
+ *  in different numbers of words without ever disagreeing about which state it
+ *  is.
+ *
+ *  `asks` is the one that earns emphasis and always did. The other three are
+ *  what "asking nothing" was flattening into silence: a walkthrough that
+ *  **passed** its checks, one that passed **unattended** — items on the file,
+ *  decisions logged, no check ever written, which is precisely what a basic
+ *  layer leaves behind once its V items move to the board — and one still
+ *  **blank**, the normal state on the day a build starts. Only `blank` has
+ *  nothing to report, and it says so by reporting nothing. */
+type WalkthroughState = "asks" | "passed" | "unattended" | "blank";
+
+function walkthroughState(w: WalkthroughCounts): WalkthroughState {
+  if (w.calls + w.checks > 0) return "asks";
+  if (w.walked > 0) return "passed";
+  if (w.notes + w.glances > 0) return "unattended";
+  return "blank";
+}
+
+/** A tile's second line: the tasks, what the board deferred, and what its
+ *  walkthrough is holding — the same three facts the board's own callout
+ *  states, in fewer words, because a card is a summary.
+ *
+ *  A walkthrough asking nothing used to drop the clause entirely. It no longer
+ *  does: "asking nothing" and "holding nothing" are different states, and the
+ *  second is rare. A basic layer that passed leaves calls, checks and walked at
+ *  zero with its decisions on the file and its V items on the board, and the
+ *  tile said `4/9 tasks` over all of it (`walkthroughState`). */
 function boardDetail(board: ActivePhase): string {
-  const tasks = `${board.done}/${board.total} tasks`;
+  const parts = [`${board.done}/${board.total} tasks`];
+  if (board.deferred > 0) parts.push(`${board.deferred} deferred`);
   const w = board.walkthrough;
-  if (!w) return tasks;
-  if (w.calls + w.checks > 0)
-    return `${tasks} · walkthrough: ${w.calls} to call, ${w.checks} to check`;
-  return w.walked > 0 ? `${tasks} · walkthrough: walked` : tasks;
+  if (w) {
+    const state = walkthroughState(w);
+    if (state === "asks") parts.push(`walkthrough: ${w.calls} to call, ${w.checks} to check`);
+    else if (state === "passed") parts.push("walkthrough: passed");
+    else if (state === "unattended") parts.push("walkthrough: passed unattended");
+  }
+  return parts.join(" · ");
 }
 
 function BoardTile({ board }: { board: ActivePhase }) {
   const active = board.status === "active";
   return (
     <Tile
-      href={`/system/phase#${board.slug}`}
+      href={`/system/phase/${board.slug}`}
       label={`${active ? "Active" : "Waiting"} · ${MODE_META[board.mode].label}`}
       value={boardName(board.title)}
       detail={boardDetail(board)}
@@ -290,10 +319,16 @@ export function BoardCards({ groups }: { groups: BoardGroup[] }) {
  *  the count line, and **no task count**: its checkboxes are not the run's
  *  progress. The member spread is.
  *
- *  `href` links the name (the shelf, pointing at the board page); omitted, the
- *  name is plain text — on the board page the reader is already there.
- *  `trailing` is where a surface adds its own control: the board page hangs
- *  the walkthrough button there, and the shelf passes nothing. */
+ *  **It carries no thesis line.** A run's name does not say what the run is
+ *  for, but the header renders on several surfaces, and quoting the run
+ *  board's `Goal:` on each would restate a sentence the run board states once
+ *  — one home, many references. The reference is the name, which is a link to
+ *  the board that holds it.
+ *
+ *  `href` links the name; omitted, the name is plain text — which is the case
+ *  on the run board's own page, where the reader is already there. Everywhere
+ *  else it points at that page. It carries no control slot: the walkthrough
+ *  is a callout of its own under the badge row, never a control on it. */
 export function RunHeader({
   group: g,
   href,
@@ -352,69 +387,80 @@ export function RunHeader({
  *
  *  It is a full-width card under the badge row, not a control *on* it. The
  *  badge row carried it as a 24px button at the end of a strip of four labels,
- *  sitting above a section index, above a board that runs several screens —
- *  and this page stacks every open board, so a run puts five of those in a
- *  column. The page's main action cannot be the last item of its densest row.
+ *  sitting above a section index, above a board that runs several screens.
+ *  The page's main action cannot be the last item of its densest row.
  *
- *  **The lede is the canon's own, not ours.** It is the Glossary's Walkthrough
- *  entry, first sentence, parsed by `glossaryLede` — so the card says why to
- *  click in your project's own words and changes when your canon does. An
- *  authored line here would be the surface restating a rule it does not own,
- *  which is the failure the derived-never-authored law names.
+ *  **It carries no definition.** The counts say why to click, and a two-line
+ *  definition sitting between the board's badge row and its body is the reader
+ *  paying for context they have on every board they open. The line keeps its
+ *  home on the walkthrough page itself, under the h1, where a page subtitle
+ *  belongs and a reader meets it once (`glossaryLede`).
  *
- *  **Asking nothing, it is not a card.** A walkthrough with no open calls and
- *  no unwalked checks is not a button: the counts are the whole reason for the
+ *  **Asking nothing is not the same as holding nothing**, and the difference is
+ *  what this card states. A walkthrough with no open calls and no unwalked
+ *  checks is not a *button* — the counts are the whole reason for the
  *  emphasis, so at zero the loudest thing on the page would be advertising
- *  that it wants nothing. It keeps the href and the slot, because an open
- *  board's walkthrough still holds the Decisions log the close reads, and drops
- *  to the weight the link had before it earned the box.
+ *  that it wants nothing. So at zero the action drops to a chip. But the card
+ *  stays: a basic layer that passed reads `0 · 0 · 0` with its decisions on
+ *  the file and its V items moved to the board, and a bare link over all of
+ *  that is silence about work still owed. The card reports what it derived:
+ *  the state, the decisions logged, and the V items the board is holding for
+ *  the deepen kind (`walkthroughState`, `ActivePhase.deferred`). A **blank**
+ *  walkthrough — the normal state on the day a build starts — reports only
+ *  its name, because there is nothing yet to report.
  *
  *  A board with no walkthrough sibling renders nothing at all. Most boards have
  *  none until the build commits — absence is a state, not a gap. */
-export function WalkthroughCallout({
-  board,
-  lede,
-}: {
-  board: ActivePhase;
-  lede: string | null;
-}) {
+export function WalkthroughCallout({ board }: { board: ActivePhase }) {
   const w = board.walkthrough;
   if (!w) return null;
   const href = `/system/walkthrough/${board.slug}`;
-  const asks = w.calls + w.checks > 0;
+  const state = walkthroughState(w);
 
-  if (!asks) {
-    return (
-      <p className="text-xs text-fg-tertiary">
-        <Link href={href} className="underline underline-offset-2">
-          {/* `walked` is what makes this sentence worth writing: a walkthrough
-              that passed nine checks says so, one that never asked anything
-              says only its own name. */}
-          walkthrough
-          {w.walked > 0 && (
-            <span className="tabular-nums">
-              {` · walked (${w.walked} ${w.walked === 1 ? "check" : "checks"})`}
-            </span>
-          )}
-          {" →"}
-        </Link>
-      </p>
-    );
+  // What the file says right now, in the register its state earns. The
+  // clauses are joined the way the badge row's are, so a reader meets one
+  // grammar across the board's chrome. The completion itself is the control's
+  // to say, not this line's — so `passed` is absent here and `unattended`
+  // survives as the qualifier, which is the half a chip reading `completed`
+  // cannot carry.
+  const clauses: string[] = [];
+  if (state === "asks") {
+    clauses.push(`${w.calls} ${w.calls === 1 ? "call" : "calls"} open`);
+    clauses.push(`${w.checks} ${w.checks === 1 ? "check" : "checks"} to walk`);
+    if (w.walked > 0) clauses.push(`${w.walked} walked`);
+  } else if (state !== "blank") {
+    if (state === "passed") clauses.push(`${w.walked} walked`);
+    else clauses.push("unattended");
+    if (w.notes > 0) clauses.push(`${w.notes} ${w.notes === 1 ? "decision" : "decisions"} logged`);
   }
+  // The deferred items are the board's, not the walkthrough's — they left the
+  // file when the basic layer closed. They are named here because this is
+  // where a reader asks what is still owed, and nowhere else on the board says.
+  if (state !== "asks" && board.deferred > 0)
+    clauses.push(`${board.deferred} V ${board.deferred === 1 ? "item" : "items"} deferred`);
 
+  const asks = state === "asks";
   return (
-    <div className="sys-callout">
+    <div className={`sys-callout${asks ? "" : " sys-callout--done"}`}>
       <div className="flex flex-col gap-tiny">
         <p className="text-sm font-semibold text-fg-primary">Walkthrough</p>
-        {lede && <p className="max-w-[60ch] text-xs text-fg-secondary leading-snug">{lede}</p>}
-        <p className="text-xs text-fg-secondary tabular-nums">
-          {w.calls} {w.calls === 1 ? "call" : "calls"} open · {w.checks}{" "}
-          {w.checks === 1 ? "check" : "checks"} to walk
-          {w.walked > 0 && ` · ${w.walked} walked`}
-        </p>
+        {clauses.length > 0 && (
+          <p className="text-xs text-fg-secondary tabular-nums">{clauses.join(" · ")}</p>
+        )}
       </div>
-      <Link href={href} className="sys-button">
-        Walk it →
+      {/* One slot, one control, three weights — the label and the skin both
+          derive from the state, so the card never asks for a walk it does not
+          want. A **blank** walkthrough gets no tick: nothing has been completed
+          yet, and a check over an empty file is the one thing this card must
+          not claim. It keeps the href in every state, because an open board's
+          walkthrough still holds the Decisions log the close reads. */}
+      <Link
+        href={href}
+        className={
+          asks ? "sys-button" : `sys-button sys-button--quiet${state === "blank" ? "" : " sys-button-check"}`
+        }
+      >
+        {asks ? "Walk it →" : state === "blank" ? "read it →" : "completed"}
       </Link>
     </div>
   );
@@ -425,7 +471,7 @@ export function WalkthroughCallout({
 function RunShelf({ group: g }: { group: BoardGroup }) {
   return (
     <div className="sys-run">
-      <RunHeader group={g} href={g.runBoard ? `/system/phase#${g.runBoard.slug}` : undefined} />
+      <RunHeader group={g} href={g.runBoard ? `/system/phase/${g.runBoard.slug}` : undefined} />
       {g.boards.length > 0 && (
         <div className="grid gap-sm grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
           {g.boards.map((b) => (
@@ -713,16 +759,16 @@ export function MdInline({
 /** The id a rendered heading gets: its text, slugged by the one shared
  *  function (lib/system.ts → headingSlug), so the inspector's deep links land.
  *
- *  `prefix` scopes the id to one document. /system/phase stacks every open
- *  board — and, for a run, the run board's body plus every member board in
- *  full — into a single document, so two boards with `## Items` emitted two
- *  `id="items"` and every link to the second landed on the first. The docs
- *  route renders one doc per page and passes no prefix, deliberately: its ids
- *  are the destination of links written by hand across a project's docs (every
- *  board mold's `../CONTRIBUTING.md#…`, `resolveDocHref`'s surviving #fragment,
- *  the inspector's deep link into the patterns doc), and prefixing there would
- *  break every one. */
-function headingId(children: ReactNode, prefix?: string): string {
+ *  Unprefixed on both consumers, because both render **one document per
+ *  page**. It took a `prefix` while `/system/phase` stacked every open board
+ *  into a single document, where two boards with `## Items` emitted two
+ *  `id="items"` and every link to the second landed on the first. A board's
+ *  home is its own page now, so the collision has no way to occur; unprefixed
+ *  also means one board's `#items` is the same address in the docs viewer and
+ *  on its board page, which is the property hand-written fragments across a
+ *  project's docs (every board mold's `../CONTRIBUTING.md#…`, the inspector's
+ *  deep link into the patterns doc) have always assumed. */
+function headingId(children: ReactNode): string {
   const textOf = (n: ReactNode): string => {
     if (typeof n === "string" || typeof n === "number") return String(n);
     if (Array.isArray(n)) return n.map(textOf).join("");
@@ -730,11 +776,7 @@ function headingId(children: ReactNode, prefix?: string): string {
       return textOf((n as { props: { children?: ReactNode } }).props.children);
     return "";
   };
-  return scopedId(headingSlug(textOf(children)), prefix);
-}
-
-function scopedId(slug: string, prefix?: string): string {
-  return prefix ? `${prefix}-${slug}` : slug;
+  return headingSlug(textOf(children));
 }
 
 /** The `##` headings of a doc body, in order, each with the id DocProse will
@@ -750,7 +792,7 @@ function scopedId(slug: string, prefix?: string): string {
  *  it (`[a](b)` renders as "a", and stripMd yields "a"). Any inline form stripMd
  *  does not know is a heading whose index entry will not land, so new inline
  *  syntax in a heading belongs in that function, not in a second stripper. */
-export function docHeadings(body: string, prefix?: string): { id: string; text: string }[] {
+export function docHeadings(body: string): { id: string; text: string }[] {
   const out: { id: string; text: string }[] = [];
   let fence: string | null = null;
   for (const line of body.split("\n")) {
@@ -767,7 +809,7 @@ export function docHeadings(body: string, prefix?: string): { id: string; text: 
     if (!m) continue;
     const text = stripMd(m[1]);
     if (!text) continue;
-    out.push({ id: scopedId(headingSlug(text), prefix), text });
+    out.push({ id: headingSlug(text), text });
   }
   return out;
 }
@@ -857,17 +899,15 @@ function DocIndex({
 export function DocProse({
   body,
   docDir,
-  idPrefix,
 }: {
   body: string;
   docDir: string;
-  idPrefix?: string;
 }) {
   const resolveHref = (href: string) => resolveDocHref(href, docDir);
 
   return (
     <>
-      <DocIndex headings={docHeadings(body, idPrefix)} bodyLength={body.length} />
+      <DocIndex headings={docHeadings(body)} bodyLength={body.length} />
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       // Raw HTML nodes hide instead of rendering as literal text — the
@@ -875,9 +915,9 @@ export function DocProse({
       // Code spans/fences are unaffected (they aren't html nodes).
       skipHtml
       components={{
-        h2: ({ children }) => <h2 id={headingId(children, idPrefix)}>{children}</h2>,
-        h3: ({ children }) => <h3 id={headingId(children, idPrefix)}>{children}</h3>,
-        h4: ({ children }) => <h4 id={headingId(children, idPrefix)}>{children}</h4>,
+        h2: ({ children }) => <h2 id={headingId(children)}>{children}</h2>,
+        h3: ({ children }) => <h3 id={headingId(children)}>{children}</h3>,
+        h4: ({ children }) => <h4 id={headingId(children)}>{children}</h4>,
         a: ({ href, children }) => {
           const resolved = resolveHref(href ?? "");
           if (resolved.startsWith("/system/")) return <Link href={resolved}>{children}</Link>;

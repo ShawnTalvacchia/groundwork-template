@@ -22,7 +22,14 @@ export const GROUPS: SystemGroup[] = [
     label: "Work",
     blurb: "What needs to be done — phases, each in one mode and run through its rituals.",
     pages: [
-      { slug: "phase", label: "Active board", blurb: "The open board(s) in full.", hidden: true },
+      {
+        slug: "phase",
+        label: "Active board",
+        // The index, not the boards: each board is a page of its own under
+        // this one, which is what the slug segment below it renders.
+        blurb: "Every open board, each one page away.",
+        hidden: true,
+      },
       {
         slug: "walkthrough",
         label: "Walkthrough",

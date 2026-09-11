@@ -1,69 +1,41 @@
 import Link from "next/link";
-import { getActiveBoards, getRoadmap, glossaryLede, groupBoards, MODE_META, type ActivePhase } from "@/lib/system";
-import { MdInline, PageIntro, DocProse, RunHeader, WalkthroughCallout } from "../ui";
+import { redirect } from "next/navigation";
+import { getActiveBoards, getRoadmap, groupBoards } from "@/lib/system";
+import { MdInline, PageIntro, BoardCards } from "../ui";
 
-// The board in full — this IS its home. Work owns it; it isn't a summary
-// pointing at a doc page. (The breadcrumb row is the way back out.)
-
-/** One board, in full, under its own badge row.
+/* The open boards, as an index — one entry per board, each linking to the
+ * board's own page.
  *
- *  The `id` is what the Active Board tiles on the hub and Work link to:
- *  without it every tile landed at the top of the page, so with two boards
- *  open a card naming one of them scrolled the reader to the other.
+ * It used to render every board in full, stacked into one document: a run of
+ * several members ran to many screens, and a card naming a member landed its
+ * reader on a `#fragment` buried under the run board's whole body. A board is
+ * a document, so a board gets a page; this is the way in to them.
  *
- *  No `run ·` clause: a board that declares a run is always rendered inside
- *  its run's group, whose header already names it (`groupBoards`). Restating
- *  it here is the same second-surface duplication this page's run rendering
- *  exists to remove. */
-function BoardSection({ board, separated, lede }: { board: ActivePhase; separated: boolean; lede: string | null }) {
-  return (
-    <section
-      id={board.slug}
-      className={`flex flex-col gap-md${separated ? " border-t border-edge-light pt-lg" : ""}`}
-    >
-      <div className="flex items-center gap-sm flex-wrap">
-        <span className="sys-pill">{MODE_META[board.mode].label}</span>
-        {/* The board's place in its phase, from the fields it declares: the
-            stage it sits at, and whether a session is working it. Brand on the
-            active board's stage, the same mark the hub's cards carry. */}
-        {board.stage && (
-          <span className={`sys-pill${board.status === "active" ? " sys-pill-active" : ""}`}>
-            {board.stage.replace(/-/g, " ")}
-          </span>
-        )}
-        <span className="text-2xs uppercase tracking-wide text-fg-tertiary">{board.status}</span>
-        <span className="text-xs text-fg-tertiary tabular-nums">
-          {board.done}/{board.total} tasks
-        </span>
-      </div>
-      {/* The page's main action, below the row rather than at the end of it —
-          the row is four labels wide and sits above a board of several screens,
-          and a run stacks those. */}
-      <WalkthroughCallout board={board} lede={lede} />
-      <article className="sys-doc">
-        {/* `idPrefix` is the board's own slug: this page stacks every open
-            board into one document, so unprefixed heading ids collided —
-            two boards with `## Items` emitted two `id="items"` and the
-            section index of the second linked into the first. */}
-        <DocProse body={board.body} docDir="phases" idPrefix={board.slug} />
-      </article>
-    </section>
-  );
-}
+ * **It is `BoardCards`, not a second drawing of the same boards.** The order of
+ * a group and the shape of one are claims the parser already makes, and a
+ * second surface may not restate them differently — which is exactly the
+ * divergence this page used to be. So the hub, Work and this page render the
+ * same component over the same groups, and what this page adds is the frame:
+ * the title, and the queue when nothing is open.
+ *
+ * **With one board open it is not a page at all — it redirects to that board.**
+ * The common case is one open board, and an index of one card is a click that
+ * carries no information: the URL means "the active board," and when there is
+ * exactly one, that is a specific board. The index appears when there is
+ * something to choose between — a run, or two modes open at once. Derived like
+ * everything else here: the board count decides, nothing declares it. This is
+ * why a board page's breadcrumb goes to Work rather than here (`nav.tsx`) —
+ * pointing it back at this route would redirect the reader to the board they
+ * just left.
+ */
 
 export default function ActiveBoardPage() {
-  // The groups the parser made, rendered as groups — not flattened into a
-  // stack of peers. A run is a shelf headed by its run board on Overview and
-  // Work, and this page said otherwise: it printed the run board as a full
-  // peer section with a `done/total tasks` count that is not the run's
-  // progress.
-  const groups = groupBoards(getActiveBoards());
+  const boards = getActiveBoards();
+  const groups = groupBoards(boards);
   const roadmap = getRoadmap();
-  // The callout's lede is the canon's own Glossary entry, read once for the
-  // page: every board's card says the same thing because it is the same
-  // definition, not because a literal was copied.
-  const lede = glossaryLede("Walkthrough");
-  const open = groups.reduce((n, g) => n + g.boards.length + (g.runBoard ? 1 : 0), 0);
+  const open = boards.length;
+
+  if (open === 1) redirect(`/system/phase/${boards[0].slug}`);
 
   if (open === 0) {
     return (
@@ -100,37 +72,12 @@ export default function ActiveBoardPage() {
 
   return (
     <>
-      {groups.map((g, i) => {
-        const separated = i > 0;
-        if (!g.run) {
-          return <BoardSection key={g.boards[0].slug} board={g.boards[0]} separated={separated} lede={lede} />;
-        }
-        return (
-          /* A run, as its spine and what hangs off it: the header the shelf
-             uses, the run board's own body beneath it — this page is still
-             every board's home — then the members. */
-          <div
-            key={`${g.mode}:${g.run}`}
-            className={`flex flex-col gap-lg${separated ? " border-t border-edge-light pt-xl" : ""}`}
-          >
-            <section id={g.runBoard?.slug} className="flex flex-col gap-md">
-              <RunHeader group={g} />
-              {/* The run board's own callout, scoped to the spine the way each
-                  member's is scoped to its board — so a run reads as a stack of
-                  boards each stating its own ask, not one row of controls. */}
-              {g.runBoard && <WalkthroughCallout board={g.runBoard} lede={lede} />}
-              {g.runBoard && (
-                <article className="sys-doc">
-                  <DocProse body={g.runBoard.body} docDir="phases" idPrefix={g.runBoard.slug} />
-                </article>
-              )}
-            </section>
-            {g.boards.map((b) => (
-              <BoardSection key={b.slug} board={b} separated lede={lede} />
-            ))}
-          </div>
-        );
-      })}
+      <PageIntro
+        title="Open boards"
+        count={open}
+        blurb="Every phase currently open, in the order the parser reads them: by mode, the one being worked first. Each board opens on its own page."
+      />
+      <BoardCards groups={groups} />
     </>
   );
 }
