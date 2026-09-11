@@ -27,3 +27,7 @@ read-when: "board close (deleted at close — the moved tracker rows + the commi
 ## Verify at close
 
 [The in-chat handoff (CONTRIBUTING → the side phase's close, step 1): what the PO checks before the board is deleted. Code/UI → `who's looking → /url → what to expect` per changed surface; research → the doc summary + load-bearing findings. Delete this section's prompt text as you fill it.]
+
+## Next
+
+[The opening line for whatever comes next, written at close: the starter shape and mode, the name, one sentence of why, and where its context already sits. A pointer, not a briefing; "nothing next" is a real answer (CONTRIBUTING → shared rules).]

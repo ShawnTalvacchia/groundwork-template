@@ -81,4 +81,6 @@ These steps are the **canonical closing process — the single source of truth.*
    - Scan docs in `strategy/`, `features/`, `implementation/` with `last-reviewed` older than 21 days. Review or bump.
 10. **Strategic review.** The most important step. Stop building and think. Read the Open Questions log, the Roadmap, the relevant strategy docs, and the next phase's scope. Then present a brief covering: **what changed** (how the work shifts understanding), **open questions worth resolving now**, **alternatives and challenges** (overbuilding? underbuilding? simpler paths?), **research suggestions**, and **next phase readiness**. This isn't a checkbox — it's a thinking mode.
 
+11. **Hand off the next opening line.** Write, in chat, the line that opens what comes next — the starter shape and mode, the name, one sentence of why, and where its context already sits (a seed, a tracker row, the `decisions.md` entries just written). A pointer, not a briefing; "nothing next" is a real answer. The next phase is a new session (`CONTRIBUTING.md` → Rules shared by all modes), so this line is what it opens from.
+
 **Enforcement:** The closing checklist items must all be checked off before a new phase can be opened.

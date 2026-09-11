@@ -28,4 +28,5 @@ read-when: "while this queue-shaping phase is open (deleted at close — the row
 
 - [ ] **Hand off for verification** — the shaped queue + the canon diff; board not deleted until the PO confirms
 - [ ] `decisions.md` only if the reasoning would surprise someone in six months
+- [ ] **The next opening line handed off** — the starter shape and mode, the name, one sentence of why, and where its context already sits; a pointer, not a briefing, and "nothing next" is a real answer (`CONTRIBUTING.md` → shared rules)
 - [ ] mode-pure commit; board deleted

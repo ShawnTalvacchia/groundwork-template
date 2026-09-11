@@ -36,4 +36,5 @@ read-when: "while this system phase is open (deleted at close — decisions.md c
 - [ ] **Hand off for verification** — present the durable record (decisions entries + surface/build state); board not deleted until the PO confirms
 - [ ] `implementation/system-surface.md` / CONTRIBUTING updated if the system's behavior changed
 - [ ] `last-reviewed` bumped on every doc reviewed (not mechanically touched)
+- [ ] **The next opening line handed off** — the starter shape and mode, the name, one sentence of why, and where its context already sits; a pointer, not a briefing, and "nothing next" is a real answer (`CONTRIBUTING.md` → shared rules)
 - [ ] mode-pure commit; board deleted
