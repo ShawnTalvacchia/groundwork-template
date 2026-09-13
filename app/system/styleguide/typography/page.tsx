@@ -146,7 +146,7 @@ export default function TypographyPage() {
         </div>
       </SgSection>
 
-      <p className="text-xs text-fg-tertiary">
+      <p className="text-xs leading-relaxed text-fg-tertiary">
         Source: <code className="sys-code">app/globals.css</code> (@theme Font Size + the TYPOGRAPHY
         sections), parsed at build time.
       </p>

@@ -50,7 +50,7 @@ export function SgSection({
     <section className="flex min-w-0 flex-col gap-md">
       <div className="flex flex-col gap-xs">
         <h2 className="text-lg font-semibold text-fg-primary">{title}</h2>
-        {note && <p className="text-xs text-fg-tertiary leading-snug max-w-[72ch]">{note}</p>}
+        {note && <p className="text-xs text-fg-tertiary leading-relaxed max-w-[72ch]">{note}</p>}
       </div>
       {children}
     </section>

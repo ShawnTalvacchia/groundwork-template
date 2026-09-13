@@ -36,7 +36,7 @@ export default function PunchListPage() {
               </span>
             </summary>
             <div className="flex flex-col gap-sm pb-md pl-xl">
-              <p className="text-xs text-fg-secondary leading-snug">
+              <p className="text-xs text-fg-secondary leading-relaxed">
                 <MdInline text={item.description} />
               </p>
               {item.refs && (

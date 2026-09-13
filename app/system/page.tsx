@@ -39,7 +39,7 @@ function Cluster({
           <span className="text-fg-tertiary">{icon}</span>
           <h2 className="text-xl font-semibold text-fg-primary">{title}</h2>
         </Link>
-        <p className="text-sm text-fg-tertiary">{purpose}</p>
+        <p className="text-sm leading-relaxed text-fg-tertiary">{purpose}</p>
       </div>
       {children}
     </section>
@@ -88,7 +88,7 @@ export default function SystemOverview() {
             <Mark size={14} />
             Fresh template: not yet kicked off.
           </p>
-          <p className="text-xs text-fg-secondary max-w-[72ch]">
+          <p className="text-xs leading-relaxed text-fg-secondary max-w-[72ch]">
             The Kickoff board below is the one-time bootstrap. Your guide is{" "}
             <code className="sys-code">KICKOFF.md</code> at the repo root. This banner derives from
             that board&apos;s existence and disappears when the kickoff closes.
@@ -96,7 +96,7 @@ export default function SystemOverview() {
         </div>
       )}
 
-      <p className="text-sm text-fg-secondary max-w-[64ch]">
+      <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
         The work, the strategy, and the rules — rendered from <code className="sys-code">docs/</code>{" "}
         on every commit.
       </p>

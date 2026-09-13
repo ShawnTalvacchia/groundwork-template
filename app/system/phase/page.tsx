@@ -54,13 +54,13 @@ export default function ActiveBoardPage() {
                   <span className="text-2xs uppercase tracking-wide text-fg-tertiary">{p.phaseStatus}</span>
                 )}
               </div>
-              <p className="text-xs text-fg-secondary leading-snug">
+              <p className="text-xs text-fg-secondary leading-relaxed">
                 <MdInline text={p.goal} />
               </p>
             </div>
           ))}
         </div>
-        <p className="text-xs text-fg-tertiary">
+        <p className="text-xs leading-relaxed text-fg-tertiary">
           Where the project stands:{" "}
           <Link href="/system/roadmap" className="underline underline-offset-2">
             Roadmap

@@ -22,7 +22,7 @@ export default function ComponentsPage() {
           <h2 className="text-lg font-semibold text-fg-primary">
             Shared inventory <span className="text-sm font-normal text-fg-tertiary">{total}</span>
           </h2>
-          <p className="text-xs text-fg-tertiary max-w-[72ch]">
+          <p className="text-xs leading-relaxed text-fg-tertiary max-w-[72ch]">
             Derived from the shared component directories at build time — the reuse-first checklist
             starts here. Feature components live beside their features and aren&apos;t listed.
           </p>
@@ -48,7 +48,7 @@ export default function ComponentsPage() {
             </div>
           </div>
         ))}
-        <p className="text-xs text-fg-tertiary">
+        <p className="text-xs leading-relaxed text-fg-tertiary">
           Source: <code className="sys-code">components/ui · overlays · layout</code>, listed by{" "}
           <code className="sys-code">lib/styleguide.ts</code> at build time.
         </p>

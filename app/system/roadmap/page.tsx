@@ -16,7 +16,7 @@ export default function RoadmapPage() {
       <section key="whereWeAre" className="flex flex-col gap-md">
         <h2 className="text-lg font-semibold text-fg-primary">Where we are</h2>
         {roadmap.whereWeAre.map((p, i) => (
-          <p key={i} className="text-sm text-fg-secondary leading-normal max-w-[70ch]">
+          <p key={i} className="text-sm text-fg-secondary leading-relaxed max-w-[70ch]">
             <MdInline text={p} />
           </p>
         ))}
@@ -63,7 +63,7 @@ export default function RoadmapPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-fg-secondary leading-snug flex-1">
+                  <p className="text-xs text-fg-secondary leading-relaxed flex-1">
                     <MdInline text={p.goal} />
                   </p>
                 </>
@@ -82,7 +82,7 @@ export default function RoadmapPage() {
             })}
           </div>
           {roadmap.runningAlongside.length > 0 && (
-            <p className="text-xs text-fg-tertiary">
+            <p className="text-xs leading-relaxed text-fg-tertiary">
               Running alongside:{" "}
               {roadmap.runningAlongside.map((r, i) => {
                 const lead = r.match(/^\*\*(.+?)\*\*/)?.[1] ?? r.split(" — ")[0];
@@ -100,7 +100,7 @@ export default function RoadmapPage() {
         {roadmap.validationHorizon && (
           <section className="flex flex-col gap-sm">
             <h2 className="text-lg font-semibold text-fg-primary">The validation horizon</h2>
-            <p className="text-sm text-fg-secondary leading-normal max-w-[70ch]">
+            <p className="text-sm text-fg-secondary leading-relaxed max-w-[70ch]">
               <MdInline text={roadmap.validationHorizon} />
             </p>
           </section>
@@ -112,12 +112,12 @@ export default function RoadmapPage() {
     keyConsiderations: roadmap.keyConsiderations.length > 0 && (
       <section key="keyConsiderations" className="flex flex-col gap-md">
         <h2 className="text-lg font-semibold text-fg-primary">Key considerations</h2>
-        <p className="text-xs text-fg-tertiary">Things to keep in mind across phases. Not tasks — lenses.</p>
+        <p className="text-xs leading-relaxed text-fg-tertiary">Things to keep in mind across phases. Not tasks — lenses.</p>
         <div className="grid gap-md sm:grid-cols-2">
           {roadmap.keyConsiderations.map((k) => (
             <div key={k.title} className="sys-card flex flex-col gap-xs">
               <span className="text-sm font-semibold text-fg-primary">{k.title}</span>
-              <p className="text-xs text-fg-secondary leading-snug">
+              <p className="text-xs text-fg-secondary leading-relaxed">
                 <MdInline text={k.text} />
               </p>
             </div>
@@ -130,7 +130,7 @@ export default function RoadmapPage() {
         <h2 className="text-lg font-semibold text-fg-primary">On the horizon</h2>
         <ul className="flex flex-col gap-xs">
           {roadmap.horizon.map((b, i) => (
-            <li key={i} className="text-xs text-fg-secondary list-disc ml-lg leading-snug">
+            <li key={i} className="text-xs text-fg-secondary list-disc ml-lg leading-relaxed">
               {b}
             </li>
           ))}
@@ -146,7 +146,7 @@ export default function RoadmapPage() {
         blurb="Where the project stands, and the queue of planned work of any mode. This doc says where things are going, never where they have been — what closed lives on the timeline, and a board is created only when a phase opens."
       />
       {roadmap.sectionOrder.map((key) => blocks[key])}
-      <p className="text-xs text-fg-tertiary">
+      <p className="text-xs leading-relaxed text-fg-tertiary">
         Full doc:{" "}
         <Link href="/system/docs/ROADMAP.md" className="underline underline-offset-2">
           ROADMAP.md

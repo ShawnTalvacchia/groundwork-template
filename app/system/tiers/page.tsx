@@ -27,7 +27,7 @@ export default function TiersPage() {
       <section className="flex flex-col gap-md">
         <div className="flex flex-col gap-xs">
           <h2 className="text-lg font-semibold text-fg-primary">The four tiers</h2>
-          <p className="text-xs text-fg-tertiary">Most guarded first.</p>
+          <p className="text-xs leading-relaxed text-fg-tertiary">Most guarded first.</p>
         </div>
         <div className="flex flex-col gap-sm">
           {tiers.map((tier) => (
@@ -36,7 +36,7 @@ export default function TiersPage() {
                 <span className="text-sm font-semibold text-fg-primary">{tier.label}</span>
                 <span className="text-2xs text-fg-tertiary tabular-nums">{docLabel(count(tier.key))}</span>
               </div>
-              <span className="text-xs text-fg-secondary leading-snug">
+              <span className="text-xs text-fg-secondary leading-relaxed">
                 <MdInline text={tier.lives} />
               </span>
               <span className="sys-tier-guard">
@@ -51,7 +51,7 @@ export default function TiersPage() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-fg-tertiary">
+        <p className="text-xs leading-relaxed text-fg-tertiary">
           Which doc sits where:{" "}
           <Link href="/system/docs" className="underline underline-offset-2">
             Structure → Docs
@@ -63,7 +63,7 @@ export default function TiersPage() {
       <section className="flex flex-col gap-md">
         <div className="flex flex-col gap-xs">
           <h2 className="text-lg font-semibold text-fg-primary">What a tier does not mean</h2>
-          <p className="text-xs text-fg-tertiary">Guarded is about changing, not reading.</p>
+          <p className="text-xs leading-relaxed text-fg-tertiary">Guarded is about changing, not reading.</p>
         </div>
         <div className="grid gap-md sm:grid-cols-3">
           {[
@@ -73,7 +73,7 @@ export default function TiersPage() {
           ].map((m) => (
             <div key={m.title} className="sys-card flex flex-col gap-sm">
               <h3 className="text-sm font-semibold text-fg-primary">{m.title}</h3>
-              <p className="text-xs text-fg-secondary leading-snug">
+              <p className="text-xs text-fg-secondary leading-relaxed">
                 <MdInline text={m.text} />
               </p>
             </div>
@@ -85,7 +85,7 @@ export default function TiersPage() {
       <section className="flex flex-col gap-md">
         <div className="flex flex-col gap-xs">
           <h2 className="text-lg font-semibold text-fg-primary">When a doc moves</h2>
-          <p className="text-xs text-fg-tertiary">Rare — and never silently.</p>
+          <p className="text-xs leading-relaxed text-fg-tertiary">Rare — and never silently.</p>
         </div>
         <div className="grid gap-md sm:grid-cols-2">
           {[
@@ -94,7 +94,7 @@ export default function TiersPage() {
           ].map((m) => (
             <div key={m.title} className="sys-card flex flex-col gap-sm">
               <h3 className="text-sm font-semibold text-fg-primary">{m.title}</h3>
-              <p className="text-xs text-fg-secondary leading-snug">
+              <p className="text-xs text-fg-secondary leading-relaxed">
                 <MdInline text={m.text} />
               </p>
             </div>
@@ -103,7 +103,7 @@ export default function TiersPage() {
       </section>
 
       {physics.antiStuck && (
-        <p className="text-xs text-fg-tertiary max-w-[70ch]">
+        <p className="text-xs leading-relaxed text-fg-tertiary max-w-[70ch]">
           <MdInline text={physics.antiStuck} />
         </p>
       )}

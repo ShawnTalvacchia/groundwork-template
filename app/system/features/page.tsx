@@ -52,7 +52,7 @@ export default function FeaturesPage() {
         <section className="flex flex-col gap-md">
           <div className="flex flex-col gap-xs">
             <h2 className="text-lg font-semibold text-fg-primary">By area</h2>
-            <p className="text-xs text-fg-tertiary">
+            <p className="text-xs leading-relaxed text-fg-tertiary">
               Areas come from each feature doc&apos;s <code className="sys-code">area:</code>{" "}
               frontmatter. Add, rename, or drop one there and this page follows.
             </p>
@@ -79,7 +79,7 @@ export default function FeaturesPage() {
             <h2 className="text-lg font-semibold text-fg-primary">
               {areas.length > 0 ? "No area yet" : "All features"}
             </h2>
-            <p className="text-xs text-fg-tertiary">
+            <p className="text-xs leading-relaxed text-fg-tertiary">
               {areas.length > 0
                 ? "Carrying no area: in the registry, outside the grouping. Add an area: to place one."
                 : "No feature doc declares an area: yet. Add one to any doc and this page groups by it."}
@@ -97,7 +97,7 @@ export default function FeaturesPage() {
         <section className="flex flex-col gap-md">
           <div className="flex flex-col gap-xs">
             <h2 className="text-lg font-semibold text-fg-primary">Demo layer</h2>
-            <p className="text-xs text-fg-tertiary">
+            <p className="text-xs leading-relaxed text-fg-tertiary">
               Docs marked <code className="sys-code">feature-kind: demo</code> — the prototype&apos;s
               own affordances, not shipping product features.
             </p>

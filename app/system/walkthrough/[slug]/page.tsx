@@ -184,7 +184,7 @@ export default async function WalkthroughPage({
     <>
       <header className="flex flex-col gap-sm">
         <h1 className="text-2xl font-semibold text-fg-primary">{wt.title}</h1>
-        {lede && <p className="text-sm text-fg-secondary max-w-[60ch]">{lede}</p>}
+        {lede && <p className="text-sm leading-relaxed text-fg-secondary max-w-[60ch]">{lede}</p>}
         <div className="flex items-center gap-sm flex-wrap">
           {board && <span className="sys-pill">{MODE_META[board.mode].label}</span>}
           {board?.stage && <span className="sys-pill">{board.stage.replace(/-/g, " ")}</span>}
@@ -198,7 +198,7 @@ export default async function WalkthroughPage({
         {/* The way back is the board, not the file tree — the callout there is
             what sent the reader here. The file stays reachable too: it is a doc
             like any other, and the doc route renders it as one. */}
-        <p className="text-xs text-fg-tertiary">
+        <p className="text-xs leading-relaxed text-fg-tertiary">
           <Link href={`/system/phase/${slug}`} className="underline underline-offset-2">
             ← the board
           </Link>

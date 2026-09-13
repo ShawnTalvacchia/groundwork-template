@@ -32,7 +32,7 @@ function FieldList({ label, fields, docDir }: { label: string; fields: DocField[
             className="flex flex-col gap-tiny border-b border-edge-light py-sm last:border-0 sm:flex-row sm:gap-md"
           >
             <dt className="text-xs font-mono text-fg-primary sm:w-40 sm:shrink-0">{f.key}</dt>
-            <dd className="text-xs text-fg-secondary leading-snug max-w-[64ch]">
+            <dd className="text-xs text-fg-secondary leading-relaxed max-w-[64ch]">
               <MdInline text={f.value} docDir={docDir} />
             </dd>
           </div>
@@ -101,7 +101,7 @@ export default function MoldsPage() {
 
                 {mold.cards.length > 0 && (
                   <InsetNote label="Explains itself in">
-                    <p className="text-xs text-fg-secondary leading-snug">
+                    <p className="text-xs text-fg-secondary leading-relaxed">
                       {mold.cards.join(" · ")} — the card the mold carries above its first section.
                     </p>
                   </InsetNote>

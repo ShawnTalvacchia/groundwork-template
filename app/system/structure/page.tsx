@@ -43,13 +43,13 @@ function PreviewCard({
             {cta}
           </Link>
         </div>
-        <p className="text-xs text-fg-tertiary leading-snug">{blurb}</p>
+        <p className="text-xs text-fg-tertiary leading-relaxed">{blurb}</p>
       </div>
       <ul className="flex flex-col">
         {rows.map((r, i) => (
           <li key={i} className="flex items-baseline gap-md border-t border-edge-light py-sm first:border-t-0 first:pt-0">
             <span className="text-2xs text-fg-tertiary tabular-nums whitespace-nowrap w-12 shrink-0">{r.date}</span>
-            <span className="text-xs text-fg-primary leading-snug">{r.text}</span>
+            <span className="text-xs text-fg-primary leading-relaxed">{r.text}</span>
           </li>
         ))}
       </ul>
@@ -139,7 +139,7 @@ export default function StructurePage() {
 
       {/* The site map is consulted, not explored — one line, the way the
           record's lists above are a glance with the page one click away. */}
-      <p className="text-xs text-fg-tertiary max-w-[60ch]">
+      <p className="text-xs leading-relaxed text-fg-tertiary max-w-[60ch]">
         The site itself:{" "}
         <Link href="/system/site" className="underline underline-offset-2">
           the route tree
@@ -148,7 +148,7 @@ export default function StructurePage() {
         A run&apos;s close reconciles its picture against it.
       </p>
 
-      <p className="text-xs text-fg-tertiary max-w-[60ch]">
+      <p className="text-xs leading-relaxed text-fg-tertiary max-w-[60ch]">
         Nothing starts settled — docs sink toward bedrock by surviving contact; reopening a settled one
         takes a{" "}
         <Link href="/system/tiers" className="underline underline-offset-2">

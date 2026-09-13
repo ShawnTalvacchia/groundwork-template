@@ -19,7 +19,7 @@ export function DriftBanner({ alarms }: { alarms: DriftAlarm[] }) {
       <p className="text-sm font-semibold text-fg-primary">
         Derivation drift — {alarms.length} parser invariant{alarms.length === 1 ? "" : "s"} failing
       </p>
-      <p className="text-xs text-fg-secondary max-w-[72ch]">
+      <p className="text-xs leading-relaxed text-fg-secondary max-w-[72ch]">
         A parsed doc&apos;s format no longer matches what its parser expects, so a page below is rendering
         empty or partial. Fix the doc to spec — formats never bend to the parsers. See{" "}
         <Link href="/system/docs/implementation/system-surface.md" className="underline underline-offset-2">
@@ -45,7 +45,7 @@ export function PageIntro({ title, count, blurb }: { title: string; count?: numb
         {title}
         {count !== undefined && <span className="ml-sm text-lg font-normal text-fg-tertiary">{count}</span>}
       </h1>
-      <p className="text-sm text-fg-secondary max-w-[60ch]">{blurb}</p>
+      <p className="text-sm text-fg-secondary leading-relaxed max-w-[60ch]">{blurb}</p>
     </header>
   );
 }
@@ -58,7 +58,7 @@ export function PageIntro({ title, count, blurb }: { title: string; count?: numb
  *  things: what is absent, and what puts something here. Emptiness is a state
  *  the record is allowed to be in; the page has to say so out loud. */
 export function EmptyNote({ children }: { children: ReactNode }) {
-  return <p className="text-xs text-fg-tertiary">{children}</p>;
+  return <p className="text-xs leading-relaxed text-fg-tertiary">{children}</p>;
 }
 
 export function Tile({
@@ -166,10 +166,10 @@ export function StarterRows({
             </span>
           </summary>
           <div className="flex flex-col gap-xs pb-md pl-lg max-w-[72ch]">
-            <p className="text-xs italic text-fg-primary leading-snug">
+            <p className="text-xs italic text-fg-primary leading-relaxed">
               <MdInline text={s.prompt} />
             </p>
-            <p className="text-xs text-fg-secondary leading-snug">
+            <p className="text-xs text-fg-secondary leading-relaxed">
               <MdInline text={s.openBy} />
             </p>
           </div>
@@ -446,7 +446,7 @@ export function WalkthroughCallout({ board }: { board: ActivePhase }) {
       <div className="flex flex-col gap-tiny">
         <p className="text-sm font-semibold text-fg-primary">Walkthrough</p>
         {clauses.length > 0 && (
-          <p className="text-xs text-fg-secondary tabular-nums">{clauses.join(" · ")}</p>
+          <p className="text-xs leading-relaxed text-fg-secondary tabular-nums">{clauses.join(" · ")}</p>
         )}
       </div>
       {/* One slot, one control, three weights — the label and the skin both
@@ -611,7 +611,7 @@ export function InsetNote({ label, children }: { label?: string; children: React
  *  reinforcing the derived-never-authored law. */
 export function SourceNote({ href, path, note }: { href: string; path: string; note?: string }) {
   return (
-    <p className="text-xs text-fg-tertiary">
+    <p className="text-xs leading-relaxed text-fg-tertiary">
       Source:{" "}
       <Link href={href} className="underline underline-offset-2">
         {path}

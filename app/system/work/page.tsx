@@ -31,7 +31,7 @@ export default function WorkPage() {
     <>
       <header className="flex flex-col gap-sm">
         <h1 className="text-2xl font-semibold text-fg-primary">Work</h1>
-        <p className="text-sm text-fg-secondary max-w-[64ch]">
+        <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
           What&apos;s being done and what&apos;s waiting. Every phase opens a board and runs one{" "}
           <Link href="/system/method" className="font-semibold underline underline-offset-2">
             mode
@@ -52,7 +52,7 @@ export default function WorkPage() {
       <section className="flex flex-col gap-md">
         <div className="flex flex-col gap-xs">
           <h2 className="text-lg font-semibold text-fg-primary">The trackers</h2>
-          <p className="text-xs text-fg-tertiary">
+          <p className="text-xs leading-relaxed text-fg-tertiary">
             Where candidates wait between phases. How they work:{" "}
             <Link href="/system/trackers" className="underline underline-offset-2">
               Method → Trackers

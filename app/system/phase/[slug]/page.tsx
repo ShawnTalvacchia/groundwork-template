@@ -94,7 +94,7 @@ export default async function BoardPage({ params }: { params: Promise<{ slug: st
 
       {/* The file stays reachable as a file: a board is a doc like any other,
           and the doc route renders it as one. */}
-      <p className="text-xs text-fg-tertiary">
+      <p className="text-xs leading-relaxed text-fg-tertiary">
         <Link href={`/system/docs/phases/${board.slug}.md`} className="underline underline-offset-2">
           the file
         </Link>

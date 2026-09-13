@@ -22,7 +22,7 @@ export default function QuestionsPage() {
         blurb="Decisions that are pending and would block or shape work — each naming what would resolve it. Nothing else lives here: known answer + small work goes to the punch list, known direction goes to Future Considerations. At phase open you read your area's questions, not all of them."
       />
 
-      <p className="text-xs text-fg-tertiary">
+      <p className="text-xs leading-relaxed text-fg-tertiary">
         {high} high priority · {topics.length} topics
       </p>
 
@@ -37,7 +37,7 @@ export default function QuestionsPage() {
               </span>
             </div>
             {t.assumption && (
-              <p className="text-xs text-fg-tertiary leading-snug max-w-[70ch]">
+              <p className="text-xs text-fg-tertiary leading-relaxed max-w-[70ch]">
                 <span className="font-semibold">Assumption:</span> {t.assumption}
               </p>
             )}
@@ -56,12 +56,12 @@ export default function QuestionsPage() {
                   {q.opened && <span className="text-2xs text-fg-tertiary">opened {q.opened}</span>}
                 </div>
                 {q.thinking && (
-                  <p className="text-xs text-fg-secondary leading-snug">
+                  <p className="text-xs text-fg-secondary leading-relaxed">
                     <span className="font-semibold">Thinking:</span> <MdInline text={q.thinking} />
                   </p>
                 )}
                 {q.resolvesWhen && (
-                  <p className="text-xs text-fg-tertiary leading-snug">
+                  <p className="text-xs text-fg-tertiary leading-relaxed">
                     <span className="font-semibold">Resolves when:</span>{" "}
                     <MdInline text={q.resolvesWhen} />
                   </p>

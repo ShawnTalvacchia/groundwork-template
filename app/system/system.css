@@ -776,7 +776,7 @@
 
 .sys-doc {
   font-size: var(--text-sm);
-  line-height: var(--leading-normal);
+  line-height: var(--leading-relaxed);
   color: var(--text-primary);
 }
 

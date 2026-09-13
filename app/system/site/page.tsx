@@ -85,7 +85,7 @@ export default function SitePage() {
         count={site ? pages.length : undefined}
         blurb="The route tree as the code declares it — one entry per page file, dynamic segments shown as such. Never drawn by hand: a run's picture holds the map it is building toward, and this is the map that exists."
       />
-      <p className="text-xs text-fg-tertiary max-w-[60ch]">
+      <p className="text-xs leading-relaxed text-fg-tertiary max-w-[60ch]">
         {pictures.length > 0 ? (
           <>
             The aspirational map is in{" "}
@@ -126,7 +126,7 @@ export default function SitePage() {
         <>
           {survey.length > 0 && (
             <InsetNote label="Against the survey">
-              <p className="text-xs text-fg-secondary leading-snug">
+              <p className="text-xs text-fg-secondary leading-relaxed">
                 {uncovered === 0
                   ? `Every page route is named by a row of the run board's shown / launch / later table (${survey.length} rows).`
                   : `${uncovered} of ${pages.length} page routes have no row in the run board's shown / launch / later table (${survey.length} rows) — marked below. A row covers a route by naming its path in the Surface cell.`}
@@ -139,7 +139,7 @@ export default function SitePage() {
         </>
       )}
 
-      <p className="text-xs text-fg-tertiary">
+      <p className="text-xs leading-relaxed text-fg-tertiary">
         Source: the routes directory{site ? "" : " (none found)"} — a folder is a segment, a{" "}
         <code className="sys-code">page</code> file is a page, a <code className="sys-code">route</code> file is a
         handler, <code className="sys-code">(groups)</code> add no segment. Read at build; the tree changes when the

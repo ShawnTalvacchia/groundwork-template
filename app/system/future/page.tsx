@@ -25,13 +25,13 @@ export default function FuturePage() {
               <span className="text-2xs text-fg-tertiary whitespace-nowrap">added {item.added}</span>
             </div>
             {item.trigger && (
-              <p className="text-xs leading-snug">
+              <p className="text-xs leading-relaxed">
                 <span className="font-semibold text-fg-secondary">Waiting on:</span>{" "}
                 <span className="text-fg-secondary">{item.trigger}</span>
               </p>
             )}
             {item.context && (
-              <p className="text-xs text-fg-tertiary leading-snug">
+              <p className="text-xs text-fg-tertiary leading-relaxed">
                 {item.context.length > 280 ? `${item.context.slice(0, 280)}…` : item.context}
               </p>
             )}

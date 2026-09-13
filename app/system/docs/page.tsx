@@ -40,7 +40,7 @@ function TierPhysicsRow({ physics }: { physics: TierPhysics }) {
       </summary>
       <div className="flex flex-col gap-sm pb-sm">
         {notes.map((n) => (
-          <p key={n.title} className="text-xs text-fg-secondary leading-snug max-w-[76ch]">
+          <p key={n.title} className="text-xs text-fg-secondary leading-relaxed max-w-[76ch]">
             <span className="font-semibold text-fg-primary">{n.title}.</span> <MdInline text={n.text} />
           </p>
         ))}
@@ -66,7 +66,7 @@ export default function DocsPage() {
       {stale.length > 0 && (
         <section className="flex flex-col gap-sm">
           <h2 className="text-lg font-semibold text-fg-primary">Possibly stale</h2>
-          <p className="text-xs text-fg-tertiary max-w-[48ch]">
+          <p className="text-xs leading-relaxed text-fg-tertiary max-w-[48ch]">
             Past their tier&apos;s review heuristic — a signal to review, not an obligation.
           </p>
           <ul className="flex flex-col">
@@ -92,10 +92,10 @@ export default function DocsPage() {
             <h2 className="text-lg font-semibold text-fg-primary">{TIER_META[tier].label}</h2>
             {row && (
               <InsetNote>
-                <span className="text-xs text-fg-secondary leading-snug">
+                <span className="text-xs text-fg-secondary leading-relaxed">
                   <MdInline text={row.lives} />
                 </span>
-                <span className="text-xs text-fg-tertiary leading-snug">
+                <span className="text-xs text-fg-tertiary leading-relaxed">
                   <span className="text-fg-secondary">To change:</span> <MdInline text={row.toChange} />
                 </span>
                 <span className="text-2xs text-fg-tertiary leading-snug">
@@ -124,7 +124,7 @@ export default function DocsPage() {
                   </Link>
                 </li>
               ))}
-              {tierDocs.length === 0 && <li className="text-xs text-fg-tertiary py-sm">Nothing at this tier.</li>}
+              {tierDocs.length === 0 && <li className="text-xs leading-relaxed text-fg-tertiary py-sm">Nothing at this tier.</li>}
             </ul>
           </section>
         );
@@ -136,7 +136,7 @@ export default function DocsPage() {
             {docs
               .filter((d) => !d.tier)
               .map((d) => (
-                <li key={d.relPath} className="text-sm text-fg-secondary py-sm">
+                <li key={d.relPath} className="text-sm leading-relaxed text-fg-secondary py-sm">
                   {d.relPath}
                 </li>
               ))}

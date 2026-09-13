@@ -62,7 +62,7 @@ function Scope({ kind, text }: { kind: keyof typeof BAND_META; text: string }) {
         <Icon size={14} weight="bold" />
         {label}
       </span>
-      <span className="text-xs text-fg-secondary leading-snug">
+      <span className="text-xs text-fg-secondary leading-relaxed">
         <MdInline text={text} />
       </span>
     </div>
@@ -97,7 +97,7 @@ function Steps({
       </span>
       <ol className="flex flex-col gap-sm">
         {steps.map((step, i) => (
-          <li key={i} className="flex gap-md text-sm text-fg-secondary leading-snug">
+          <li key={i} className="flex gap-md text-sm text-fg-secondary leading-relaxed">
             <span className="sys-step-num">{i + 1}</span>
             <span>
               {step.withPO && <span className="sys-actor">with the {PO_TERM}</span>}
@@ -164,7 +164,7 @@ export default function MethodPage() {
     <>
       <header className="flex flex-col gap-sm">
         <h1 className="text-2xl font-semibold text-fg-primary">How we work</h1>
-        <p className="text-sm text-fg-secondary max-w-[64ch]">
+        <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
           <MdInline text={lede} anchors={anchors} />
         </p>
       </header>
@@ -175,7 +175,7 @@ export default function MethodPage() {
         <section id="session-starters" className="flex flex-col gap-md scroll-mt-2xl">
           <h2 className="text-lg font-semibold text-fg-primary">Session starters</h2>
           {startersLede && (
-            <p className="text-sm text-fg-secondary max-w-[64ch]">
+            <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
               <MdInline text={startersLede} anchors={anchors} />
             </p>
           )}
@@ -208,7 +208,7 @@ export default function MethodPage() {
                   runs taller than the left at 1.4fr_1fr, stretching the card. */}
               <div className="grid gap-lg lg:grid-cols-[1fr_1.1fr]">
                   <div className="flex flex-col gap-md">
-                    <p className="text-sm text-fg-secondary leading-normal">
+                    <p className="text-sm text-fg-secondary leading-relaxed">
                       <MdInline text={m.purpose} anchors={anchors} />
                     </p>
                     <Scope kind="reads" text={m.reads} />
@@ -240,7 +240,7 @@ export default function MethodPage() {
                       <span className="flex items-baseline gap-sm text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">
                         During
                       </span>
-                      <p className="text-sm text-fg-secondary leading-snug">
+                      <p className="text-sm text-fg-secondary leading-relaxed">
                         <MdInline text={m.during} anchors={anchors} />
                       </p>
                     </div>
@@ -260,7 +260,7 @@ export default function MethodPage() {
         <section className="flex flex-col gap-md">
           <h2 className="text-lg font-semibold text-fg-primary">{triggerPart?.name ?? "Triggers"}</h2>
           {triggersLede && (
-            <p className="text-sm text-fg-secondary max-w-[64ch]">
+            <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
               <MdInline text={triggersLede} />
             </p>
           )}
@@ -269,7 +269,7 @@ export default function MethodPage() {
               <div key={t.name} className="sys-scope">
                 <span className="sys-scope-head">{t.name}</span>
                 {t.fires && (
-                  <span className="text-xs text-fg-secondary leading-snug">
+                  <span className="text-xs text-fg-secondary leading-relaxed">
                     <MdInline text={t.fires} anchors={anchors} />
                   </span>
                 )}
@@ -288,12 +288,12 @@ export default function MethodPage() {
           <h2 className="text-lg font-semibold text-fg-primary">The phase pipeline</h2>
           {pipeline.readWhen && (
             <InsetNote label="Read when">
-              <span className="text-xs text-fg-secondary leading-snug">
+              <span className="text-xs text-fg-secondary leading-relaxed">
                 <MdInline text={pipeline.readWhen} />
               </span>
             </InsetNote>
           )}
-          <p className="text-sm text-fg-secondary max-w-[64ch]">
+          <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
             <MdInline text={pipeline.lede} />
           </p>
 
@@ -315,7 +315,7 @@ export default function MethodPage() {
                     <MdInline text={r.name} />
                   </span>
                   <span className="sys-pill self-start">{r.level}</span>
-                  <span className="text-xs text-fg-secondary leading-snug">
+                  <span className="text-xs text-fg-secondary leading-relaxed">
                     <MdInline text={r.text} anchors={anchors} />
                   </span>
                 </div>
@@ -336,7 +336,7 @@ export default function MethodPage() {
                     </span>
                   </summary>
                   <div className="pb-md pl-lg max-w-[72ch]">
-                    <p className="text-xs text-fg-secondary leading-snug">
+                    <p className="text-xs text-fg-secondary leading-relaxed">
                       <MdInline text={r.text} />
                     </p>
                   </div>
@@ -357,7 +357,7 @@ export default function MethodPage() {
               const lead = r.match(/^\*\*(.+?)\*\*\s*([\s\S]*)$/);
               if (!lead || !lead[2].trim()) {
                 return (
-                  <p key={i} className="sys-rule-plain text-sm text-fg-secondary leading-snug">
+                  <p key={i} className="sys-rule-plain text-sm text-fg-secondary leading-relaxed">
                     <MdInline text={r} anchors={anchors} />
                   </p>
                 );
@@ -373,7 +373,7 @@ export default function MethodPage() {
                     </span>
                   </summary>
                   <div className="pb-md pl-lg max-w-[72ch]">
-                    <p className="text-xs text-fg-secondary leading-snug">
+                    <p className="text-xs text-fg-secondary leading-relaxed">
                       <MdInline text={lead[2]} anchors={anchors} />
                     </p>
                   </div>
@@ -389,7 +389,7 @@ export default function MethodPage() {
       {parts.length > 0 && (
         <Shelf label="The parts" note={partsLede ? "the model is a kit — every part is yours to reshape" : ""}>
           {partsLede && (
-            <p className="text-sm text-fg-secondary max-w-[64ch]">
+            <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
               <MdInline text={partsLede} />
             </p>
           )}
@@ -397,12 +397,12 @@ export default function MethodPage() {
             {parts.map((p) => (
               <article key={p.name} className="sys-part">
                 <h3 className="text-base font-semibold text-fg-primary">{p.name}</h3>
-                <p className="text-sm text-fg-secondary leading-snug">
+                <p className="text-sm text-fg-secondary leading-relaxed">
                   <MdInline text={p.is} />
                 </p>
                 <div className="sys-scope">
                   <span className="sys-scope-head">Properties</span>
-                  <span className="text-xs text-fg-secondary leading-snug">
+                  <span className="text-xs text-fg-secondary leading-relaxed">
                     <MdInline text={p.properties} anchors={anchors} />
                   </span>
                 </div>
@@ -415,7 +415,7 @@ export default function MethodPage() {
       {adjustments.length > 0 && (
         <Shelf label="Adjustments" note="allowed, never required">
           {adjustmentsLede && (
-            <p className="text-sm text-fg-secondary max-w-[64ch]">
+            <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
               <MdInline text={adjustmentsLede} />
             </p>
           )}
@@ -425,7 +425,7 @@ export default function MethodPage() {
                 <span className="text-sm font-semibold text-fg-primary leading-snug">
                   <MdInline text={a.when} />
                 </span>
-                <span className="text-xs text-fg-secondary leading-snug">
+                <span className="text-xs text-fg-secondary leading-relaxed">
                   <MdInline text={a.what} anchors={anchors} />
                 </span>
               </li>

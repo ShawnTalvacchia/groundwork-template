@@ -24,17 +24,17 @@ export default function DecisionsPage() {
               <h2 className="text-sm font-semibold text-fg-primary">{d.title}</h2>
             </div>
             {d.what && (
-              <p className="text-xs text-fg-primary leading-snug">
+              <p className="text-xs text-fg-primary leading-relaxed">
                 <span className="font-semibold">What:</span> <MdInline text={d.what} />
               </p>
             )}
             {d.why && (
-              <p className="text-xs text-fg-secondary leading-snug">
+              <p className="text-xs text-fg-secondary leading-relaxed">
                 <span className="font-semibold">Why:</span> <MdInline text={d.why} />
               </p>
             )}
             {d.instead.length > 0 && (
-              <div className="text-xs text-fg-secondary leading-snug">
+              <div className="text-xs text-fg-secondary leading-relaxed">
                 <span className="font-semibold">Instead of:</span>
                 <ul className="mt-2xs flex flex-col gap-2xs pl-md">
                   {d.instead.map((alt, i) => (

@@ -46,7 +46,7 @@ export default function TrackersPage() {
                 ].map(([label, value]) => (
                   <div key={label} className="flex flex-col gap-xs">
                     <dt className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">{label}</dt>
-                    <dd className="text-xs text-fg-secondary leading-snug">
+                    <dd className="text-xs text-fg-secondary leading-relaxed">
                       <MdInline text={value} />
                     </dd>
                   </div>
@@ -61,7 +61,7 @@ export default function TrackersPage() {
         <h2 className="text-lg font-semibold text-fg-primary">How work flows</h2>
         <ul className="flex flex-col gap-sm">
           {flow.map((f, i) => (
-            <li key={i} className="text-xs text-fg-secondary leading-snug flex gap-sm">
+            <li key={i} className="text-xs text-fg-secondary leading-relaxed flex gap-sm">
               <span className="sys-step-num">{i + 1}</span>
               <span>
                 <MdInline text={f} />
@@ -76,7 +76,7 @@ export default function TrackersPage() {
           <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">
             Shared rule — prune on resolve
           </span>
-          <p className="text-xs text-fg-secondary leading-snug">
+          <p className="text-xs text-fg-secondary leading-relaxed">
             <MdInline text={sharedRule} />
           </p>
         </section>

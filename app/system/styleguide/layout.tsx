@@ -13,7 +13,7 @@ export default function StyleguideLayout({ children }: { children: React.ReactNo
       <header className="flex flex-col gap-lg">
         <div className="flex flex-col gap-sm">
           <h1 className="text-2xl font-semibold text-fg-primary">Styleguide</h1>
-          <p className="text-sm text-fg-secondary max-w-[60ch]">
+          <p className="text-sm leading-relaxed text-fg-secondary max-w-[60ch]">
             The design system&apos;s surface: the colors, type, scale, and components the app is built
             from. Derived from <code className="sys-code">globals.css</code> at build time — a token
             edit updates these pages in the same commit, so they can&apos;t drift. To change a value,

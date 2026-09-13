@@ -15,7 +15,7 @@ function DocCard({ d }: { d: SystemDoc }) {
       <span className="flex">
         <TierPill tier={d.tier} />
       </span>
-      {d.summary && <span className="text-xs text-fg-secondary leading-snug">{d.summary}</span>}
+      {d.summary && <span className="text-xs text-fg-secondary leading-relaxed">{d.summary}</span>}
     </Link>
   );
 }
@@ -26,7 +26,7 @@ function Shelf({ title, blurb, docs }: { title: string; blurb: string; docs: Sys
     <section className="flex flex-col gap-md">
       <div className="flex flex-col gap-xs">
         <h2 className="text-lg font-semibold text-fg-primary">{title}</h2>
-        <p className="text-xs text-fg-tertiary">{blurb}</p>
+        <p className="text-xs leading-relaxed text-fg-tertiary">{blurb}</p>
       </div>
       {docs.map((d) => (
         <DocCard key={d.relPath} d={d} />

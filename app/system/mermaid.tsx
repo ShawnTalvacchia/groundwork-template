@@ -107,11 +107,11 @@ export function Mermaid({ code }: { code: string }) {
       {error ? (
         // A map that fails to parse is still the doc's content: show the
         // source, say why, and never render nothing.
-        <p className="text-xs text-fg-tertiary">Diagram did not render — {error.split("\n")[0]}</p>
+        <p className="text-xs leading-relaxed text-fg-tertiary">Diagram did not render — {error.split("\n")[0]}</p>
       ) : svg ? (
         <div className="sys-diagram-svg" dangerouslySetInnerHTML={{ __html: svg }} />
       ) : (
-        <p className="text-xs text-fg-tertiary">Rendering diagram…</p>
+        <p className="text-xs leading-relaxed text-fg-tertiary">Rendering diagram…</p>
       )}
       <details className="sys-diagram-source">
         <summary className="text-2xs text-fg-tertiary">source</summary>

@@ -14,7 +14,7 @@ export default function GlossaryPage() {
         {terms.map((t) => (
           <div key={t.term} className="flex flex-col gap-xs border-b border-edge-light py-md sm:flex-row sm:gap-lg">
             <dt className="text-sm font-semibold text-fg-primary sm:w-32 sm:shrink-0">{t.term}</dt>
-            <dd className="text-xs text-fg-secondary leading-snug max-w-[64ch]">
+            <dd className="text-xs text-fg-secondary leading-relaxed max-w-[64ch]">
               <MdInline text={t.def} />
             </dd>
           </div>

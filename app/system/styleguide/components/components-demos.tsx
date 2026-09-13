@@ -27,7 +27,7 @@ function Section({ title, note, children }: { title: string; note: string; child
     <section className="flex min-w-0 flex-col gap-md">
       <div className="flex flex-col gap-xs">
         <h2 className="text-lg font-semibold text-fg-primary">{title}</h2>
-        <p className="max-w-[72ch] text-xs leading-snug text-fg-tertiary">{note}</p>
+        <p className="max-w-[72ch] text-xs leading-relaxed text-fg-tertiary">{note}</p>
       </div>
       {children}
     </section>
