@@ -982,6 +982,32 @@
   padding: 0;
 }
 
+/* A rendered mermaid fence (mermaid.tsx). The figure sits where the code
+   block would, on the same inset; the SVG scales to the column and never
+   scrolls the page sideways; the source folds under it. */
+.sys-diagram {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface-inset);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+.sys-diagram-svg svg {
+  max-width: 100%;
+  height: auto;
+}
+.sys-diagram-source {
+  margin-top: var(--space-2);
+}
+.sys-diagram-source summary {
+  cursor: pointer;
+}
+.sys-diagram-source pre {
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  background: none;
+}
+
 /* The inset explainer, one home for two callers: a blockquote inside a rendered
    doc (the molds' "how to use this surface" voice), and <InsetNote> on a React
    page. It was blockquote-only until the tiers needed the same visual on

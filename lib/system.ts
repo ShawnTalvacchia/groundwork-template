@@ -1456,6 +1456,11 @@ export interface ActivePhase {
   stage: string | null;
   /** `run:` — the run this board belongs to, or null. */
   run: string | null;
+  /** The doc the board's `**Picture:**` line links — a run board's one-frame
+   *  view (`planning/<run>-picture.md`, CONTRIBUTING § The phase pipeline),
+   *  as a docs-relative path. Null where the line is absent or links
+   *  nothing; a member or standalone board deletes the line. */
+  picture: string | null;
   /** V items sitting unwalked under the board's `## Deepening` section —
    *  written by the basic layer and moved there at its close, walked by the
    *  deepen kind. A **board** fact, not a walkthrough one: the items have left
@@ -1530,6 +1535,7 @@ export function getActiveBoards(): ActivePhase[] {
       statusRaw,
       stage: parsed.fm.stage?.trim() || null,
       run: parsed.fm.run?.trim() || null,
+      picture: pictureLink(parsed.body),
       deferred: countDeferredV(parsed.body),
       workstreams,
       done,
@@ -1661,6 +1667,17 @@ function itemKind(id: string | null): WalkthroughItem["kind"] {
  *  Presence-not-count, like the invariants: a standalone board deletes the
  *  section (the mold says to), a member board carries it empty until the
  *  survey writes it, and both read zero rather than firing anything. */
+/** The first `.md` link on the board's `**Picture:**` line, resolved from
+ *  `phases/` to a docs-relative path. The mold's placeholder links the mold
+ *  itself, which is not a picture, so that resolves to null too. */
+function pictureLink(body: string): string | null {
+  const line = body.split("\n").find((l) => l.startsWith("**Picture:**"));
+  const href = line?.match(/\]\(([^)]+\.md)\)/)?.[1];
+  if (!href || href.startsWith("http")) return null;
+  const rel = path.posix.normalize(path.posix.join("phases", href));
+  return path.posix.basename(rel).startsWith("_") ? null : rel;
+}
+
 function countDeferredV(body: string): number {
   let n = 0;
   for (const line of sectionOf(body, "Deepening").split("\n")) {
@@ -1892,4 +1909,172 @@ export function getArchivedPhases(): ArchivedPhase[] {
     });
   }
   return phases.sort((a, b) => (b.lastReviewed ?? "").localeCompare(a.lastReviewed ?? ""));
+}
+
+/* ── The site map, derived from the routes directory ───────────────── */
+
+/** One route in the tree `/[surface]/site` draws.
+ *
+ *  Read from the mount's routes directory (`Surface.routesDir`), never from a
+ *  doc: the site map is the one surface here whose source is code, and it is
+ *  derived for the same reason every other page is — an authored map of the
+ *  routes is a second thing to review, and the run's picture doc already
+ *  holds the *aspirational* map. This is the map it is reconciled against at
+ *  the run's close (CONTRIBUTING § The phase pipeline). */
+export interface RouteNode {
+  /** The segment as the folder names it — `[id]`, `[...slug]`, `docs`. */
+  segment: string;
+  /** The URL path down to this node, dynamic segments kept in brackets. */
+  path: string;
+  /** A bracketed segment: `[id]`, `[...slug]`, `[[...slug]]`. */
+  dynamic: boolean;
+  /** What the folder holds at this level — a page, a route handler, both,
+   *  or nothing (a folder that only groups its children). */
+  page: string | null;
+  handler: string | null;
+  children: RouteNode[];
+}
+
+/** The routing conventions, in one place — Next's App Router as this project
+ *  runs it. An adopter on another file-based router edits these three and
+ *  nothing else: what names a page, what names a handler, and which folders
+ *  are not URL segments. */
+const ROUTE_PAGE = /^page\.(tsx|ts|jsx|js|mdx|md)$/;
+const ROUTE_HANDLER = /^route\.(tsx|ts|jsx|js)$/;
+/** Route groups `(name)` add no segment; parallel slots `@name`, private
+ *  folders `_name` and dotfiles are not routes. */
+function routeSegment(name: string): { kind: "segment" | "transparent" | "skip"; segment: string } {
+  if (name.startsWith(".") || name.startsWith("_") || name.startsWith("@")) return { kind: "skip", segment: "" };
+  if (/^\(.+\)$/.test(name)) return { kind: "transparent", segment: "" };
+  return { kind: "segment", segment: name };
+}
+
+function readRouteDir(dir: string, urlPath: string, node: RouteNode, root: string): void {
+  let entries: fs.Dirent[];
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    const full = path.join(dir, entry.name);
+    if (entry.isFile()) {
+      if (ROUTE_PAGE.test(entry.name)) node.page = path.relative(root, full);
+      else if (ROUTE_HANDLER.test(entry.name)) node.handler = path.relative(root, full);
+      continue;
+    }
+    if (!entry.isDirectory()) continue;
+    const seg = routeSegment(entry.name);
+    if (seg.kind === "skip") continue;
+    if (seg.kind === "transparent") {
+      // A route group folds into its parent: its children are the parent's.
+      readRouteDir(full, urlPath, node, root);
+      continue;
+    }
+    const childPath = urlPath === "/" ? `/${seg.segment}` : `${urlPath}/${seg.segment}`;
+    const child: RouteNode = {
+      segment: seg.segment,
+      path: childPath,
+      dynamic: seg.segment.startsWith("["),
+      page: null,
+      handler: null,
+      children: [],
+    };
+    readRouteDir(full, childPath, child, root);
+    // A folder with nothing routable under it (components, styles) is not a
+    // node — the tree shows routes, not the filesystem.
+    if (child.page || child.handler || child.children.length > 0) node.children.push(child);
+  }
+}
+
+/** The route tree under a routes directory. Null when the directory does not
+ *  exist — distinct from an empty tree, which is a routes directory holding
+ *  no page files. */
+/** The routes directory the site map reads — the app router's own folder,
+ *  beside `docs/`. */
+const ROUTES_DIR = path.join(path.dirname(DOCS_DIR), "app");
+
+export function getSiteMap(): RouteNode | null {
+  const routesDir = ROUTES_DIR;
+  if (!fs.existsSync(routesDir)) return null;
+  const root: RouteNode = { segment: "", path: "/", dynamic: false, page: null, handler: null, children: [] };
+  readRouteDir(routesDir, "/", root, routesDir);
+  return root;
+}
+
+/** Every node of a tree, depth-first, the root included. */
+export function flattenRoutes(root: RouteNode): RouteNode[] {
+  const out: RouteNode[] = [];
+  const visit = (n: RouteNode) => {
+    out.push(n);
+    n.children.forEach(visit);
+  };
+  visit(root);
+  return out;
+}
+
+/** A row of a run board's survey table — the shown / launch / later table on
+ *  the product mold (CONTRIBUTING § The phase pipeline). The first column
+ *  names the surface; the column set after it is the board's own, so the
+ *  rest of the row is kept as the header names it rather than as three fixed
+ *  fields. `paths` are the URL paths the Surface cell names, which is how a
+ *  row is matched to a route: a row that names no path covers no route. */
+export interface SurveyRow {
+  board: string;
+  surface: string;
+  paths: string[];
+  cells: { header: string; value: string }[];
+}
+
+const ROUTE_PATH_IN_CELL = /(?<![\w/])\/[\w\-.[\]/]*/g;
+
+/** Every survey-table row across the open product boards. Presence-not-count:
+ *  a mount with no run board, or a run board whose table still holds the
+ *  mold's placeholder row, yields nothing. */
+export function getSurveyRows(): SurveyRow[] {
+  const rows: SurveyRow[] = [];
+  for (const board of getActiveBoards()) {
+    if (board.mode !== "product") continue;
+    for (const section of board.body.split(/^## /m).slice(1)) {
+      const header = section.slice(0, section.indexOf("\n")).trim();
+      if (!/^survey/i.test(header)) continue;
+      let headers: string[] | null = null;
+      for (const line of section.split("\n")) {
+        const m = line.match(/^\s*\|(.+)\|\s*$/);
+        if (!m) {
+          if (headers && line.trim() === "") headers = null;
+          continue;
+        }
+        const cells = m[1].split("|").map((c) => c.trim());
+        if (!headers) {
+          headers = cells;
+          continue;
+        }
+        if (cells.every((c) => /^:?-+:?$/.test(c))) continue;
+        const surface = stripMd(cells[0] ?? "");
+        // The mold's placeholder is not a row.
+        if (!surface || /^\(.*\)$/.test(surface)) continue;
+        rows.push({
+          board: board.slug,
+          surface,
+          paths: (cells[0].match(ROUTE_PATH_IN_CELL) ?? []).map((p) => p.replace(/\/$/, "") || "/"),
+          cells: headers.slice(1).map((h, i) => ({ header: h, value: cells[i + 1] ?? "" })),
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+/** Whether a survey row's path covers a route: equal, or a prefix by whole
+ *  segments, with a dynamic segment on either side matching any one segment
+ *  (`/demo/site` covers `/[surface]/site`; `/dogs` covers `/dogs/[id]`). */
+export function routeCovered(routePath: string, rowPaths: string[]): boolean {
+  const route = routePath.split("/").filter(Boolean);
+  const isDynamic = (s: string) => s.startsWith("[");
+  return rowPaths.some((rp) => {
+    const row = rp.split("/").filter(Boolean);
+    if (row.length > route.length) return false;
+    return row.every((seg, i) => seg === route[i] || isDynamic(seg) || isDynamic(route[i]));
+  });
 }

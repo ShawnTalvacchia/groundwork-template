@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { BRIEFING_FILE, getAllDocs, getArchivedPhases, getDecisions, TIER_ORDER } from "@/lib/system";
+import {
+  BRIEFING_FILE,
+  flattenRoutes,
+  getAllDocs,
+  getArchivedPhases,
+  getDecisions,
+  getSiteMap,
+  TIER_ORDER,
+} from "@/lib/system";
 import { GROUPS } from "../nav-model";
 import { PageIntro, StalePill, Tile } from "../ui";
 
@@ -54,6 +62,8 @@ export default function StructurePage() {
   const featureDocs = docs.filter((d) => d.featureStatus);
   const archived = getArchivedPhases();
   const decisions = getDecisions();
+  const site = getSiteMap();
+  const pageCount = site ? flattenRoutes(site).filter((n) => n.page).length : null;
   const tierCounts = TIER_ORDER.map((t) => `${docs.filter((d) => d.tier === t).length} ${t}`).join(" · ");
   const briefing = docs.find((d) => d.relPath === BRIEFING_FILE);
 
@@ -126,6 +136,17 @@ export default function StructurePage() {
           rows={decisions.slice(0, 4).map((d) => ({ date: shortDate(d.date), text: d.title }))}
         />
       </div>
+
+      {/* The site map is consulted, not explored — one line, the way the
+          record's lists above are a glance with the page one click away. */}
+      <p className="text-xs text-fg-tertiary max-w-[60ch]">
+        The site itself:{" "}
+        <Link href="/system/site" className="underline underline-offset-2">
+          the route tree
+        </Link>
+        {pageCount !== null ? ` — ${pageCount} page routes, as the code declares them` : " — no routes directory found"}.
+        A run&apos;s close reconciles its picture against it.
+      </p>
 
       <p className="text-xs text-fg-tertiary max-w-[60ch]">
         Nothing starts settled — docs sink toward bedrock by surviving contact; reopening a settled one

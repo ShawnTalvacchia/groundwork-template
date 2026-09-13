@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import type { ActivePhase, BoardGroup, BoardMode, Tier, WalkthroughCounts } from "@/lib/system";
 import { boardName, MODE_KINDS, MODE_META, TIER_META, headingSlug, stripMd } from "@/lib/system";
 import type { DriftAlarm } from "@/lib/derivation";
+import { Mermaid } from "./mermaid";
 
 /* Shared server-side UI for /system. Presentation only — no content. */
 
@@ -918,6 +919,17 @@ export function DocProse({
         h2: ({ children }) => <h2 id={headingId(children)}>{children}</h2>,
         h3: ({ children }) => <h3 id={headingId(children)}>{children}</h3>,
         h4: ({ children }) => <h4 id={headingId(children)}>{children}</h4>,
+        // A ```mermaid fence renders as a diagram (mermaid.tsx); every other
+        // fence stays a code block. The check is on the fence's language,
+        // which react-markdown hands over as the code child's className.
+        pre: ({ children }) => {
+          const child = Array.isArray(children) ? children[0] : children;
+          const props = (child as { props?: { className?: string; children?: unknown } })?.props;
+          if (props?.className?.includes("language-mermaid") && typeof props.children === "string") {
+            return <Mermaid code={props.children.replace(/\n$/, "")} />;
+          }
+          return <pre>{children}</pre>;
+        },
         a: ({ href, children }) => {
           const resolved = resolveHref(href ?? "");
           if (resolved.startsWith("/system/")) return <Link href={resolved}>{children}</Link>;

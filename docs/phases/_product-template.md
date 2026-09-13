@@ -14,7 +14,11 @@ read-when: When any task is completed or blocked
 
 **Project:** *(the repo this board lives in — work outside it gets handed over, not done)*
 
-**Goal:** One sentence describing what "done" looks like.
+**Thesis:** *(run boards only — the run in one sentence: the change it sets out to make; delete on a member or standalone board)*
+
+**Goal:** One sentence: what the close leaves behind. Never the criterion — that lives in Acceptance Criteria.
+
+**Picture:** *(run boards only — [planning/<run>-picture.md](../planning/_run-picture-template.md), the one-frame view of the run, written by the open kind from `_run-picture-template.md` and reconciled at the close; delete on a member or standalone board)*
 
 **Levels:** *(none — one chat, kinds run in order | one level per kind: open high · build [tier] · close [tier], or in a run open high · basic layer [tier] · survey high · deepen [tier] · close [tier]; fires: [the `Read when:` triggers the close is expected to fire] — see CONTRIBUTING → The phase pipeline)*
 

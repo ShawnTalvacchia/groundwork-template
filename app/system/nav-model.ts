@@ -53,6 +53,10 @@ export const GROUPS: SystemGroup[] = [
       { slug: "features", label: "Features", blurb: "One current-state spec per capability, grouped by the areas the docs declare." },
       { slug: "strategy", label: "Strategy", blurb: "What we believe — settled models, drafts, interview kits, research — each with its thesis." },
       { slug: "styleguide", label: "Styleguide", blurb: "The design system's surface — colors, type, tokens, components." },
+      // Hidden: reached for at one moment, a run's survey or close, when the
+      // aspirational map is reconciled against it — and the drift banner
+      // links here when a route falls outside the survey table.
+      { slug: "site", label: "Site", blurb: "The route tree as the code declares it — one entry per page file, dynamic segments shown as such.", hidden: true },
       { slug: "docs", label: "Docs", blurb: "Every live doc by review tier, with folder and freshness. Doc reading lives here too.", hidden: true },
       { slug: "timeline", label: "Timeline", blurb: "The shipped record — closed phases by month.", hidden: true },
       { slug: "decisions", label: "Decisions", blurb: "Why things are the way they are — dated What/Why/Where entries, newest first.", hidden: true },

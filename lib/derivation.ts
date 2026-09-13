@@ -3,6 +3,7 @@ import {
   getAllDocs,
   getArchivedPhases,
   getDecisions,
+  flattenRoutes,
   getFeatureAreas,
   getFutureItems,
   getGlossary,
@@ -12,12 +13,15 @@ import {
   getPunchItems,
   getQueuedSeeds,
   getRoadmap,
+  getSiteMap,
   getStateReferences,
+  getSurveyRows,
   getTierPhysics,
   getTiers,
   getTrackerModel,
   getWorkModel,
   MODE_KINDS,
+  routeCovered,
   TIER_ORDER,
   type BoardMode,
   type ReferenceKind,
@@ -329,6 +333,29 @@ export function getDriftAlarms(): DriftAlarm[] {
         "getStateReferences",
         ref.source,
         `names ${ref.id}, which is not in ${tracker.doc} — the item was resolved and removed, or the ID is wrong`,
+      );
+    }
+  }
+
+  // The site map against the survey table. A run board's shown / launch /
+  // later table is the run's claim about every surface the site has; the
+  // routes directory is what the site actually has. A page route that no row
+  // names is a surface the survey never weighed — built outside the run's
+  // picture, or added after the survey ran. Presence-not-count twice over:
+  // a project with no routes directory, or no run board with a filled table,
+  // fires nothing. Route handlers are not surfaces and are not checked. A row
+  // covers a route by path (`routeCovered`), so a row written in words alone
+  // covers nothing, and the alarm says to name the path.
+  const site = getSiteMap();
+  const survey = getSurveyRows();
+  if (site && survey.length > 0) {
+    const rowPaths = survey.flatMap((r) => r.paths);
+    for (const node of flattenRoutes(site)) {
+      if (!node.page || routeCovered(node.path, rowPaths)) continue;
+      alarm(
+        "getSiteMap",
+        `phases/ (Survey table) · ${node.page}`,
+        `route ${node.path} has no row in the run board's shown / launch / later table — add one naming the path, or the route was built outside the run's picture`,
       );
     }
   }
