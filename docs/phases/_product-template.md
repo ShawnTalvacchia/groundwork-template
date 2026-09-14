@@ -85,6 +85,16 @@ read-when: When any task is completed or blocked
 
 ---
 
+## Raised
+
+> **What other boards found on this board's ground**
+>
+> Any board may write here; only this one drains it. An entry names what was found or changed, where, which board found it and when, and what this session owes. **A note is never an item** — read this section at your open, and where a ruling or a check is owed, author your own O or V item from it, then delete the entry. Crossing re-authors it, and that is how this board takes ownership. An entry owed to a kind this board has already passed sets it back there, `paused` at that kind. **Undrained entries hold the close** (`CONTRIBUTING.md` → Rules shared by all modes).
+
+- *(what was found or changed)* · **Where:** *(file or route)* · **From:** *(board)*, *(date)* · **Owes:** *(judge | verify | nothing, FYI)*
+
+---
+
 ## Deepening
 
 > **Member boards in a run — delete on a standalone board**

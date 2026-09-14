@@ -20,13 +20,21 @@ read-when: "board close (deleted at close — the moved tracker rows + the commi
 - [ ] P## · [one line — what the fix is]
 - [ ] P## · [one line]
 
+## Raised
+
+> **What other boards found on this board's ground**
+>
+> Any board may write here; only this one drains it. An entry names what was found or changed, where, which board found it and when, and what this session owes. **A note is never an item** — read this section at your open, and where a ruling or a check is owed, author your own item from it, then delete the entry. **Undrained entries hold the close** (`CONTRIBUTING.md` → Rules shared by all modes).
+
+- *(what was found or changed)* · **Where:** *(file or route)* · **From:** *(board)*, *(date)* · **Owes:** *(judge | verify | nothing, FYI)*
+
 ## Notes
 
 [Anything surfaced that isn't done here: new punch items added, scope flagged back, overlap decisions.]
 
 ## Verify at close
 
-[The in-chat handoff (CONTRIBUTING → the side phase's close, step 1): what the PO checks before the board is deleted. Code/UI → `who's looking → /url → what to expect` per changed surface; research → the doc summary + load-bearing findings. Delete this section's prompt text as you fill it.]
+[The in-chat handoff (CONTRIBUTING → the side phase's close, step 1): what the PO checks before the board is deleted. Code/UI → `who's looking → /url → what to expect` per changed surface; research → the doc summary + load-bearing findings. Plus `## Raised` drained — the section empty before the board goes. Delete this section's prompt text as you fill it.]
 
 ## Next
 
