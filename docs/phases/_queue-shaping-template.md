@@ -1,6 +1,6 @@
 ---
 category: phase
-status: active
+status: active | paused
 mode: queue-shaping
 tier: working
 last-reviewed: YYYY-MM-DD

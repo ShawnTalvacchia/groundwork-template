@@ -652,6 +652,39 @@
   border-color: var(--border-subtle);
 }
 
+/* A paused board's card does the opposite of a waiting one: it is NOT set
+   back. `waiting` is a claim of completion, so a board that stopped mid-kind
+   used to render as one that finished — muted, ranked last, indistinguishable
+   from work that cleared its kind. The warning edge is the fix, and it is
+   deliberately the loudest thing this state gets: `paused` is a legal state,
+   not a record defect, so it fires no drift alarm and never fails `verify`.
+   Loud is the rank (`STATUS_RANK`), the label and this edge.
+
+   Measured on the page: the edge reads 3.19:1 against the card in light and
+   11.46:1 in dark, against a neutral tile border sitting at ~1.1:1 — roughly
+   three times the contrast of the border it replaces, which is what makes a
+   paused card scannable in a grid of them. */
+.sys-tile-paused {
+  border-color: var(--status-warning-strong);
+}
+
+/* The stage on a paused board — the load-bearing half of the claim, because
+   it is where to resume. Same ring-carries-emphasis structure as
+   `.sys-pill-active`: the fill is a warmth, the border is the signal.
+
+   Its text keeps `--text-primary` rather than taking the warning colour the
+   way the active pill takes the brand — `--status-warning-strong` on this
+   fill measures 3.07:1, which is a legal ring and an illegal label. Same
+   call `.sys-pill-stale` already made. Text reads 14.66:1 light, 13.42:1
+   dark; the ring 3.07 and 10.72. In light that ring matches the neutral
+   pill's 3.15 rather than beating it, so the pill is reinforcement and the
+   tile's edge is the primary signal. */
+.sys-pill-paused {
+  border-color: var(--status-warning-strong);
+  color: var(--text-primary);
+  background: var(--status-warning-light);
+}
+
 /* A run's boards under the run board — the shelf, its header row naming the
    run and the members in a grid beneath. */
 .sys-run {
@@ -683,6 +716,14 @@
   background: var(--surface-top);
   border-color: var(--border-light);
   opacity: 0.72;
+}
+
+/* Inside a shelf the members sit on the inset ground; a paused one comes up
+   to the top surface with the active board rather than fading with the rest.
+   No opacity step — the point of the state is to be seen. */
+.sys-run .sys-tile-paused {
+  background: var(--surface-top);
+  border-color: var(--status-warning-strong);
 }
 
 .sys-id {

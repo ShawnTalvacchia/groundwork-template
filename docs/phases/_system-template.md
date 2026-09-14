@@ -1,6 +1,6 @@
 ---
 category: phase
-status: active | waiting
+status: active | waiting | paused
 mode: system
 stage: open | build | close
 tier: working

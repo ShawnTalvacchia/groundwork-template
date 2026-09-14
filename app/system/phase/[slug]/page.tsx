@@ -7,7 +7,7 @@ import {
   type ActivePhase,
   type BoardGroup,
 } from "@/lib/system";
-import { DocProse, RunHeader, WalkthroughCallout } from "../../ui";
+import { DocProse, RunHeader, StagePill, WalkthroughCallout } from "../../ui";
 import { slugParams } from "../../slug-params";
 
 /* One board, on its own page — this is its home.
@@ -73,13 +73,11 @@ export default async function BoardPage({ params }: { params: Promise<{ slug: st
         <div className="flex items-center gap-sm flex-wrap">
           <span className="sys-pill">{MODE_META[board.mode].label}</span>
           {/* The board's place in its phase, from the fields it declares: the
-              stage it sits at, and whether a session is working it. Brand on
-              the active board's stage, the same mark the tiles carry. */}
-          {board.stage && (
-            <span className={`sys-pill${board.status === "active" ? " sys-pill-active" : ""}`}>
-              {board.stage.replace(/-/g, " ")}
-            </span>
-          )}
+              stage it sits at, and whether a session is working it. Shared
+              with the tiles (`StagePill`) rather than restated here — the
+              skin is a claim about the board, and a second surface may not
+              spell it differently. */}
+          <StagePill board={board} />
           <span className="text-2xs uppercase tracking-wide text-fg-tertiary">{board.status}</span>
           <span className="text-xs text-fg-tertiary tabular-nums">
             {board.done}/{board.total} tasks

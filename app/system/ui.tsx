@@ -2,8 +2,8 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ReactNode } from "react";
-import type { ActivePhase, BoardGroup, BoardMode, Tier, WalkthroughCounts } from "@/lib/system";
-import { boardName, MODE_KINDS, MODE_META, TIER_META, headingSlug, stripMd } from "@/lib/system";
+import type { ActivePhase, BoardGroup, BoardMode, BoardStatus, Tier, WalkthroughCounts } from "@/lib/system";
+import { boardName, MODE_KINDS, MODE_META, STATUS_LABEL, TIER_META, headingSlug, stripMd } from "@/lib/system";
 import type { DriftAlarm } from "@/lib/derivation";
 import { Mermaid } from "./mermaid";
 
@@ -67,7 +67,7 @@ export function Tile({
   value,
   detail,
   pill,
-  muted,
+  tone,
 }: {
   href: string;
   label: string;
@@ -77,14 +77,18 @@ export function Tile({
    *  briefing tile, whose whole job is to prompt a review, and the amber
    *  StalePill is the only thing on the surface that ever asks for one. */
   pill?: ReactNode;
-  /** Sets the tile back a step (`.sys-tile-waiting`) — a waiting board
-   *  beside the active one. Muted, never disabled: still a link. */
-  muted?: boolean;
+  /** How the card sits relative to the active board beside it. `waiting`
+   *  sets it back a step (`.sys-tile-waiting`) — muted, never disabled,
+   *  still a link. `paused` does the opposite and gives it a warning edge:
+   *  a board that stopped mid-kind must not read as one that finished, which
+   *  is the whole reason the status exists (CONTRIBUTING § Rules shared by
+   *  all modes). Omitted on the active board, which is the baseline. */
+  tone?: "waiting" | "paused";
 }) {
   // Numbers get the big stat treatment; text values sit a step smaller.
   const valueSize = typeof value === "number" ? "text-2xl" : "text-lg";
   return (
-    <Link href={href} className={`sys-tile${muted ? " sys-tile-waiting" : ""}`}>
+    <Link href={href} className={`sys-tile${tone ? ` sys-tile-${tone}` : ""}`}>
       <span className="flex items-baseline justify-between gap-md">
         <span className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">{label}</span>
         {pill}
@@ -182,13 +186,14 @@ export function StarterRows({
 /** The stage a board sits at, as its label — the kind's name with the
  *  hyphen the frontmatter needs read back out ("basic-layer" → "basic layer").
  *  The active board's pill carries the brand. */
-function StagePill({ board }: { board: ActivePhase }) {
+export function StagePill({ board }: { board: ActivePhase }) {
   if (!board.stage) return null;
-  return (
-    <span className={`sys-pill${board.status === "active" ? " sys-pill-active" : ""}`}>
-      {board.stage.replace(/-/g, " ")}
-    </span>
-  );
+  // The active board's pill carries the brand; a paused board's carries the
+  // warning edge, because on a paused board the stage is the load-bearing
+  // half of the claim — it is where to resume. A waiting board's is plain.
+  const skin =
+    board.status === "active" ? " sys-pill-active" : board.status === "paused" ? " sys-pill-paused" : "";
+  return <span className={`sys-pill${skin}`}>{board.stage.replace(/-/g, " ")}</span>;
 }
 
 /** Where a walkthrough stands, as one of four states — the classification the
@@ -235,15 +240,14 @@ function boardDetail(board: ActivePhase): string {
 }
 
 function BoardTile({ board }: { board: ActivePhase }) {
-  const active = board.status === "active";
   return (
     <Tile
       href={`/system/phase/${board.slug}`}
-      label={`${active ? "Active" : "Waiting"} · ${MODE_META[board.mode].label}`}
+      label={`${STATUS_LABEL[board.status]} · ${MODE_META[board.mode].label}`}
       value={boardName(board.title)}
       detail={boardDetail(board)}
       pill={<StagePill board={board} />}
-      muted={!active}
+      tone={board.status === "active" ? undefined : board.status}
     />
   );
 }
@@ -337,7 +341,10 @@ export function RunHeader({
   group: BoardGroup;
   href?: string;
 }) {
-  const active = g.boards.filter((b) => b.status === "active").length + (g.runBoard?.status === "active" ? 1 : 0);
+  const count = (s: BoardStatus) =>
+    g.boards.filter((b) => b.status === s).length + (g.runBoard?.status === s ? 1 : 0);
+  const active = count("active");
+  const paused = count("paused");
   // The members by stage, in the mode's kind order — where the run
   // stands, which is what the run board's own task count never said.
   const kinds = MODE_KINDS[g.mode];
@@ -377,6 +384,13 @@ export function RunHeader({
         <span className="text-2xs text-fg-tertiary tabular-nums">
           {g.boards.length} {g.boards.length === 1 ? "board" : "boards"}
           {` · ${active > 0 ? `${active} active` : "none active"}`}
+          {/* A paused member is named here and nowhere else on the shelf:
+              the count line is where a run reports itself, and a run whose
+              only unfinished board is paused would otherwise read as a run
+              between kinds. It is not a gate — the run may advance past it
+              deliberately (CONTRIBUTING § The phase pipeline) — so it is a
+              clause on the run's own line, not a banner over it. */}
+          {paused > 0 && ` · ${paused} paused`}
           {spread && ` · ${spread}`}
         </span>
       </span>

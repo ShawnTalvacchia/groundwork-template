@@ -1,5 +1,5 @@
 ---
-status: active | waiting
+status: active | waiting | paused
 tier: working
 mode: product
 stage: open | build | basic-layer | survey | deepen | close

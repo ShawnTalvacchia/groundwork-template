@@ -22,6 +22,7 @@ import {
   getWorkModel,
   MODE_KINDS,
   routeCovered,
+  STATUS_RANK,
   TIER_ORDER,
   type BoardMode,
   type ReferenceKind,
@@ -282,11 +283,11 @@ export function getDriftAlarms(): DriftAlarm[] {
   // has no name, so its stage is never checked (MODE_KINDS).
   const boards = getActiveBoards();
   for (const b of boards) {
-    if (b.statusRaw && b.statusRaw !== "active" && b.statusRaw !== "waiting") {
+    if (b.statusRaw && !(b.statusRaw in STATUS_RANK)) {
       alarm(
         "getActiveBoards",
         `phases/${b.slug}.md`,
-        `status "${b.statusRaw}" is not active | waiting — the board renders as active`,
+        `status "${b.statusRaw}" is not active | waiting | paused — the board renders as active`,
       );
     }
     const kinds = MODE_KINDS[b.mode];

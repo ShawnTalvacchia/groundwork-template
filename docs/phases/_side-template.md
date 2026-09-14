@@ -1,6 +1,6 @@
 ---
 category: phase
-status: active
+status: active | paused
 mode: side
 tier: working
 last-reviewed: YYYY-MM-DD

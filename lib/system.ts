@@ -1426,7 +1426,30 @@ export function boardName(title: string): string {
     .trim();
 }
 
-export type BoardStatus = "active" | "waiting";
+/** A board's three states. `waiting` is a claim of *completion* — cleared its
+ *  kind, queued for the next — so it could not describe a board that stopped
+ *  mid-kind, and one stopped mid-walkthrough read as finished. `paused` says
+ *  the board is NOT finished at the kind its `stage:` names and nobody is on
+ *  it (CONTRIBUTING § Rules shared by all modes). It holds no mode slot, and
+ *  it ranks above `waiting` everywhere a surface orders boards: the state
+ *  exists to be seen. */
+export type BoardStatus = "active" | "waiting" | "paused";
+
+/** How a status ranks when a surface orders boards: active · paused ·
+ *  waiting. Paused sits second on purpose — a board that stopped must never
+ *  hide behind boards that cleared their kind, which is the failure the state
+ *  was added for. Shared by `getActiveBoards` and `groupBoards` so the
+ *  surfaces cannot disagree about the order. */
+export const STATUS_RANK: Record<BoardStatus, number> = { active: 0, paused: 1, waiting: 2 };
+
+/** A status's word on a surface, the way `MODE_META` carries a mode's — so a
+ *  tile's label, a badge row and a run's count line cannot spell the same
+ *  state three ways. */
+export const STATUS_LABEL: Record<BoardStatus, string> = {
+  active: "Active",
+  waiting: "Waiting",
+  paused: "Paused",
+};
 
 /** The kinds each mode's boards pass through, in sequence order — the
  *  pipeline's own words (CONTRIBUTING § The phase pipeline), as a board
@@ -1531,7 +1554,7 @@ export function getActiveBoards(): ActivePhase[] {
       slug,
       title: stripMd(firstHeading(parsed.body) ?? slug),
       mode,
-      status: statusRaw === "waiting" ? "waiting" : "active",
+      status: statusRaw === "waiting" || statusRaw === "paused" ? statusRaw : "active",
       statusRaw,
       stage: parsed.fm.stage?.trim() || null,
       run: parsed.fm.run?.trim() || null,
@@ -1545,7 +1568,7 @@ export function getActiveBoards(): ActivePhase[] {
     });
   }
   const order = Object.keys(MODE_META) as BoardMode[];
-  const rank = (b: ActivePhase) => (b.status === "active" ? 0 : 1);
+  const rank = (b: ActivePhase) => STATUS_RANK[b.status];
   return boards.sort(
     (a, b) =>
       order.indexOf(a.mode) - order.indexOf(b.mode) || rank(a) - rank(b) || a.slug.localeCompare(b.slug)
@@ -1853,7 +1876,7 @@ export function groupBoards(boards: ActivePhase[]): BoardGroup[] {
     const i = b.stage ? MODE_KINDS[b.mode].indexOf(b.stage) : -1;
     return i === -1 ? MODE_KINDS[b.mode].length : i;
   };
-  const activeRank = (b: ActivePhase) => (b.status === "active" ? 0 : 1);
+  const activeRank = (b: ActivePhase) => STATUS_RANK[b.status];
   for (const g of groups) {
     g.boards.sort((a, b) => activeRank(a) - activeRank(b) || stageRank(a) - stageRank(b) || a.slug.localeCompare(b.slug));
   }
