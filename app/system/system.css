@@ -644,45 +644,125 @@
   background: var(--brand-subtle);
 }
 
+/* The three board statuses are one scale, and the bar is what puts them on
+   it: `active` wears a 3px bar in full brand, `paused` the same bar in faded
+   brand, `waiting` none at all, and it sits back besides. One hue at two
+   intensities, so the rank reads off a single dimension — and neither
+   question is asked of the 1px ring, which every tile carries whatever its
+   state. A scale built from one token cannot invert; the surface reached for
+   a second hue first and that is exactly how it inverted.
+
+   It used to rank the wrong way round. `waiting` was set back and `paused`
+   took a warning ring around the whole card, while `active` took nothing at
+   all — `.sys-tile-active` did not exist, so the active board's card was
+   byte-identical to the `.sys-tile` a feature-doc link uses. The board
+   nobody was working outranked the board someone was, and a run between
+   kinds (every member waiting, none active — a legal state) left a paused
+   card as the only marked card on the page. */
+
 /* A waiting board's card sits back a step: the inset surface instead of the
-   top one, so the active board is the only card standing on the page. The
-   text keeps its colors — muted, not disabled. */
+   top one, and no bar. The text keeps its colors — muted, not disabled. */
 .sys-tile-waiting {
   background: var(--surface-inset);
   border-color: var(--border-subtle);
 }
 
-/* A paused board's card does the opposite of a waiting one: it is NOT set
-   back. `waiting` is a claim of completion, so a board that stopped mid-kind
-   used to render as one that finished — muted, ranked last, indistinguishable
-   from work that cleared its kind. The warning edge is the fix, and it is
-   deliberately the loudest thing this state gets: `paused` is a legal state,
-   not a record defect, so it fires no drift alarm and never fails `verify`.
-   Loud is the rank (`STATUS_RANK`), the label and this edge.
+/* The active board — the card that wants the reader, wearing the mark this
+   surface already uses for exactly that: `.sys-callout` and
+   `.sys-wt-item--call` carry the same 3px brand bar, and `.sys-pill-active`
+   makes the same claim with a ring. One mark, one meaning.
 
-   Measured on the page: the edge reads 3.19:1 against the card in light and
-   11.46:1 in dark, against a neutral tile border sitting at ~1.1:1 — roughly
-   three times the contrast of the border it replaces, which is what makes a
-   paused card scannable in a grid of them. */
-.sys-tile-paused {
-  border-color: var(--status-warning-strong);
+   The bar is a MARKER (one side, 3px), not a boundary (four sides, 1px), and
+   that is what leaves `.sys-tile:hover` something to say: hover recolours
+   the card's remaining three edges while the bar stays put. */
+.sys-tile-active {
+  border-left: 3px solid var(--brand-main);
 }
 
-/* The stage on a paused board — the load-bearing half of the claim, because
-   it is where to resume. Same ring-carries-emphasis structure as
-   `.sys-pill-active`: the fill is a warmth, the border is the signal.
+/* The bar is 2px wider than the ring it replaces, so a marked card's content
+   would start 2px inside an unmarked one's. On a callout or a walkthrough row
+   that never shows — those are full-width and stacked. In a tile GRID the
+   cards sit side by side and their label rows read as one line, which a 2px
+   jog breaks. Give the bar back what it took: text lines up across every
+   card, and the bar-to-text gap absorbs the difference at 14px instead of
+   16, which nothing measures against. */
+.sys-tile-active,
+.sys-tile-paused {
+  padding-left: calc(var(--space-4) - 2px);
+}
 
-   Its text keeps `--text-primary` rather than taking the warning colour the
-   way the active pill takes the brand — `--status-warning-strong` on this
-   fill measures 3.07:1, which is a legal ring and an illegal label. Same
-   call `.sys-pill-stale` already made. Text reads 14.66:1 light, 13.42:1
-   dark; the ring 3.07 and 10.72. In light that ring matches the neutral
-   pill's 3.15 rather than beating it, so the pill is reinforcement and the
-   tile's edge is the primary signal. */
-.sys-pill-paused {
-  border-color: var(--status-warning-strong);
-  color: var(--text-primary);
-  background: var(--status-warning-light);
+/* A paused board's card is NOT set back. `waiting` is a claim of completion,
+   so a board that stopped mid-kind used to render as one that finished —
+   muted, ranked last, indistinguishable from work that cleared its kind.
+   The bar is the fix, and `paused` fires no drift alarm and never fails
+   `verify`: it is a legal state, not a record defect. Loud is the rank
+   (`STATUS_RANK`), the label and this bar.
+
+   Same geometry as the active board's, and the SAME HUE at a lower
+   intensity — not a second colour. Full brand is the work, faded brand is
+   the stall, nothing is a board that cleared its kind.
+
+   It was a warning ring here first, and that failed twice. Measured, the
+   amber ran 3.19:1 in light against 11.46:1 in dark, so in dark the stalled
+   board out-shouted the active one. Contrast also understates it: ratio is
+   luminance-only, and a high-chroma yellow reads before a low-chroma brand
+   at the SAME ratio, so no amount of matching would have settled it. And it
+   was never portable — brand-against-warning is a judgement about one
+   particular brand ramp, which the next palette does not inherit. The card
+   is the largest surface that argument applies to.
+
+   Measured on this palette: 2.27:1 light, 2.17:1 dark, against the active
+   board's 7.90 and 5.54 and the waiting tile's ring at 1.07 and 1.97 — both
+   themes within a tenth of each other, because an overlay holds its step
+   against whatever it sits on. `--brand-faded` in `globals.css` carries the
+   strength, the floor it answers to, and why that floor is waiting's ring
+   rather than 3:1. */
+.sys-tile-paused {
+  border-left: 3px solid var(--brand-faded);
+}
+
+/* There is deliberately NO `.sys-pill-paused`. The stage pill on a paused
+   board is the ordinary chip, exactly like a waiting board's.
+
+   It carried a warning edge when `paused` was the only marked state and the
+   card behind it said nothing. The card says it now — `.sys-tile-paused`'s
+   bar ranks the three statuses on one scale — so a second mark on the same
+   card was the status stated twice, and stating it twice is what kept
+   reading as loud however the pill itself was tuned. Tried and rejected on
+   the page, in both themes: a faded-brand ring over `--brand-subtle` (still
+   read as marked, because a tinted chip reads as marked however faint its
+   border), and the same ring over the ordinary chip (heavier again — the
+   chip overlay is a stronger grey than the pale fill it replaced).
+
+   Safe because the status is never only a colour: every `StagePill` callsite
+   states it in words beside the pill — the tile's `Paused · Product` label,
+   the board page's own status word, the run header's. */
+
+/* HOVER LIFTS A CARD INSIDE ITS OWN REGISTER, it does not jump every card to
+   one shared colour. A marked card brightens toward its own mark; an unmarked
+   one takes a neutral step. That keeps hover saying "this is clickable"
+   without ever restating, or contradicting, the status.
+
+   `.sys-tile:hover` above handles the active board (its bar is already
+   `--brand-main`) and every tile that is not a board at all. The two rules
+   below are the boards that need their own answer.
+
+   Two defects this replaces. A paused card took the full brand ring on hover,
+   which read as ACTIVE for as long as the pointer sat on it — the one wrong
+   answer available. And a waiting card behaved two different ways for one
+   state: `.sys-tile:hover` and `.sys-run .sys-tile-waiting` have the SAME
+   specificity (0,2,0), so source order decided, and the shelf rule wins by
+   sitting later in the file. Standalone waiting tiles flashed full brand;
+   the same tile inside a run shelf did nothing at all and read as unclickable.
+   The shelf-scoped selector below is carried deliberately rather than relying
+   on source order to stay as it is. */
+.sys-tile-paused:hover {
+  border-color: var(--brand-faded);
+}
+
+.sys-tile-waiting:hover,
+.sys-run .sys-tile-waiting:hover {
+  border-color: var(--border-stronger);
 }
 
 /* A run's boards under the run board — the shelf, its header row naming the
@@ -720,10 +800,11 @@
 
 /* Inside a shelf the members sit on the inset ground; a paused one comes up
    to the top surface with the active board rather than fading with the rest.
-   No opacity step — the point of the state is to be seen. */
+   No opacity step — the point of the state is to be seen. The bar carries
+   the state here as it does anywhere (`.sys-tile-paused`), so this rule is
+   the surface lift and nothing else. */
 .sys-run .sys-tile-paused {
   background: var(--surface-top);
-  border-color: var(--status-warning-strong);
 }
 
 .sys-id {

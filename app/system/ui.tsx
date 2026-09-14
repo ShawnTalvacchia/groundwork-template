@@ -77,13 +77,19 @@ export function Tile({
    *  briefing tile, whose whole job is to prompt a review, and the amber
    *  StalePill is the only thing on the surface that ever asks for one. */
   pill?: ReactNode;
-  /** How the card sits relative to the active board beside it. `waiting`
-   *  sets it back a step (`.sys-tile-waiting`) — muted, never disabled,
-   *  still a link. `paused` does the opposite and gives it a warning edge:
-   *  a board that stopped mid-kind must not read as one that finished, which
-   *  is the whole reason the status exists (CONTRIBUTING § Rules shared by
-   *  all modes). Omitted on the active board, which is the baseline. */
-  tone?: "waiting" | "paused";
+  /** Where the card sits on the status scale, and the three values are ONE
+   *  scale rather than two states and a baseline: `active` takes a 3px left
+   *  bar in full brand, `paused` the same bar in faded brand, `waiting` none
+   *  at all and sits back a step — muted, never disabled, still a link. One
+   *  hue at two strengths, so the rank cannot invert. A board that stopped
+   *  mid-kind must not read as one that finished, and the board being worked
+   *  must not read as neither (CONTRIBUTING § Rules shared by all modes).
+   *
+   *  This bar is the board's only status mark; the stage pill is plain except
+   *  on the active board. Omitted entirely by the tiles that are not boards —
+   *  a feature-doc card, a seed card — which is what `active` used to be
+   *  indistinguishable from. */
+  tone?: "active" | "waiting" | "paused";
 }) {
   // Numbers get the big stat treatment; text values sit a step smaller.
   const valueSize = typeof value === "number" ? "text-2xl" : "text-lg";
@@ -188,11 +194,12 @@ export function StarterRows({
  *  The active board's pill carries the brand. */
 export function StagePill({ board }: { board: ActivePhase }) {
   if (!board.stage) return null;
-  // The active board's pill carries the brand; a paused board's carries the
-  // warning edge, because on a paused board the stage is the load-bearing
-  // half of the claim — it is where to resume. A waiting board's is plain.
-  const skin =
-    board.status === "active" ? " sys-pill-active" : board.status === "paused" ? " sys-pill-paused" : "";
+  // Only the ACTIVE board's pill is skinned. A paused board's is plain, like
+  // a waiting board's: the card's bar already ranks the three statuses, and
+  // every callsite states the status in words beside this pill, so a second
+  // mark here was the same claim twice (see `.sys-pill-paused`'s absence in
+  // system.css).
+  const skin = board.status === "active" ? " sys-pill-active" : "";
   return <span className={`sys-pill${skin}`}>{board.stage.replace(/-/g, " ")}</span>;
 }
 
@@ -247,7 +254,7 @@ function BoardTile({ board }: { board: ActivePhase }) {
       value={boardName(board.title)}
       detail={boardDetail(board)}
       pill={<StagePill board={board} />}
-      tone={board.status === "active" ? undefined : board.status}
+      tone={board.status}
     />
   );
 }

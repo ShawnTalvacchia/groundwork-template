@@ -298,6 +298,25 @@
   --brand-light: var(--brand-400); /* #6366f1 — mid-tone brand accent */
   --brand-main: var(--brand-600); /* #4338ca — primary brand colour */
   --brand-strong: var(--brand-700); /* #3730a3 — hover / emphasis on brand */
+  /* A step BELOW `--brand-main` that survives a re-skin, for ranking a second
+     marked state under a first (the dashboard's `paused` board card). Computed
+     rather than a ramp rung, for two reasons. The dark ramp has no such rung —
+     `--brand-400` and `--brand-600` re-point to the same value there — and a
+     second marked state must rank below the first under WHATEVER brand you
+     set here, which a hand-picked rung cannot promise. Mixing toward
+     `transparent` makes it an overlay, so it holds its step against whatever
+     it sits on, which is why both themes land within a tenth of each other.
+
+     Measured on this palette as a card mark: 2.27:1 light, 2.17:1 dark,
+     against `--brand-main` at 7.90 and 5.54. Re-measure if you re-skin: the
+     RELATIONSHIP survives any brand, the figures do not.
+
+     It sits under 3:1 on purpose. That floor is for a graphical object
+     carrying information nothing else carries, and this mark is not one — the
+     card states its status in words beside it. The floor that binds is the
+     waiting tile's ring (1.07 light / 1.97 dark): the faded mark has to read
+     clearly above that or it stops being a mark at all. */
+  --brand-faded: color-mix(in oklab, var(--brand-main) 45%, transparent);
 
   /* ================================================
      SEMANTIC TOKENS — Text
