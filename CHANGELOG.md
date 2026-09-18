@@ -12,9 +12,30 @@ Every change the template ships that a project built on it may want. Numbered, n
 - **parser:** the `/system` dashboard's code.
 - **convention:** the rules' prose and the molds.
 
+**Every entry names what it builds on.** Its **Depends on** line lists the rules and code it assumes that are older than this changelog, each with the commit that shipped it. If your project was copied before one of those commits, port that first, or the entry will not apply cleanly. Earlier entries are never listed, because you take entries in order.
+
+## 3 · Two dashboard fixes, and entries name what they build on
+
+**Class:** parser · convention
+**Depends on:** the site map and its survey alarm (`4e17f21`)
+**Resolves:** laws-for-paws U1 · laws-for-paws U3 · job-hunt U4
+
+**What changed.**
+
+- `routeCovered` in `lib/system.ts`: a Survey row naming `/` covers only `/`. Before, it covered every route, so the uncovered-route alarm could never fire again.
+- `.sys-id` in `app/system/system.css` moves from the mono face to the body sans, with tabular figures. At 12px the system mono faces drew the letter O and the digit zero alike, so a walkthrough's `O2` read as `02`.
+- This file gains the **Depends on** line, stated above. Entries 1 and 2 now carry one.
+
+**How to adopt.**
+
+1. Take this entry's commit as a patch for `lib/system.ts`, `app/system/system.css` and `docs/implementation/system-surface.md`.
+2. If your Survey table has a row naming `/`, the alarm may now name routes it silenced. Add rows naming their paths.
+3. Nothing to do for the Depends on line. Read it on entries past your marker.
+
 ## 2 · Where We Are stops logging
 
 **Class:** convention · parser
+**Depends on:** the briefing's no-current-state rule and Where We Are's rules 1 to 3, in `docs/CONTRIBUTING.md` → The ROADMAP and the briefing are not changelogs (`1c5a10d`) · the dangling-ID drift alarm (`6c06eb3`)
 **Commits:** `3c5282f`, then `d7ed048`. Take both, never the second alone.
 **Resolves:** none
 
@@ -37,6 +58,7 @@ Every change the template ships that a project built on it may want. Numbered, n
 ## 1 · The channel
 
 **Class:** protocol · convention
+**Depends on:** the rule *Every close hands off the next opening line*, in `docs/CONTRIBUTING.md` → The Work Model (`b8ed5f5`) · the `## Raised` entry shape the outbox borrows (`805e295`)
 **Resolves:** none
 
 **What changed.**

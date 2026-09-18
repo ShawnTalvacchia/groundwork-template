@@ -2111,12 +2111,15 @@ export function getSurveyRows(): SurveyRow[] {
 
 /** Whether a survey row's path covers a route: equal, or a prefix by whole
  *  segments, with a dynamic segment on either side matching any one segment
- *  (`/demo/site` covers `/[surface]/site`; `/dogs` covers `/dogs/[id]`). */
+ *  (`/demo/site` covers `/[surface]/site`; `/dogs` covers `/dogs/[id]`).
+ *  `/` is the exception: it covers only `/`, or one row naming the home page
+ *  would cover every route and the uncovered-route alarm could never fire. */
 export function routeCovered(routePath: string, rowPaths: string[]): boolean {
   const route = routePath.split("/").filter(Boolean);
   const isDynamic = (s: string) => s.startsWith("[");
   return rowPaths.some((rp) => {
     const row = rp.split("/").filter(Boolean);
+    if (row.length === 0) return route.length === 0;
     if (row.length > route.length) return false;
     return row.every((seg, i) => seg === route[i] || isDynamic(seg) || isDynamic(route[i]));
   });
