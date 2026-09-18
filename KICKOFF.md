@@ -10,11 +10,13 @@ This repo is a **project operating system**, not a codebase: a work model (phase
 
 ```
 README.md                     the front door — replaced with your project's own at kickoff close
+CHANGELOG.md                  the template's changes, numbered — deleted at kickoff close; read it at the template's repo
 CLAUDE.md                     project instructions (Work Model summary + kickoff stubs)
 docs/
   CONTRIBUTING.md             the full Work Model, tiers, trackers, hygiene — the rulebook
   ROADMAP.md                  the queue (empty — you fill it)
   decisions.md                institutional memory (empty)
+  upstream.md                 your side of the template's changelog: the marker, your declines, your outbox
   strategy/
     Vision.md                 BEDROCK stub — the thesis; fill first
     Scope & Constraints.md    in/out of scope, non-goals
@@ -82,7 +84,7 @@ The kickoff is the **bootstrap** — the one-time phase that runs *before* the t
    **No mark yet? Defer it deliberately, not silently.** A kickoff must never stall waiting on a designer, and "generic placeholder" is a legitimate answer on day one. Write a Future Consideration in your own words with your own trigger — "the first time someone outside the project sees a link preview," say — and move on. The one thing not to do is leave it unowned: the trigger you name is what brings it back.
 7. **Set the ROADMAP** — the Goal line, Where We Are, and queue your **first product phase** with a one-line thesis + a seed in `planning/queued/`.
 8. **Log the kickoff decisions** in `decisions.md` (the stack choice, the vision as first drafted).
-9. **Close the kickoff** with the verification handoff (present the filled shelf for a read), then work the board's close items — they replace the README with your project's own and **delete this file** — and open your first product phase from the roadmap.
+9. **Close the kickoff** with the verification handoff (present the filled shelf for a read), then work the board's close items — they replace the README with your project's own, **delete this file** and the template's `CHANGELOG.md` — and open your first product phase from the roadmap.
 
 After that, work the normal loop: queue → open a phase from its mode's template → orient (align or challenge) → build → (product) walkthrough → close (distill + delete). The whole loop is in `docs/CONTRIBUTING.md`.
 
@@ -116,7 +118,7 @@ Punch list IDs. They come onto one light board and get worked together, with no 
 
 ### The doors are yours too
 
-Three doors is the short version of seven, and the seven are not fixed. `docs/CONTRIBUTING.md` → **Adjustments** is the map: name a **kind** when you keep opening the same shape of work, bind a ritual to a moment where nothing fires, edit or delete a step that costs more than it catches, redraw a mode's bands when they stop matching who edits what. Each one names the moment you'd want it, and none of them is something you should do on day one.
+Three doors is the short version, and the full set in Session starters is not fixed. `docs/CONTRIBUTING.md` → **Adjustments** is the map: name a **kind** when you keep opening the same shape of work, bind a ritual to a moment where nothing fires, edit or delete a step that costs more than it catches, redraw a mode's bands when they stop matching who edits what. Each one names the moment you'd want it, and none of them is something you should do on day one.
 
 The one thing worth doing deliberately rather than by drift: make the change in the section that owns it, commit it, and check that `/system/method` renders your version. The dashboard reads these docs, so your model is the one it shows.
 

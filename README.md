@@ -47,7 +47,7 @@ Queue-shaping is the lightest door, and the routine way an idea enters the queue
 
 Two things need no door. A board left open by an earlier chat is a continuation, so pick it back up. Questions and reading need no board at all, and the first edit is the line where a shape gets named.
 
-All seven ways a session begins, and the parts you can reshape, are in `docs/CONTRIBUTING.md` → Session starters, rendered at `/system/method`.
+Every way a session begins, and the parts you can reshape, are in `docs/CONTRIBUTING.md` → Session starters, rendered at `/system/method`.
 
 ## First 30 minutes
 
@@ -59,6 +59,20 @@ All seven ways a session begins, and the parts you can reshape, are in `docs/CON
 The kickoff's close ritual replaces this README with your project's own and deletes `KICKOFF.md`. The template leaves no onboarding behind. What remains is your project.
 
 Not a web project? The methodology works without the app. Delete `app/`, `components/`, `lib/`, and the web config; keep `docs/` and `CLAUDE.md`.
+
+## Taking the template's updates
+
+The template keeps changing after you copy it. Each change a project may want is a numbered entry in [`CHANGELOG.md`](CHANGELOG.md).
+
+Your copy tracks where it stands in `docs/upstream.md`. Its marker is the last entry you reviewed. A fresh copy starts current.
+
+When entries wait past your marker, run an upgrade:
+
+`Run a system phase, upgrade: template entries 3 to 5.`
+
+It takes each entry in, adapts it, or declines it with a reason. Then it moves the marker.
+
+Found something the template should fix? Write it in the outbox in `docs/upstream.md`. Or paste it into an issue here. Same format either way.
 
 ## Two audiences
 
