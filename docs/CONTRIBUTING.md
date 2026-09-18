@@ -101,7 +101,7 @@ Every session starts with someone arriving with something, and your part is two 
 
 **Opening ritual:**
 
-1. Open the board from `_product-template.md` (`mode: product`) with its thesis stated; fold the phase's **seed** into the board, and remove row + seed per the shared rule (§ Rules shared by all modes). Update the ROADMAP's Where-We-Are current-phase line instead. Declare `stage`, `status` and `run` in the frontmatter, and the Levels line — one level per kind the board will run; the open is the **open** kind's work, and every later kind arrives at what it declares (§ The phase pipeline). **A product phase opens from its seed.** Arriving without one, shape the seed first — a fresh open chat opens from it.
+1. Open the board from `_product-template.md` (`mode: product`) with its thesis stated; fold the phase's **seed** into the board, and remove row + seed per the shared rule (§ Rules shared by all modes). Declare `stage`, `status` and `run` in the frontmatter, and the Levels line — one level per kind the board will run; the open is the **open** kind's work, and every later kind arrives at what it declares (§ The phase pipeline). **A product phase opens from its seed.** Arriving without one, shape the seed first — a fresh open chat opens from it.
 2. **Then name the chat** — set its title from the convention and record it on the board, asking only when the title is not derivable (§ Rules shared by all modes).
 3. Orient — run the **Opening Checklist** (`product-lifecycle.md` → Opening a Product Phase): Ring 1 reads the strategy shelf whole, Ring 2 actively aligns to the docs this phase answers to; align or challenge.
 4. Confirm thesis + scope with the PO — no task moves to in-progress before this.
@@ -445,7 +445,7 @@ Every piece of information has exactly one home doc. Other docs reference it —
 
 ### The ROADMAP and the briefing are not changelogs
 
-The Roadmap tracks: where we're going, what phase we're in, what's coming next, key strategic considerations. It does NOT track: what was built in previous phases (that's `archive/`), or detailed task lists (that's phase boards).
+The Roadmap tracks: where we're going, the project's stage and what blocks its next step, what's coming next, key strategic considerations. It does NOT track: what phase is open (that's `phases/`), what was built in previous phases (that's `archive/`), or detailed task lists (that's phase boards).
 
 When closing a phase, do NOT add a completion summary to the Roadmap. Take the finished phase off the forward list and archive its board — that IS the record. Let what the phase revealed *re-orient* the forward view, but express it as direction, never as a log of what's done.
 
