@@ -239,6 +239,35 @@ export function getDriftAlarms(): DriftAlarm[] {
     );
   }
 
+  // Where We Are, logging. The section says the project's stage today and what
+  // blocks its next step, each blocker naming its tracker ID — nothing dated,
+  // nothing in the past tense, no log, no risks (those are the trackers'). Four
+  // rules say so (CONTRIBUTING § The ROADMAP and the briefing are not
+  // changelogs), and rules alone let a current-state section ratchet: growth
+  // arrives between closes, and each close removes only part of it.
+  //
+  // What this can and cannot do: it makes NO judgement about which sentences
+  // are log lines — that is the four rules', and unbuildable here. It is one
+  // number against one limit, the same ground every invariant above stands on.
+  // The message carries the purpose and the smells in words instead of
+  // triggering on them: a past-tense regex fires on legitimate current-state
+  // prose, and a date regex fires on "open since <date>" and on citations.
+  //
+  // 400 words, flat. A section holding a stage and its blockers runs well under
+  // a hundred and a fresh shelf a few dozen, so it stays silent on day one
+  // without a second condition; past 400, a section has regrown into a log.
+  // NOT compared to the queue: a limit that scales with What's Next lets a long
+  // queue license a long current-state section. A count threshold is the
+  // deliberate re-tightening the CALIBRATION note above allows.
+  const WHERE_WE_ARE_LIMIT = 400;
+  if (roadmap.whereWeAreWords > WHERE_WE_ARE_LIMIT) {
+    alarm(
+      "getRoadmap",
+      "ROADMAP.md § Where We Are",
+      `${roadmap.whereWeAreWords} words, past the ${WHERE_WE_ARE_LIMIT}-word limit — the section is logging. It says the project's stage today and what blocks its next step, each blocker naming its tracker ID: nothing dated, nothing in the past tense, no record of what closed or shipped, no risks. Re-read it against the four rules (CONTRIBUTING § The ROADMAP and the briefing are not changelogs): a date or a past-tense verb is history (archive/ or decisions.md), a board's name or status is already on phases/ and /system/roadmap, and a risk belongs to a tracker (the Assumptions Log, Future Considerations) or is a lens for Key Considerations`,
+    );
+  }
+
   // The seed ↔ queued-row match is bidirectional and mode-agnostic (2026-07-20:
   // the queue holds upcoming work of any mode; every queued row carries a seed,
   // and the roadmap card IS the link to it). A rename on either side silently

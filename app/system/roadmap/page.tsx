@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { getQueuedSeeds, getRoadmap, MODE_META, type RoadmapSection } from "@/lib/system";
-import { EmptyNote, MdInline, PageIntro, groupQueue } from "../ui";
+import { getActiveBoards, getQueuedSeeds, getRoadmap, groupBoards, MODE_META, type RoadmapSection } from "@/lib/system";
+import { BoardCards, EmptyNote, MdInline, PageIntro, groupQueue } from "../ui";
 
 export default function RoadmapPage() {
   const roadmap = getRoadmap();
   const seeds = getQueuedSeeds();
   const seedFor = (name: string) => seeds.find((s) => s.phase === name);
+  const boards = groupBoards(getActiveBoards());
 
   // Section ORDER comes from the doc, never from this file. Reorder ROADMAP.md
   // and this page follows: the order the ROADMAP puts its sections in is a
@@ -143,8 +144,20 @@ export default function RoadmapPage() {
     <>
       <PageIntro
         title="Roadmap"
-        blurb="Where the project stands, and the queue of planned work of any mode. This doc says where things are going, never where they have been — what closed lives on the timeline, and a board is created only when a phase opens."
+        blurb="The boards open now, the queue of planned work of any mode, and where the project stands."
       />
+      {/* The open boards lead the page, ahead of every doc section: what is
+          being worked on now comes before what is queued next. Where We Are's
+          prose holds no board state (CONTRIBUTING § The ROADMAP and the briefing
+          are not changelogs, rule 4), so the page derives it. Not a doc
+          section, so it sits outside `sectionOrder` and the doc's claim about
+          its own order stands. Same cards the hub and Work render: the order
+          and shape of a group are the parser's claims, and a second surface
+          may not restate them differently. */}
+      <section className="flex flex-col gap-md">
+        <h2 className="text-lg font-semibold text-fg-primary">Open boards</h2>
+        <BoardCards groups={boards} />
+      </section>
       {roadmap.sectionOrder.map((key) => blocks[key])}
       <p className="text-xs leading-relaxed text-fg-tertiary">
         Full doc:{" "}

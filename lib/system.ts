@@ -1100,6 +1100,11 @@ export interface Roadmap {
    *  two: bullets written with none parsed means the lenses are authored and
    *  the page shows nothing. */
   keyConsiderationsWritten: number;
+  /** Prose words in § Where We Are — markdown and any table or list
+   *  scaffolding stripped. The drift invariant holds it to a flat limit
+   *  (`lib/derivation.ts`). A count only — which sentences are log lines is
+   *  the four rules' judgement, and no parser can make it. */
+  whereWeAreWords: number;
   /** ROADMAP § On the horizon. Named for the section, not for any one
    *  project's shape. */
   horizon: string[];
@@ -1113,6 +1118,20 @@ function ledeOf(section: string): string {
   const paras = section.trim().split("\n\n");
   const first = paras[0]?.trim() ?? "";
   return /^\*\*Read when:\*\*/.test(first) ? (paras[1]?.trim() ?? "") : first;
+}
+
+/** A section's prose length in words. Markdown emphasis, links and code
+ *  spans come off via `stripMd`; table pipes, separator rows, list bullets
+ *  and `---` breaks are scaffolding rather than words. What is left is what a
+ *  reader reads. */
+function proseWords(section: string): number {
+  return stripMd(section)
+    .replace(/^\s*\|?[-:\s|]+\|\s*$/gm, " ") // table separator rows
+    .replace(/^\s*[-*]\s+/gm, " ") // list bullets
+    .replace(/^-{3,}\s*$/gm, " ") // thematic breaks
+    .replace(/\|/g, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
 }
 
 function sectionOf(body: string, heading: string): string {
@@ -1178,6 +1197,7 @@ export function getRoadmap(): Roadmap {
     runningAlongside,
     keyConsiderations: considerations,
     keyConsiderationsWritten: kcBullets.length,
+    whereWeAreWords: proseWords(sectionOf(body, "Where We Are")),
     horizon,
   };
 }

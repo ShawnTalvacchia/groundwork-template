@@ -9,19 +9,24 @@ import { Mermaid } from "./mermaid";
 
 /* Shared server-side UI for /system. Presentation only — no content. */
 
-/** The surface self-reporting parser drift (lib/derivation.ts). Rendered by
- *  the layout on every /system page; absent when every invariant holds, so
- *  its mere presence is the alarm. */
+/** The surface self-reporting drift (lib/derivation.ts). Rendered by the
+ *  layout on every /system page; absent when every invariant holds, so its
+ *  mere presence is the alarm. The copy covers two classes: most alarms are
+ *  format drift with a hollow page below, and the Where We Are length alarm
+ *  is a record defect on a page that renders correctly. Naming only the
+ *  first would make the band lie about the second. */
 export function DriftBanner({ alarms }: { alarms: DriftAlarm[] }) {
   if (alarms.length === 0) return null;
   return (
     <div className="flex flex-col gap-sm rounded-panel border border-warning bg-warning-light px-lg py-md">
       <p className="text-sm font-semibold text-fg-primary">
-        Derivation drift — {alarms.length} parser invariant{alarms.length === 1 ? "" : "s"} failing
+        Derivation drift — {alarms.length} check{alarms.length === 1 ? "" : "s"} failing
       </p>
       <p className="text-xs leading-relaxed text-fg-secondary max-w-[72ch]">
         A parsed doc&apos;s format no longer matches what its parser expects, so a page below is rendering
-        empty or partial. Fix the doc to spec — formats never bend to the parsers. See{" "}
+        empty or partial — or the record itself drifted from a rule these checks hold it to, on a page
+        that renders fine. The doc is what moves either way: formats never bend to the parsers, and a
+        record defect is fixed by rewriting the record. See{" "}
         <Link href="/system/docs/implementation/system-surface.md" className="underline underline-offset-2">
           system-surface.md → Drift alarms
         </Link>
@@ -273,7 +278,7 @@ export function BoardCards({ groups }: { groups: BoardGroup[] }) {
           href="/system/phase"
           label="Active board"
           value="Between boards"
-          detail="no phase open — the queue below is what's next"
+          detail="no phase open — the queue is what's next"
         />
       </div>
     );
