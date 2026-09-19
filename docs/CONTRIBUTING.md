@@ -44,7 +44,7 @@ Rules for humans and agents working in this repo. Read before building. This is 
 - **Commits are mode-pure.** A commit serves exactly one board and names it in the message. Never mix product and system changes in one commit.
 - Boards work the main working tree — parallelism is *between* phases, not within one. (Spawned side tasks are the exception: they run in worktrees, per the side phase.)
 - **Routing ("where does this go?"):** ≤30 min isolated fix → punch list, swept later · focused work, no strategy → side phase · structural thesis or cross-surface coupling → product phase · workflow/doc/dashboard work → system phase · committed, phase-sized, not this phase's job → a row and seed on the queue · strategic and unresolved → Open Questions · known direction, no trigger yet → Future Considerations.
-- The active board(s) render live at `/system` (Work → Active board), badged by mode.
+- The active board(s) render live at `/system` (Work → Active board), badged by mode — and by **upgrade** where the board's Upgrade line names template entries, since that tunes the mode's rituals.
 
 ### Session starters — the front door
 
@@ -286,7 +286,7 @@ Two more things make it an outlier, and they're features:
 
 A project copied from a template keeps changing after the copy, and so does the template. The template publishes each change a project may want as a numbered entry in its `CHANGELOG.md`: its class, what changed, how to adopt it, and the outbox items it resolves. **This project's side is one file, `docs/upstream.md`:** the **marker** (`template-entry:`, the last entry this project reviewed), where the template lives (`template:`), the entries adapted or declined and why, and the **outbox**. The template ships the file with its marker pre-set, so a fresh copy starts current; a project copied before the changelog existed joins by taking entry 1. Nothing older is tracked — earlier template work is caught up by diff.
 
-**Down — the upgrade kind.** A system phase on a collapsed board, one chat, its walkthrough walking each adapt and decline call. Its steps:
+**Down — the upgrade kind.** A system phase on a collapsed board, one chat, its board's **Upgrade** line naming the entries taken in, its walkthrough walking each adapt and decline call. Its steps:
 
 1. **Read the entries past the marker** in the template's own `CHANGELOG.md`, where `template:` points.
 2. **Per entry, adopt, adapt or decline,** and land the work by three rules:

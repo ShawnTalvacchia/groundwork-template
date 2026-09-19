@@ -1486,6 +1486,33 @@ export const MODE_KINDS: Record<BoardMode, string[]> = {
   "queue-shaping": [],
 };
 
+/** What a board carries across its project's boundary — the kinds that are
+ *  not stages. **upgrade**: its `**Upgrade:**` line names the template's
+ *  changelog entries being taken in. **export**: an `**Exports:**` line names
+ *  another repo the board writes into, which a project built from the template
+ *  does not do unless it maintains one of its own. Derived, never declared:
+ *  the lines are where a board already says so, and amended mid-phase when
+ *  the truth arrives, so a declared `kind:` field would be a second copy that
+ *  goes stale. Any mode may carry one. */
+export type BoardCrossing = "export" | "upgrade";
+
+/** The crossings a board's body lines name, in `BoardCrossing` order. Only the
+ *  lines above the first `##` count, where the molds put them. A value reads
+ *  as absent when it is empty, `none` (with or without a gloss after it), or
+ *  still the mold's `*(placeholder)*` — an unfilled line is not a crossing. */
+function boardCrossings(body: string): BoardCrossing[] {
+  const head = body.split(/^## /m)[0];
+  const fields = boldFields(head);
+  const named = (key: string) => {
+    const value = fields.find((f) => f.key === key)?.value.trim() ?? "";
+    return value !== "" && !/^none\b/i.test(value) && !value.startsWith("*(");
+  };
+  const out: BoardCrossing[] = [];
+  if (named("Exports")) out.push("export");
+  if (named("Upgrade")) out.push("upgrade");
+  return out;
+}
+
 export interface ActivePhase {
   slug: string;
   title: string;
@@ -1499,6 +1526,9 @@ export interface ActivePhase {
   stage: string | null;
   /** `run:` — the run this board belongs to, or null. */
   run: string | null;
+  /** What the board carries across the project's boundary, from its
+   *  `Exports:` and `Upgrade:` lines (`boardCrossings`). Empty for most. */
+  crossings: BoardCrossing[];
   /** The doc the board's `**Picture:**` line links — a run board's one-frame
    *  view (`planning/<run>-picture.md`, CONTRIBUTING § The phase pipeline),
    *  as a docs-relative path. Null where the line is absent or links
@@ -1578,6 +1608,7 @@ export function getActiveBoards(): ActivePhase[] {
       statusRaw,
       stage: parsed.fm.stage?.trim() || null,
       run: parsed.fm.run?.trim() || null,
+      crossings: boardCrossings(parsed.body),
       picture: pictureLink(parsed.body),
       deferred: countDeferredV(parsed.body),
       workstreams,

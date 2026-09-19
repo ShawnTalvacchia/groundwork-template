@@ -14,6 +14,25 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names what it builds on.** Its **Depends on** line lists the rules and code it assumes that are older than this changelog, each with the commit that shipped it. If your project was copied before one of those commits, port that first, or the entry will not apply cleanly. Earlier entries are never listed, because you take entries in order.
 
+## 4 · A board shows its upgrade beside its mode
+
+**Class:** parser · convention
+**Depends on:** the molds page's body-field parse, `boldFields` (`fca16cf`) · boards declaring status, stage and run, and the stage pill (`fd0ded8`)
+**Resolves:** none
+
+**What changed.**
+
+- `lib/system.ts`: every open board gets `crossings`, read from its `**Upgrade:**` and `**Exports:**` lines above the first `##`. Empty, `none` or the mold's `*(placeholder)*` reads as absent.
+- `app/system/ui.tsx`: a new `CrossingPills` puts one plain pill per crossing beside the mode pill, on the board page and the walkthrough header. A tile's label adds it too: `Active · System · upgrade`.
+- `docs/phases/_system-template.md`: the Project line gains `**Upgrade:**`.
+- `docs/CONTRIBUTING.md`: the board-badge bullet and The upgrade kind name the Upgrade line. `docs/implementation/system-surface.md` follows.
+
+**How to adopt.**
+
+1. Take this entry's commit as a patch for `lib/system.ts` and the three `app/system/` files. Where your badge rows differ, add `<CrossingPills board={board} />` after the mode pill by hand.
+2. Add the Upgrade field to your system mold's Project line.
+3. Patch the two CONTRIBUTING sentences. Your next upgrade board fills the line with the entries it takes, and the pill shows.
+
 ## 3 · Two dashboard fixes, and entries name what they build on
 
 **Class:** parser · convention

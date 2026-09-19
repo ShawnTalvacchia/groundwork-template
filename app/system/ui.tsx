@@ -208,6 +208,23 @@ export function StagePill({ board }: { board: ActivePhase }) {
   return <span className={`sys-pill${skin}`}>{board.stage.replace(/-/g, " ")}</span>;
 }
 
+/** What the board carries across the project's boundary — upgrade, export —
+ *  one plain pill each, at the mode pill's weight. The status bar already
+ *  says how much attention a board wants; this says only which rituals it
+ *  runs, so it takes no skin of its own. Shared by the board page and the
+ *  walkthrough header so the two cannot spell it differently. */
+export function CrossingPills({ board }: { board: ActivePhase }) {
+  return (
+    <>
+      {board.crossings.map((c) => (
+        <span key={c} className="sys-pill">
+          {c}
+        </span>
+      ))}
+    </>
+  );
+}
+
 /** Where a walkthrough stands, as one of four states — the classification the
  *  board's callout and the cards' detail line both read, so the two can say it
  *  in different numbers of words without ever disagreeing about which state it
@@ -255,7 +272,7 @@ function BoardTile({ board }: { board: ActivePhase }) {
   return (
     <Tile
       href={`/system/phase/${board.slug}`}
-      label={`${STATUS_LABEL[board.status]} · ${MODE_META[board.mode].label}`}
+      label={[STATUS_LABEL[board.status], MODE_META[board.mode].label, ...board.crossings].join(" · ")}
       value={boardName(board.title)}
       detail={boardDetail(board)}
       pill={<StagePill board={board} />}

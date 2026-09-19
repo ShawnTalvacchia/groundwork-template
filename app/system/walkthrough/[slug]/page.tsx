@@ -11,7 +11,7 @@ import {
   type WalkthroughItem,
   type WalkthroughSection,
 } from "@/lib/system";
-import { InsetNote, EmptyNote, MdInline, resolveDocHref } from "../../ui";
+import { CrossingPills, InsetNote, EmptyNote, MdInline, resolveDocHref } from "../../ui";
 import { slugParams } from "../../slug-params";
 
 /* The walkthrough, scoped for the person walking it.
@@ -187,6 +187,7 @@ export default async function WalkthroughPage({
         {lede && <p className="text-sm leading-relaxed text-fg-secondary max-w-[60ch]">{lede}</p>}
         <div className="flex items-center gap-sm flex-wrap">
           {board && <span className="sys-pill">{MODE_META[board.mode].label}</span>}
+          {board && <CrossingPills board={board} />}
           {board?.stage && <span className="sys-pill">{board.stage.replace(/-/g, " ")}</span>}
           <span className="text-xs text-fg-secondary tabular-nums">
             {c.calls} {c.calls === 1 ? "call" : "calls"} open · {c.checks}{" "}

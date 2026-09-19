@@ -12,7 +12,7 @@ read-when: "while this system phase is open (deleted at close — decisions.md c
 
 **Mode:** system · [the rituals this board runs](../CONTRIBUTING.md#the-system-phase-tends-the-rules)
 
-**Project:** *(the repo this board lives in — work outside it gets handed over, not done)*
+**Project:** *(the repo this board lives in — work outside it gets handed over, not done)* · **Upgrade:** *(none | the template's changelog entries this phase takes in — anything here puts it in the **upgrade** kind, see CONTRIBUTING → The upgrade kind)*
 
 **Levels:** *(none — one chat, kinds run in order | open high · build [tier] · close [tier], fires: [the `Read when:` triggers the close is expected to fire] — see CONTRIBUTING → The phase pipeline)*
 

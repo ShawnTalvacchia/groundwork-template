@@ -7,7 +7,7 @@ import {
   type ActivePhase,
   type BoardGroup,
 } from "@/lib/system";
-import { DocProse, RunHeader, StagePill, WalkthroughCallout } from "../../ui";
+import { CrossingPills, DocProse, RunHeader, StagePill, WalkthroughCallout } from "../../ui";
 import { slugParams } from "../../slug-params";
 
 /* One board, on its own page — this is its home.
@@ -72,6 +72,10 @@ export default async function BoardPage({ params }: { params: Promise<{ slug: st
       <section className="flex flex-col gap-md">
         <div className="flex items-center gap-sm flex-wrap">
           <span className="sys-pill">{MODE_META[board.mode].label}</span>
+          {/* What the board carries across the project's boundary — derived
+              from its Upgrade and Exports lines, beside the mode because it
+              tunes the mode's rituals. */}
+          <CrossingPills board={board} />
           {/* The board's place in its phase, from the fields it declares: the
               stage it sits at, and whether a session is working it. Shared
               with the tiles (`StagePill`) rather than restated here — the
