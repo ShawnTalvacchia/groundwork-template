@@ -14,6 +14,27 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names what it builds on.** Its **Depends on** line lists the rules and code it assumes that are older than this changelog, each with the commit that shipped it. If your project was copied before one of those commits, port that first, or the entry will not apply cleanly. Earlier entries are never listed, because you take entries in order.
 
+**Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
+
+## 5 · Resolves names public issues, and you judge your own outbox
+
+**Class:** convention
+**Depends on:** none
+**Resolves:** none
+
+**What changed.**
+
+- The **Resolves** line names this repo's GitHub issues, or `none`. It never names an entry in a project's outbox. The header above now says so.
+- Entry 3's Resolves line now reads `none`, to match.
+- `docs/CONTRIBUTING.md` → The upgrade kind. An entry's parts now include Depends on, and the issues it resolves. Step 1 ports what an entry depends on first. Step 4 clears the outbox entries the new entries fix, judged from each entry's What changed. The outbox paragraph says the same.
+- `docs/upstream.md`: the card's sentence on when you clear an outbox entry says the same.
+
+**How to adopt.**
+
+1. Patch The upgrade kind in `docs/CONTRIBUTING.md` from this entry's commit: its opening paragraph, steps 1 and 4, and the outbox paragraph.
+2. Change the last sentence of your `docs/upstream.md` card the same way.
+3. Judge each entry in your outbox against the entries you have taken, and clear the ones they fix. From here on, that is step 4 of every upgrade.
+
 ## 4 · A board shows its upgrade beside its mode
 
 **Class:** parser · convention
@@ -37,7 +58,7 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Class:** parser · convention
 **Depends on:** the site map and its survey alarm (`4e17f21`)
-**Resolves:** laws-for-paws U1 · laws-for-paws U3 · job-hunt U4
+**Resolves:** none
 
 **What changed.**
 

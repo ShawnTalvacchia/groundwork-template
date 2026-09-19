@@ -284,19 +284,19 @@ Two more things make it an outlier, and they're features:
 
 **Read when:** the template's changelog has entries past this project's marker, or this project has found something the template should fix.
 
-A project copied from a template keeps changing after the copy, and so does the template. The template publishes each change a project may want as a numbered entry in its `CHANGELOG.md`: its class, what changed, how to adopt it, and the outbox items it resolves. **This project's side is one file, `docs/upstream.md`:** the **marker** (`template-entry:`, the last entry this project reviewed), where the template lives (`template:`), the entries adapted or declined and why, and the **outbox**. The template ships the file with its marker pre-set, so a fresh copy starts current; a project copied before the changelog existed joins by taking entry 1. Nothing older is tracked — earlier template work is caught up by diff.
+A project copied from a template keeps changing after the copy, and so does the template. The template publishes each change a project may want as a numbered entry in its `CHANGELOG.md`: its class, what it depends on, what changed, how to adopt it, and the public issues it resolves. **This project's side is one file, `docs/upstream.md`:** the **marker** (`template-entry:`, the last entry this project reviewed), where the template lives (`template:`), the entries adapted or declined and why, and the **outbox**. The template ships the file with its marker pre-set, so a fresh copy starts current; a project copied before the changelog existed joins by taking entry 1. Nothing older is tracked — earlier template work is caught up by diff.
 
 **Down — the upgrade kind.** A system phase on a collapsed board, one chat, its board's **Upgrade** line naming the entries taken in, its walkthrough walking each adapt and decline call. Its steps:
 
-1. **Read the entries past the marker** in the template's own `CHANGELOG.md`, where `template:` points.
+1. **Read the entries past the marker** in the template's own `CHANGELOG.md`, where `template:` points. An entry's **Depends on** names older commits it assumes; port any your project predates first.
 2. **Per entry, adopt, adapt or decline,** and land the work by three rules:
    - **Baseline by diff.** Diff your files against the template at the entry's commits and port only what is missing, whatever the entry, or a brief about it, says the baseline is.
    - **Patch, never copy over.** A copied file silently reverts every divergence this project holds.
    - **Re-measure.** A contrast ratio, pixel figure or other measurement in a ported comment is re-measured against your own tokens and rewritten, or deleted.
 3. **Record each entry adapted or declined, and why,** in `docs/upstream.md`, so a decline is never argued twice. An entry adopted as written needs no line.
-4. **Clear the outbox entries** the new entries name under Resolves, then **set the marker** to the last entry reviewed.
+4. **Clear the outbox entries** the new entries fix, judged from each one's What changed — its Resolves line names only the template's public issues — then **set the marker** to the last entry reviewed.
 
-**Up — the outbox.** What this project finds that the template should fix goes in `docs/upstream.md`'s outbox, in the `## Raised` shape — what was found, where, who found it and when, what is owed — plus an ID (`U1`, `U2`, never reused) that a changelog entry's Resolves line can name. Whoever maintains the template reads it there; where they cannot, paste the entry into an issue on the template's repository — same format, different carrier. Only this project writes its outbox, and it clears an entry when a changelog entry resolves or declines it.
+**Up — the outbox.** What this project finds that the template should fix goes in `docs/upstream.md`'s outbox, in the `## Raised` shape — what was found, where, who found it and when, what is owed — plus an ID (`U1`, `U2`, never reused) to cite it by. Whoever maintains the template reads it there; where they cannot, paste the entry into an issue on the template's repository — same format, different carrier. Only this project writes its outbox, and it clears an entry when it judges a changelog entry has fixed it, or when the template declines it.
 
 ---
 
