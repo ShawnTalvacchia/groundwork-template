@@ -16,6 +16,30 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 6 · The method page teaches the run, and the kind sequences come from one declared list
+
+**Class:** protocol · parser · convention
+**Depends on:** kinds as session shapes and the product phase's run (`a79bb71`) · `MODE_KINDS` and boards declaring status, stage and run (`fd0ded8`) · the method page's arrival order (`c68b503`)
+**Resolves:** none
+
+**What changed.**
+
+- **`docs/CONTRIBUTING.md` → § The phase pipeline gains a `### The run` subsection.** Same words as the run paragraph it replaces, broken at its own bold sentences: a lede, then three bold-led paragraphs. It sits **last** in the section, because everything under a `###` reads as part of it, and the parser cuts it out before reading the parent's rules — which is what lets the page render it beside the kind cards. The section's parser marker says so, and names the kind-name join below.
+- **`lib/system.ts`: `MODE_SEQUENCES` replaces the hard-coded `MODE_KINDS`,** which now derives from it. A mode declares the shapes its boards run — a product phase runs open → build → close on its own and the longer shape inside a run — and the flat list a `stage:` is checked against is their merged union, in the same order as before. One flat list could order a run's members but could not say which kinds only a run has.
+- **`getPhasePipeline` returns `kinds` and `run`.** `PipelineRole` is now `PipelineKind`, `pipeline.roles` is `pipeline.kinds`, and `PipelineRun` carries the subsection's heading, tagline, lede and rules. `WorkModel.arc` is deleted: nothing consumed it once the kind cards stopped carrying arc-step tags.
+- **The method page renders the kind layer in three parts** — one strip per declared sequence, the kind cards each tagged with the sequences that run it, then the run. The tag join is the card's name against the sequence list, normalised for case and hyphens (`**Basic layer**` ⇔ `basic-layer`); a name no sequence lists renders untagged.
+- **The Concurrency shared rule renders with the modes** instead of folded at the foot, carrying a chip per status its own text names. A canon whose rule names no status gets no chips; a canon with no such rule leaves the foot as it was.
+- **`app/system/system.css`: the kind grid's columns are floored at 240px.** They were `minmax(0, 1fr)`, so auto-fit put six kinds on one row — six unreadable slivers at a 1024 viewport. `.sys-arc-role(s)` is now `.sys-arc-kind(s)`, and `.sys-seq*` and `.sys-run-note` are new.
+- **The drift alarm splits in two.** A pipeline section that parses hollow fires as before; a `### The run` that parses hollow fires separately. Both are presence-not-count: writing no subsection is silent.
+- `docs/implementation/system-surface.md`: the Method row is rewritten for all of it. It had fallen behind the page it describes, so take the row whole rather than patching it.
+
+**How to adopt.**
+
+1. **The canon first.** In your `docs/CONTRIBUTING.md` → § The phase pipeline, move the run paragraph to the end of the section under a `### The run — <your tagline>` heading and break it at its bold sentences — a lede, then one paragraph per bold lead. Patch the section's parser marker from this entry's commit. If your canon has no run, skip this step: the page renders no run and nothing fires.
+2. **Then the parser.** Take this entry's commit as a patch for `lib/system.ts` and `lib/derivation.ts`. If you renamed the kinds, edit `MODE_SEQUENCES` to your own names and sequences — that constant is the one place they are declared now, and `MODE_KINDS` follows.
+3. **Then the page and the CSS.** Patch `app/system/method/page.tsx` and `app/system/system.css`. The rename touches both: `.sys-arc-role(s)` → `.sys-arc-kind(s)`. If your method page has diverged, the three parts of the kind layer can be taken one at a time — the strips, the card tags, the run block — and the Concurrency lift is independent of all three.
+4. **Check the page.** Your kind cards should wrap rather than shrink, each tagged with the sequences that run it, and a card tagged with nothing means its name is not in `MODE_SEQUENCES` — fix the list, not the canon.
+
 ## 5 · Resolves names public issues, and you judge your own outbox
 
 **Class:** convention

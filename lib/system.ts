@@ -553,10 +553,6 @@ export interface WorkModel {
    *  invariant is not a fixed number — it is that every heading present made
    *  it into `modes`, which is what `lib/derivation.ts` checks. */
   modeHeadings: number;
-  /** The phase arc's step names, parsed from the lede's own "its arc is
-   *  A → B → C" sentence. Empty when the lede states no arc — the method
-   *  page then skips the role strip's tags rather than authoring them. */
-  arc: string[];
   sharedRules: string[];
   modes: WorkMode[];
   /** Lede paragraph of `### Session starters`. */
@@ -625,7 +621,7 @@ function parseTriggers(is: string): WorkTrigger[] {
 export function getWorkModel(): WorkModel {
   const parsed = readDoc("CONTRIBUTING.md");
   const empty: WorkModel = {
-    lede: "", modeHeadings: 0, arc: [], sharedRules: [], modes: [],
+    lede: "", modeHeadings: 0, sharedRules: [], modes: [],
     startersLede: "", starters: [], partsLede: "", parts: [],
     adjustmentsLede: "", adjustments: [], triggers: [],
   };
@@ -638,8 +634,6 @@ export function getWorkModel(): WorkModel {
   const nextH2 = afterHeading.search(/^## /m);
   const section = nextH2 === -1 ? afterHeading : afterHeading.slice(0, nextH2);
   const lede = section.trim().split("\n\n")[0] ?? "";
-  const arc = (stripMd(lede).match(/arc is ([^.]+)/)?.[1] ?? "")
-    .split("→").map((s) => s.trim()).filter(Boolean);
   const sharedBlock = section.split(/\*\*Rules shared by all modes:\*\*/)[1]?.split(/^### /m)[0] ?? "";
   const sharedRules = (sharedBlock.match(/^- .*$/gm) ?? []).map((b) => b.slice(2).trim());
 
@@ -722,31 +716,53 @@ export function getWorkModel(): WorkModel {
   const triggerPart = parts.find((p) => p.name.toLowerCase() === "trigger");
   const triggers = triggerPart ? parseTriggers(triggerPart.is) : [];
   return {
-    lede, modeHeadings, arc, sharedRules, modes, startersLede, starters,
+    lede, modeHeadings, sharedRules, modes, startersLede, starters,
     partsLede, parts, adjustmentsLede, adjustments, triggers,
   };
 }
 
-/** One role bullet of § The phase pipeline: `- **The planner** (runs high) …`.
+/** One kind bullet of § The phase pipeline: `- **Open** (high) opens the …`.
  *  The names are the project's own words — a project may rename or reshape
- *  the roles, so nothing here asserts which roles exist. */
-export interface PipelineRole {
+ *  the kinds, so nothing here asserts which kinds exist. */
+export interface PipelineKind {
   name: string;
-  level: string; // the parenthetical: the level the role's chat runs at
+  level: string; // the parenthetical: the level the kind's chat runs at
   text: string; // markdown kept — render with MdInline
+}
+
+/** A bold-led rule paragraph: its lead sentence, then the rest. */
+export interface PipelineRule {
+  title: string;
+  text: string;
+}
+
+/** § The phase pipeline → `### The run`, cut out before the parent's rules
+ *  are read. Same shape as its parent — a lede, then bold-led paragraphs —
+ *  because it is the same kind of prose, and the page folds it the same way.
+ *  Null when the canon states no run: a project may run one board at a time
+ *  and never write the subsection. */
+export interface PipelineRun {
+  /** The heading's own words, split at the em dash the way a mode heading is:
+   *  the name, then its tagline. A subsection written without one has an
+   *  empty tagline. */
+  title: string;
+  tagline: string;
+  lede: string; // markdown kept
+  rules: PipelineRule[];
 }
 
 export interface PhasePipeline {
   lede: string; // markdown kept
   /** The section's own `**Read when:**` line — the condition under which any
    *  of this applies. It was parsed away as noise until the method page had a
-   *  place to put it: the role layer is the split phase's, and a page that
+   *  place to put it: the kind layer is the split phase's, and a page that
    *  renders it unconditionally tells a collapsed phase it has three chats.
    *  Empty when the section states no trigger. */
   readWhen: string;
-  roles: PipelineRole[];
+  kinds: PipelineKind[];
   /** The trailing bold-led paragraphs — the pipeline's standing rules. */
-  rules: { title: string; text: string }[];
+  rules: PipelineRule[];
+  run: PipelineRun | null;
 }
 
 /** Like sectionOf, but matches the `## ` heading by prefix, so a project's
@@ -760,31 +776,56 @@ function sectionByPrefix(body: string, prefix: string): string | null {
   return next === -1 ? rest : rest.slice(0, next);
 }
 
-/** § The phase pipeline — how one phase runs across chats. Absence is
- *  legitimate: a project that reshapes the model may delete the section,
- *  and the method page then renders no role cards. The section's
- *  `**Read when:**` line is a trigger for readers, never a lede. */
-export function getPhasePipeline(): PhasePipeline | null {
-  const parsed = readDoc("CONTRIBUTING.md");
-  if (!parsed) return null;
-  const section = sectionByPrefix(parsed.body, "The phase pipeline");
-  if (section === null) return null;
-  const lede = ledeOf(section);
-  const readWhen = section.match(/^\*\*Read when:\*\*\s*([\s\S]+?)$/m)?.[1].trim() ?? "";
-  const roles: PipelineRole[] = [];
-  const roleRe = /^- \*\*(.+?)\*\*\s*\(([^)]+)\)\s*(.+)$/gm;
-  let m;
-  while ((m = roleRe.exec(section))) {
-    roles.push({ name: m[1].trim(), level: m[2].trim(), text: m[3].trim() });
-  }
-  const rules: { title: string; text: string }[] = [];
+/** The bold-led paragraphs of a pipeline section: `**Lead.** rest`. Bullets,
+ *  the Read when: line and the section's own lede are not rules. */
+function pipelineRules(section: string, lede: string): PipelineRule[] {
+  const rules: PipelineRule[] = [];
   for (const para of section.split("\n\n")) {
     const p = para.trim();
-    if (!p || p.startsWith("- ") || /^\*\*Read when:\*\*/.test(p) || p === lede) continue;
+    if (!p || p.startsWith("- ") || p.startsWith("#") || /^\*\*Read when:\*\*/.test(p) || p === lede) continue;
     const rm = p.match(/^\*\*(.+?)\*\*\s*([\s\S]+)$/);
     if (rm) rules.push({ title: rm[1].trim().replace(/[.:]$/, ""), text: rm[2].trim() });
   }
-  return { lede, readWhen, roles, rules };
+  return rules;
+}
+
+/** § The phase pipeline — how one phase runs across chats. Absence is
+ *  legitimate: a project that reshapes the model may delete the section,
+ *  and the method page then renders no kind cards. The section's
+ *  `**Read when:**` line is a trigger for readers, never a lede.
+ *
+ *  `### The run` is cut out first, so the parent's rules never swallow it and
+ *  it never swallows them. The canon has to put it last — everything under a
+ *  `###` reads as part of it — while the page wants it beside the kinds, and
+ *  cutting is what lets the two orders differ. */
+export function getPhasePipeline(): PhasePipeline | null {
+  const parsed = readDoc("CONTRIBUTING.md");
+  if (!parsed) return null;
+  const whole = sectionByPrefix(parsed.body, "The phase pipeline");
+  if (whole === null) return null;
+  const runStart = whole.search(/^### The run\b/m);
+  const section = runStart === -1 ? whole : whole.slice(0, runStart);
+  const lede = ledeOf(section);
+  const readWhen = section.match(/^\*\*Read when:\*\*\s*([\s\S]+?)$/m)?.[1].trim() ?? "";
+  const kinds: PipelineKind[] = [];
+  const kindRe = /^- \*\*(.+?)\*\*\s*\(([^)]+)\)\s*(.+)$/gm;
+  let m;
+  while ((m = kindRe.exec(section))) {
+    kinds.push({ name: m[1].trim(), level: m[2].trim(), text: m[3].trim() });
+  }
+  let run: PipelineRun | null = null;
+  if (runStart !== -1) {
+    const heading = whole.slice(runStart).match(/^### (.+)$/m)?.[1].trim() ?? "";
+    const [title, tagline = ""] = heading.split(/\s+—\s+/);
+    // To the next `###`, so a canon that grows a second subsection keeps this
+    // one to its own paragraphs.
+    const after = whole.slice(runStart).replace(/^### .*$/m, "");
+    const next = after.search(/^### /m);
+    const body = next === -1 ? after : after.slice(0, next);
+    const runLede = ledeOf(body);
+    run = { title: title.trim(), tagline: tagline.trim(), lede: runLede, rules: pipelineRules(body, runLede) };
+  }
+  return { lede, readWhen, kinds, rules: pipelineRules(section, lede), run };
 }
 
 export interface TrackerRow {
@@ -1471,20 +1512,72 @@ export const STATUS_LABEL: Record<BoardStatus, string> = {
   paused: "Paused",
 };
 
-/** The kinds each mode's boards pass through, in sequence order — the
- *  pipeline's own words (CONTRIBUTING § The phase pipeline), as a board
- *  declares them in `stage:`. Hard-coded like MODE_META's labels: the canon
- *  states the sequences in one prose sentence per mode, and a parser that
- *  read them out of it would be the fragile prose-reading the declared
- *  fields exist to avoid. The list orders a run's members and lets the drift
- *  alarms check a declared stage. Queue-shaping runs one unnamed kind, so its
- *  list is empty and a declared stage there is never checked. */
-export const MODE_KINDS: Record<BoardMode, string[]> = {
-  product: ["open", "build", "basic-layer", "survey", "deepen", "close"],
-  system: ["open", "build", "close"],
-  side: ["sweep", "research"],
+/** One shape a mode's board can run, in kind order. `name` is the shape's
+ *  own word, empty where the mode runs a single shape and its own name says
+ *  it all — the surfaces label that one by the mode. */
+export interface KindSequence {
+  name: string;
+  kinds: string[];
+}
+
+/** The kind sequences each mode's boards run — the pipeline's own words
+ *  (CONTRIBUTING § The phase pipeline), as a board declares them in `stage:`.
+ *  Hard-coded like MODE_META's labels: the canon states the sequences in one
+ *  prose sentence per mode, and a parser that read them out of it would be
+ *  the fragile prose-reading the declared fields exist to avoid.
+ *
+ *  A mode may run more than one: a product phase runs open → build → close on
+ *  its own, and the longer shape inside a **run**. The shapes are declared
+ *  here and the flat list derives below, which is what keeps the two from
+ *  disagreeing — and what lets the method page say which kinds only a run
+ *  has, which one flat list of six could not.
+ *
+ *  Side's two are alternatives rather than a sequence — one board runs one of
+ *  them — and it is a list for the same reason product's are: the union below
+ *  is what a stage is checked against. Queue-shaping runs one unnamed kind, so
+ *  it declares no shape and a declared stage there is never checked. */
+export const MODE_SEQUENCES: Record<BoardMode, KindSequence[]> = {
+  product: [
+    { name: "on its own", kinds: ["open", "build", "close"] },
+    { name: "in a run", kinds: ["open", "basic-layer", "survey", "deepen", "close"] },
+  ],
+  system: [{ name: "", kinds: ["open", "build", "close"] }],
+  side: [{ name: "", kinds: ["sweep", "research"] }],
   "queue-shaping": [],
 };
+
+/** The sequences merged into one order — every kind once, and no kind before
+ *  one that precedes it in any sequence (build sits before basic layer
+ *  because the standalone shape puts it there, and close stays last because
+ *  the run's shape does). A first-seen concatenation would rank `close`
+ *  third, which is the order a run's members sort by.
+ *
+ *  Sequences that contradict each other have no such order; that falls back
+ *  to first-seen rather than looping, since this runs at module load. */
+function mergeSequences(seqs: string[][]): string[] {
+  const out: string[] = [];
+  const rest = seqs.map((s) => [...s]);
+  while (rest.some((s) => s.length > 0)) {
+    // A head is takeable when no other sequence puts it after something else.
+    const head = rest.find((s) => s.length > 0 && !rest.some((o) => o.indexOf(s[0]) > 0));
+    if (!head) {
+      for (const s of rest) for (const k of s) if (!out.includes(k)) out.push(k);
+      break;
+    }
+    const kind = head[0];
+    out.push(kind);
+    for (const s of rest) if (s[0] === kind) s.shift();
+  }
+  return out;
+}
+
+/** Every kind a mode's boards can declare in `stage:`, in one order — the
+ *  union of the mode's sequences. This is what orders a run's members and
+ *  what the drift alarms check a declared stage against; which shapes run a
+ *  kind is `MODE_SEQUENCES`' to say, and only the method page asks. */
+export const MODE_KINDS: Record<BoardMode, string[]> = Object.fromEntries(
+  Object.entries(MODE_SEQUENCES).map(([mode, seqs]) => [mode, mergeSequences(seqs.map((s) => s.kinds))]),
+) as Record<BoardMode, string[]>;
 
 /** What a board carries across its project's boundary — the kinds that are
  *  not stages. **upgrade**: its `**Upgrade:**` line names the template's

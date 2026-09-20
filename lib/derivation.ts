@@ -135,7 +135,7 @@ export function getDriftAlarms(): DriftAlarm[] {
   // already guaranteed by the five-parts assertion above: a Trigger card that
   // exists while its list parses to nothing is the hollow render this catches
   // — the method page would tag no ritual with the moment that fires it. No
-  // count of six: the moments are the project's own, like the roles. And no
+  // count of six: the moments are the project's own, like the kinds. And no
   // assertion on the steps' actor — a ritual reshaped to run unattended names
   // no human legitimately (§ Adjustments), so a floor there would fire on a
   // correct canon.
@@ -146,13 +146,24 @@ export function getDriftAlarms(): DriftAlarm[] {
   // § The phase pipeline — presence, not count. A project that reshapes the
   // model may delete the section (silent), but a section that exists and
   // parses hollow is drift: the method page would render its heading over
-  // nothing. No role-count assertion — the roles are the project's own words.
+  // nothing. No kind-count assertion — the kinds are the project's own words.
+  // Its `### The run` subsection is presence-not-count the same way, and on
+  // the same parser: a project that runs one board at a time writes no
+  // subsection and hears nothing, while one that writes a heading the page
+  // renders over nothing is the same drift one level down.
   const pipeline = getPhasePipeline();
-  if (pipeline && (!pipeline.lede || pipeline.roles.length === 0)) {
+  if (pipeline && (!pipeline.lede || pipeline.kinds.length === 0)) {
     alarm(
       "getPhasePipeline",
       "CONTRIBUTING.md § The phase pipeline",
-      "section present but its lede or role bullets parsed empty",
+      "section present but its lede or kind bullets parsed empty",
+    );
+  }
+  if (pipeline?.run && (!pipeline.run.lede || pipeline.run.rules.length === 0)) {
+    alarm(
+      "getPhasePipeline",
+      "CONTRIBUTING.md § The phase pipeline → The run",
+      "subsection present but its lede or bold-led paragraphs parsed empty",
     );
   }
 

@@ -1201,21 +1201,25 @@
 
 /* ── Method: how we work ── */
 
-/* The roles that carry the arc — one card per role, each tagged with the
-   steps it runs. The tags are the arc; there is no separate step strip. */
-.sys-arc-roles {
+/* The kinds a phase passes through — one card per bullet, each tagged with
+   the sequences that run it.
+
+   The columns are FLOORED. `minmax(0, 1fr)` let auto-fit put every kind on
+   one row, which at six kinds and a 1024 viewport is six 131px slivers; the
+   floor wraps them to two rows of three. */
+.sys-arc-kinds {
   display: grid;
   gap: var(--space-3);
   grid-template-columns: 1fr;
 }
 
 @media (min-width: 700px) {
-  .sys-arc-roles {
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  .sys-arc-kinds {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   }
 }
 
-.sys-arc-role {
+.sys-arc-kind {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -1225,11 +1229,65 @@
   border-radius: var(--radius-panel);
 }
 
-/* A role's level text can be a phrase, not a word — let its pill wrap
+/* A kind's level text can be a phrase, not a word — let its pill wrap
    instead of forcing the grid column wide. */
-.sys-arc-role .sys-pill {
+.sys-arc-kind .sys-pill {
   white-space: normal;
   text-align: left;
+}
+
+/* A sequence strip: the label, then the kinds in order. One row per shape a
+   mode's boards run, above the cards they order. */
+.sys-seqs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sys-seq {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+}
+
+.sys-seq-label {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  min-width: 14ch;
+}
+
+/* The order is the list's; the arrow is decoration, so it is drawn here
+   rather than typed into the markup where a screen reader would read it. */
+.sys-seq-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.sys-seq-kinds li + li::before {
+  content: "\2192";
+  margin-right: var(--space-2);
+  color: var(--text-tertiary);
+}
+
+/* The run — the kind layer's one subsection, set back from the cards above
+   it so a reader can tell "this is the long shape" from "these are the
+   kinds". Same inset rail the explainer cards use. */
+.sys-run-note {
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--brand-faded);
+  background: var(--surface-inset);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 /* A shared rule with no bold lead renders as a plain row with the folded
