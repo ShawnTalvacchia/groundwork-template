@@ -110,7 +110,7 @@ export function daysSince(isoDate: string | null): number | null {
   return Math.floor((Date.now() - then.getTime()) / 86_400_000);
 }
 
-/* ── The doc registry (everything live under docs/, plus the briefing) ─ */
+/* ── The doc registry (everything live under docs/, plus the root's own) ─ */
 
 /** The **briefing**: a project's root-level instruction file, read at the
  *  start of every session — that reading IS the session-start ritual. It sits
@@ -122,15 +122,46 @@ export function daysSince(isoDate: string | null): number | null {
  *  (`getStateReferences`), and the pages that label where a doc lives. */
 export const BRIEFING_FILE = "CLAUDE.md";
 
-/** A doc's path as it exists in the repo — what a reader would open. Registry
- *  paths are relative to `docs/`; the briefing is the one that is not. */
-export function docSourcePath(relPath: string): string {
-  return relPath === BRIEFING_FILE ? BRIEFING_FILE : `docs/${relPath}`;
+/** The project root's own docs — the files that sit beside `docs/` rather than
+ *  inside it, and say so by carrying doc frontmatter.
+ *
+ *  The briefing was the only one for a long time, named as a constant above
+ *  because it has jobs no other doc has. It is not the only kind: a project may
+ *  keep meta docs at its root that are genuinely its own and genuinely docs,
+ *  and before this they were readable in an editor and nowhere else.
+ *
+ *  **A root doc declares itself, and the declaration is a `tier:`.** Not a list
+ *  in code, which you would have to find and edit, and not every `.md` lying at
+ *  the root, which would sweep in the README, the changelog and whatever else a
+ *  repo keeps there. Declaring a tier is what every doc under `docs/` already
+ *  does to be one, and a root file that declares one is asking for the same
+ *  treatment — after which the frontmatter-coverage alarm holds it to the rest
+ *  (`read-when`, `last-reviewed`), the way it holds every other doc. Same
+ *  bargain the molds make: the set derives, so adding one gets it rendered
+ *  without touching this file.
+ *
+ *  Not recursive, and `docs/` itself is skipped: everything under there is the
+ *  registry's own walk. */
+function rootDocs(): string[] {
+  const root = path.dirname(DOCS_DIR);
+  if (!fs.existsSync(root)) return [];
+  return fs
+    .readdirSync(root, { withFileTypes: true })
+    .filter((e) => e.isFile() && e.name.endsWith(".md"))
+    .map((e) => e.name)
+    .filter((name) => parseFrontmatter(fs.readFileSync(path.join(root, name), "utf-8")).fm.tier)
+    .sort();
 }
 
 export interface SystemDoc {
   title: string;
   relPath: string; // e.g. "strategy/Product Vision.md"
+  /** Where the file actually is, from the project root — what a reader would
+   *  open. Registry paths are relative to `docs/`, and a root doc's is not,
+   *  and the two cannot be told apart from `relPath` alone (`ROADMAP.md` is
+   *  `docs/ROADMAP.md`; `CLAUDE.md` is not `docs/CLAUDE.md`). Recorded where
+   *  it is known rather than recomputed from a rule that cannot see it. */
+  sourcePath: string;
   dir: string; // top-level bucket, e.g. "strategy", "features", "" for root
   status: string | null;
   tier: Tier | null;
@@ -167,6 +198,7 @@ function toSystemDoc(
   fm: Frontmatter,
   body: string,
   limits: Partial<Record<Tier, number | null>>,
+  sourcePath = `docs/${relPath}`,
 ): SystemDoc {
   const tier = (["bedrock", "commitments", "working"].includes(fm.tier ?? "")
     ? fm.tier
@@ -178,6 +210,7 @@ function toSystemDoc(
   return {
     title: stripMd(firstHeading(body) ?? path.basename(relPath, ".md")),
     relPath,
+    sourcePath,
     dir: relPath.includes(path.sep) ? relPath.split(path.sep)[0] : "",
     status: fm.status ?? null,
     tier,
@@ -203,13 +236,13 @@ function toSystemDoc(
  *  simply has one fewer doc. */
 export function getAllDocs(): SystemDoc[] {
   const limits = staleLimits();
-  const briefing = path.join(path.dirname(DOCS_DIR), BRIEFING_FILE);
-  const read = (full: string, relPath: string) => {
+  const read = (full: string, relPath: string, sourcePath?: string) => {
     const { fm, body } = parseFrontmatter(fs.readFileSync(full, "utf-8"));
-    return toSystemDoc(relPath, fm, body, limits);
+    return toSystemDoc(relPath, fm, body, limits, sourcePath);
   };
+  const root = path.dirname(DOCS_DIR);
   const docs = walk(DOCS_DIR).map((full) => read(full, path.relative(DOCS_DIR, full)));
-  if (fs.existsSync(briefing)) docs.push(read(briefing, BRIEFING_FILE));
+  for (const name of rootDocs()) docs.push(read(path.join(root, name), name, name));
   return docs.sort((a, b) => a.relPath.localeCompare(b.relPath));
 }
 
@@ -282,7 +315,7 @@ export function getAllDocPaths(): string[] {
     }
   };
   walkAll(DOCS_DIR);
-  if (fs.existsSync(path.join(path.dirname(DOCS_DIR), BRIEFING_FILE))) out.push(BRIEFING_FILE);
+  out.push(...rootDocs());
   return out;
 }
 
@@ -928,18 +961,21 @@ export function getTierPhysics(): TierPhysics {
 }
 
 /** Reads any doc under docs/ (archive included) — used by the doc detail page.
- *  CLAUDE.md is the one special case outside docs/ (repo root). */
+ *  The project root's own docs are read too (`rootDocs`), CLAUDE.md among them. */
 export function getDocByPath(
   relPath: string,
 ): { doc: SystemDoc; body: string; frontmatter: DocField[] } | null {
-  const isBriefing = relPath === BRIEFING_FILE;
-  const full = isBriefing
-    ? path.join(path.dirname(DOCS_DIR), BRIEFING_FILE)
-    : path.normalize(path.join(DOCS_DIR, relPath));
-  if (!isBriefing && (!full.startsWith(DOCS_DIR + path.sep) || !full.endsWith(".md"))) return null;
+  // `docs/` answers first, so a project that keeps `docs/NOTES.md` reads that
+  // one and a root doc never shadows the tree. Only then the project root, and
+  // only for a file that declared itself a doc there (`rootDocs`) — otherwise
+  // this route would serve any `.md` beside `docs/`, README included.
+  const inDocs = path.normalize(path.join(DOCS_DIR, relPath));
+  const isRoot = !(inDocs.startsWith(DOCS_DIR + path.sep) && fs.existsSync(inDocs)) && rootDocs().includes(relPath);
+  const full = isRoot ? path.join(path.dirname(DOCS_DIR), relPath) : inDocs;
+  if (!isRoot && (!full.startsWith(DOCS_DIR + path.sep) || !full.endsWith(".md"))) return null;
   if (!fs.existsSync(full)) return null;
   const { fm, body } = parseFrontmatter(fs.readFileSync(full, "utf-8"));
-  const rel = isBriefing ? BRIEFING_FILE : path.relative(DOCS_DIR, full);
+  const rel = isRoot ? relPath : path.relative(DOCS_DIR, full);
   // No stale limits: the detail page shows the doc, never a freshness verdict
   // on it — that judgement belongs to the index, which passes the real ones.
   //
@@ -949,7 +985,7 @@ export function getDocByPath(
   // the next author will copy. Object keys preserve insertion order, so this
   // is the file's own order rather than one this file chose.
   return {
-    doc: toSystemDoc(rel, fm, body, {}),
+    doc: toSystemDoc(rel, fm, body, {}, isRoot ? rel : undefined),
     body,
     frontmatter: Object.entries(fm).map(([key, value]) => ({ key, value })),
   };

@@ -4,7 +4,7 @@ status: active
 tier: working
 last-reviewed: YYYY-MM-DD
 template: https://github.com/ShawnTalvacchia/groundwork-template
-template-entry: 6
+template-entry: 7
 read-when: "the template's changelog has entries past template-entry, or this project has found something the template should fix"
 ---
 

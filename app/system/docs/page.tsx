@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BRIEFING_FILE, getAllDocs, getTierPhysics, getTiers, TIER_META, type Tier, type TierPhysics } from "@/lib/system";
+import { getAllDocs, getTierPhysics, getTiers, TIER_META, type Tier, type TierPhysics } from "@/lib/system";
 import { InsetNote, MdInline, PageIntro, StalePill } from "../ui";
 
 // Tiers + doc map, merged (IA v2): every live doc grouped by tier — most
@@ -60,7 +60,7 @@ export default function DocsPage() {
       <PageIntro
         title="Docs"
         count={docs.length}
-        blurb="Every live doc, grouped by how guarded it is against change — the briefing at the project root included, since every session reads it first. Nothing starts settled: docs sink by surviving, and reopening a settled one takes a structured challenge. Amber marks docs past their tier's check-up backstop. The archive is deliberately absent — reach it through the timeline."
+        blurb="Every live doc, grouped by how guarded it is against change — the project root's own docs included, the briefing among them, since every session reads it first. Nothing starts settled: docs sink by surviving, and reopening a settled one takes a structured challenge. Amber marks docs past their tier's check-up backstop. The archive is deliberately absent — reach it through the timeline."
       />
       <TierPhysicsRow physics={physics} />
       {stale.length > 0 && (
@@ -114,9 +114,13 @@ export default function DocsPage() {
                     <span className="flex items-baseline gap-sm min-w-0">
                       <span className="text-sm text-fg-primary truncate">{d.title}</span>
                       <span className="text-2xs text-fg-tertiary whitespace-nowrap">
-                        {d.relPath === BRIEFING_FILE
-                          ? `${BRIEFING_FILE} · project root`
-                          : d.relPath.split("/").slice(0, -1).join("/") || "docs"}
+                        {/* A root doc sits beside `docs/`, so its source path
+                            carries no folder to name; say where it is instead.
+                            The briefing was the only one for a long time and
+                            this line named it literally. */}
+                        {d.sourcePath.startsWith("docs/")
+                          ? d.relPath.split("/").slice(0, -1).join("/") || "docs"
+                          : `${d.relPath} · project root`}
                         {d.status && d.status !== "active" ? ` · ${d.status}` : ""}
                       </span>
                     </span>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import path from "node:path";
-import { docSourcePath, getAllDocPaths, getDocByPath } from "@/lib/system";
+import { getAllDocPaths, getDocByPath } from "@/lib/system";
 import { StalePill, TierPill, DocProse } from "../../ui";
 
 // Renders any doc under docs/ (archive included) as a read-only page.
@@ -30,7 +30,7 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
   return (
     <>
       <div className="sys-card flex flex-wrap items-center gap-sm text-xs text-fg-tertiary">
-        <code className="sys-code">{docSourcePath(doc.relPath)}</code>
+        <code className="sys-code">{doc.sourcePath}</code>
         <TierPill tier={doc.tier} />
         {doc.status && <span className="sys-pill">{doc.status}</span>}
         {doc.featureStatus && <span className="sys-pill">{doc.featureStatus}</span>}

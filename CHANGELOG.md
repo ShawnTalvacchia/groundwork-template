@@ -16,6 +16,30 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 7 · The docs surface takes your project root's own docs
+
+**Class:** parser · convention
+**Depends on:** the briefing in the doc registry (`1c5a10d`) · the doc reader's frontmatter fold (`fca16cf`)
+**Resolves:** none
+
+**What changed.**
+
+- **`getAllDocs` and `getAllDocPaths` take every `.md` beside `docs/` that carries a `tier:`,** not the briefing alone. `rootDocs()` is the new reader. Until now `CLAUDE.md` was hard-coded as the one file the registry would reach outside the tree, so any other meta doc you keep at your root — a boundary doc, a conventions note, an operations runbook — was readable in an editor and nowhere else.
+- **A root doc declares itself, and the declaration is a `tier:`.** Not a list in code and not every `.md` at the root. Declaring a tier is already what a file does to be a registry doc, so the rule needs no new field, and the frontmatter-coverage alarm then holds a root doc to `read-when` and `last-reviewed` the way it holds every other. The set derives, the way the molds' does: add one and it renders.
+- **`getDocByPath` resolves `docs/` first and the project root second.** A project that keeps `docs/NOTES.md` reads that one; a root doc never shadows the tree.
+- **`SystemDoc` gains `sourcePath`, and `docSourcePath` is deleted.** The old function guessed a doc's real path from `relPath` alone, which cannot survive more than one root doc: `ROADMAP.md` means `docs/ROADMAP.md` while `CLAUDE.md` does not mean `docs/CLAUDE.md`. The path is now recorded where it is known. `BRIEFING_FILE` stays, for the two jobs only the briefing has — the Structure lead tile and the dangling-reference scan.
+- **The Docs index labels any root doc `project root`,** reading it off `sourcePath` rather than comparing against the briefing's name, and its blurb says so.
+- `docs/implementation/system-surface.md`: the Docs row and the doc-reader row.
+
+**Nothing changes for a project whose root declares no tiered doc.** That is the shipped state of this template — `README.md`, `KICKOFF.md` and `CHANGELOG.md` carry no frontmatter — so the registry you get is the one you had.
+
+**How to adopt.**
+
+1. **Take this entry's commit as a patch for `lib/system.ts`.** Four hunks: `rootDocs` replacing `docSourcePath`, `sourcePath` on `SystemDoc` and `toSystemDoc`, the two registry walks, and `getDocByPath`'s resolution order.
+2. **Then the two pages.** `app/system/docs/page.tsx` (the label and the blurb, and `BRIEFING_FILE` drops out of its imports) and `app/system/docs/[...slug]/page.tsx` (`docSourcePath(doc.relPath)` becomes `doc.sourcePath`). If your doc reader has diverged, the only thing it needs is to print `doc.sourcePath` instead of deriving the path.
+3. **Then the spec rows,** from this entry's commit.
+4. **To put a root doc on the surface, give it frontmatter** — `status`, `tier`, `last-reviewed`, `read-when` — and it appears on `/system/docs` at its tier, at `/system/docs/<NAME>.md`, labelled `project root`. Give it none and nothing changes. **Check the page:** your doc count should rise by exactly the number of root files you tiered, and a drift alarm naming a missing field means that file is now a registry doc and owes the rest of them.
+
 ## 6 · The method page teaches the run, and the kind sequences come from one declared list
 
 **Class:** protocol · parser · convention
