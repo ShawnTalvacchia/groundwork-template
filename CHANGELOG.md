@@ -16,6 +16,25 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 9 · The tab badge's count is readable in dark
+
+**Class:** convention
+**Depends on:** the starter token set and `TabBar` (`feb807b`) · the primary button's `fg-inverse` label, whose reasoning this repeats (`3a9e01b`)
+**Resolves:** none
+
+**What changed.**
+
+- **`.tab-badge` paints its count with `--text-inverse` instead of `--text-white`.** White on `--brand-main` measures 6.79:1 in light and **2.79:1 in dark**, against the 4.5:1 floor for small text. `--text-inverse` reads 6.38:1 and 5.92:1.
+- **This is the same call the primary button already made, at a callsite that was missed.** In dark the brand lifts to `#d18a62` so it stays readable as brand *text* on dark surfaces, which is why the fix is the label token and not the ramp: darkening `--brand-main` would break its other job. `--text-inverse` already flips with the theme, so one token covers both.
+- The rule it illustrates is worth keeping: **a measured contrast failure is fixed where the token resolves, not at the callsite — except where the token has a second job that moving it would break.** Then the fix moves the *other* side of the pair.
+
+**If you pass `badge` to a `TabBar`, this was failing for your readers in dark.** The starter app does not use the prop, so the components page's demo is where it shows.
+
+**How to adopt.**
+
+1. **One property in `app/globals.css`:** `.tab-badge`'s `color`, from `var(--text-white)` to `var(--text-inverse)`. Take the comment above the rule with it.
+2. **If your styleguide has the components page (entry 8),** update `TabBar`'s `badge count` pair in `demos.tsx` to name `--text-inverse`, or the table measures a colour the page no longer paints.
+
 ## 8 · The components page shows what a component is, when to reach for it, and what it paints
 
 **Class:** parser · convention
