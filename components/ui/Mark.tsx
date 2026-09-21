@@ -32,6 +32,14 @@
  *
  * No `viewBox` scaling logic: `size` drives width/height and the 32x32 box does
  * the rest.
+ *
+ * @when Your project's logo anywhere inside the app — a header wordmark, a
+ * nav, an empty state.
+ * @whenNot As a decorative bullet or a generic glyph: the mark is your
+ * project's identity, and spending it as ornament is what stops it reading as
+ * one. Outside the app it is not this component at all — `app/icon.svg` and
+ * `app/opengraph-image.tsx` carry the same path data for renderers that have
+ * no stylesheet.
  */
 
 export function Mark({

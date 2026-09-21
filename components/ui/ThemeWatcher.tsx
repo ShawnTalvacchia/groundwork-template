@@ -9,6 +9,12 @@
  * `data-theme` immediately. When the preference is an explicit light/dark, OS
  * changes are ignored. Re-checks on the theme-changed event so switching
  * to/from System takes effect without a reload. Renders nothing.
+ *
+ * @when Once, in the root layout. Every page needs the OS-follow, and a
+ * watcher mounted anywhere narrower stops working the moment the reader
+ * navigates away from it.
+ * @whenNot Anywhere else, and never more than once: each instance attaches
+ * its own listeners to do work that is already being done.
  */
 
 import { useEffect } from "react";

@@ -16,6 +16,36 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 8 · The components page shows what a component is, when to reach for it, and what it paints
+
+**Class:** parser · convention
+**Depends on:** `getComponentDetails` and the docblock-is-the-why convention, both from the element inspector (`3a9e01b`) · the styleguide's components page and `lib/styleguide.ts` (`feb807b`)
+**Resolves:** none
+
+**What changed.**
+
+- **The components page consumes `getComponentDetails`, which until now fed the element inspector and nothing else.** It listed component names; it now renders one fixed anatomy per component — what it is, when to reach for it and when not, a live demo, composition, variants, measured contrast, callsites — joining the component's own file to a demo registry by name, and authoring no fact of its own.
+- **Two tags in the docblock carry the guidance: `@when` and `@whenNot`.** They are parsed out of the comment and rendered as their own answers, so the description stays a description. A tag runs to the next tag or the end of the comment, so either may wrap. The nine components here are worked examples.
+- **A component's docblock is now the first doc comment at column 0.** It was the first `/**` anywhere in the file, which read an indented *field* comment as the component's description — `TabBar` had no docblock and both the inspector and the styleguide reported its `Tab.badge` field comment as what TabBar is. A wrong answer stands in for a missing one indefinitely, where a missing one is a nudge. `TabBar` now has a docblock.
+- **A signature no longer leaks a template expression.** A `${…}` whose expression contains a nested template literal is cut in half by the parser's outer backtick match, so its `}` never arrives and the existing break could not see it: `Input`'s signature read `…focus:outline-none${className ?`. The inspector identifies *server* components by that string, so this was a live defect there.
+- **`app/system/styleguide/components/demos.tsx` is the new demo registry, and coverage derives from it.** It holds only what a comment cannot: the mount, the surface it sits on, a declared `noDemoReason`, and the token pairs the demo paints. The old hand-kept `DEMOED` set — five names commented "update when adding one" — is deleted, along with `components-demos.tsx`. An entry with mounts is demoed, an entry with a `noDemoReason` deliberately is not, and a component with neither renders as a gap named in the per-directory line. An entry for a component you do not have is dropped silently; an entry's **import** is not, so it leaves with its component.
+- **Demos render twice, once per theme.** `:root[data-theme="dark"]` is root-scoped, so a nested `data-theme` changes nothing — and overriding the `:root` tokens alone changes nothing either, because a custom property's `var()` is substituted where it is *declared*, so `--color-fg-primary` computes on `:root` and inherits as a light literal. `ThemePanesStyle` (in `derived-ui.tsx`) emits both layers from the same parse the token pages use.
+- **`lib/contrast.ts` is new, and contrast is computed at build** from those same values rather than quoted from a comment. It parses hex, `rgb()` and the `color-mix(…, transparent)` fade form, composites a translucent value over a named backdrop, and returns the WCAG ratio. The page prints it per theme beside the floor the pair is held to — 4.5:1 for text, 3:1 for a graphical object or a border that is what identifies a control.
+- **A failing ratio is marked by the word `under`, not by colour.** Colour alone is WCAG 1.4.1, and the red this page reached for measured 4.34:1 against its own 4.5 floor — the mark saying "under the floor" was under it. The colour stays as emphasis on a message already written.
+- **Pointer states are measured, not drawn.** `hover` and `focus` cannot be forced in a static render without duplicating the skin, so the demos show the states a component exposes as props and those two appear as their own contrast pairs.
+- `docs/implementation/system-surface.md`: the Styleguide row. `docs/implementation/component-patterns.md`: the two tag names, in its explainer.
+
+**Expect the page to report failures on day one.** It measures the starter tokens honestly, and several pairs in the shipped ramps are under their floors. That is the page working. Treat each as a row on your punch list and fix it where the token resolves, not at the callsite.
+
+**How to adopt.**
+
+1. **Take this entry's commit as a patch for `lib/styleguide.ts`.** Three hunks: `parseDocblock` replacing the inline docblock match, the two new fields on `ComponentDetail`, and the extra `${` break in `expand`.
+2. **Copy `lib/contrast.ts`** whole. It is new and depends on nothing.
+3. **Copy `app/system/styleguide/components/page.tsx`, `demos.tsx` and `demos.client.tsx`,** and delete `components-demos.tsx`. If your components have diverged from the starters, edit `demos.tsx`: it is the only file that names them. An entry for a component you removed is harmless — its `import` is not, so delete both.
+4. **Take `ThemePanesStyle` into `app/system/styleguide/derived-ui.tsx`** from this entry's commit, and `getStyleguide` / `TokenDef` into that file's imports if they are not already there.
+5. **Write `@when` and `@whenNot` into your own components' docblocks.** The page prints a named absence until you do, which is the nudge. If you took the nine starters as they ship, they are already written.
+6. **Then the two doc rows,** from this entry's commit.
+
 ## 7 · The docs surface takes your project root's own docs
 
 **Class:** parser · convention

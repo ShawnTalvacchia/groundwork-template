@@ -34,6 +34,38 @@ export function getBackings(): { light: string; dark: string; darkText: string }
   };
 }
 
+/** The two theme panes, derived.
+ *
+ *  A component demo can only be compared across themes if both themes are on
+ *  screen at once, and `:root[data-theme="dark"]` is root-scoped — a nested
+ *  `data-theme` changes nothing. Redeclaring the dark values by hand would be
+ *  a second copy of the palette, which is the one thing this surface exists
+ *  not to do, so the panes are emitted from the same parse the token pages
+ *  render: every token that resolves differently in dark, at its parsed value.
+ *
+ *  BOTH layers have to be set, and that is the part that is easy to get
+ *  wrong. A custom property's `var()` is substituted where the property is
+ *  DECLARED, so `--color-fg-primary: var(--text-primary)` computed on `:root`
+ *  inherits as a literal — overriding `--text-primary` alone on a descendant
+ *  does nothing at all. The real dark theme works because it redeclares on
+ *  `:root`, the same element. Emitting the `@theme` aliases too is what makes
+ *  a nested pane behave.
+ *
+ *  The light pane is emitted for the same reason the token pages print
+ *  literals rather than `var()`: a reader in dark mode still has to see the
+ *  light rendering. `color-scheme` rides along so native controls (the
+ *  `<input>` caret, a scrollbar) follow their pane. */
+export function ThemePanesStyle() {
+  const data = getStyleguide();
+  const tokens = [...data.root, ...data.theme].flatMap((s) => s.tokens).filter((t) => t.dark);
+  const decls = (pick: (t: TokenDef) => string) =>
+    tokens.map((t) => `${t.name}:${pick(t)}`).join(";");
+  const css =
+    `.sg-pane-light{color-scheme:light;${decls((t) => t.light)}}` +
+    `.sg-pane-dark{color-scheme:dark;${decls((t) => t.dark ?? t.light)}}`;
+  return <style>{css}</style>;
+}
+
 export function SgSection({
   title,
   note,

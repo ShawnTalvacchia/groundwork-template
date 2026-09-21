@@ -396,8 +396,14 @@ export interface ComponentVariant {
 }
 
 export interface ComponentDetail extends ComponentEntry {
-  /** The leading doc comment, flattened to one string. Null = not written. */
+  /** The leading doc comment's prose, flattened to one string, with the guide
+   *  tags below lifted out of it. Null = not written. */
   docblock: string | null;
+  /** `@when` — when to reach for this component. Null = the docblock does not
+   *  say, which the surfaces render as a named absence. */
+  whenToUse: string | null;
+  /** `@whenNot` — when to reach for something else instead. */
+  whenNot: string | null;
   /** Static class tokens identifying the root element — lets the inspector
    *  recognize SERVER components, which never appear in the client fiber
    *  tree. Heuristic: the longest static run (≥3 tokens) across the file's
@@ -411,6 +417,49 @@ export interface ComponentDetail extends ComponentEntry {
   variants: ComponentVariant[];
   /** Callsites outside the component's own file and the styleguide demos. */
   usage: { count: number; files: string[] };
+}
+
+/** The component's own doc comment, split into prose and the two guide tags.
+ *
+ *  **The comment has to open at column 0.** Every docblock that follows the
+ *  convention opens a file or a top-level declaration, and the obvious rule —
+ *  the first `/**` anywhere in the file — reads an indented *property* comment
+ *  as the component's description. `TabBar` has no docblock, and both surfaces
+ *  reported its `Tab.badge` field comment ("Optional badge count — renders a
+ *  small dot/number next to the label…") as what TabBar is. A wrong answer is
+ *  worse than none here: none is the nudge to write one, and the miss was
+ *  invisible for as long as something plausible stood in its place.
+ *
+ *  Known limit: a top-level doc comment on a helper declared *above* the
+ *  component would still be taken. Nothing in the shared dirs does that.
+ *
+ *  **The tags are `@when` and `@whenNot`** — when to reach for the component,
+ *  and when to reach for something else (`component-patterns.md` → The
+ *  docblock is a component's one-home "why"). A tag runs to the next tag or
+ *  the end of the comment, so either may wrap. Both are lifted out of the
+ *  prose, so the "what" stays a description and the page can render the three
+ *  as the three separate answers they are. */
+function parseDocblock(raw: string): {
+  prose: string | null;
+  whenToUse: string | null;
+  whenNot: string | null;
+} {
+  const block = raw.match(/^\/\*\*([\s\S]*?)\*\//m);
+  if (!block) return { prose: null, whenToUse: null, whenNot: null };
+
+  const parts: { tag: string; lines: string[] }[] = [{ tag: "", lines: [] }];
+  for (const line of block[1].split("\n").map((l) => l.replace(/^\s*\*?\s?/, ""))) {
+    const tag = line.match(/^@(whenNot|when)\b\s*(.*)$/);
+    if (tag) parts.push({ tag: tag[1], lines: [tag[2]] });
+    else parts[parts.length - 1].lines.push(line);
+  }
+
+  const flatten = (tag: string) => {
+    const found = parts.filter((p) => p.tag === tag);
+    if (!found.length) return null;
+    return found.flatMap((p) => p.lines).join(" ").replace(/\s+/g, " ").trim() || null;
+  };
+  return { prose: flatten(""), whenToUse: flatten("when"), whenNot: flatten("whenNot") };
 }
 
 /** String constants and Record<...> variant maps from one source file.
@@ -441,15 +490,7 @@ export function getComponentDetails(): ComponentDetail[] {
   detailCache = inventory.map((c) => {
     const raw = fs.readFileSync(path.join(process.cwd(), c.file), "utf-8");
 
-    const db = raw.match(/\/\*\*([\s\S]*?)\*\//);
-    const docblock = db
-      ? db[1]
-          .split("\n")
-          .map((l) => l.replace(/^\s*\*?\s?/, ""))
-          .join(" ")
-          .replace(/\s+/g, " ")
-          .trim() || null
-      : null;
+    const { prose: docblock, whenToUse, whenNot } = parseDocblock(raw);
 
     // The component's own constants plus those of same-dir modules it
     // imports (`./buttonStyles`) — the shared-skin pattern.
@@ -483,7 +524,15 @@ export function getComponentDetails(): ComponentDetail[] {
     const expand = (tpl: string) =>
       tpl
         .replace(/\$\{(\w+)\}/g, (_, n: string) => consts.get(n) ?? BREAK)
-        .replace(/\$\{[^}]*\}/g, BREAK);
+        .replace(/\$\{[^}]*\}/g, BREAK)
+        // A `${…}` whose expression contains a nested template literal is cut
+        // in half by the outer backtick match above, so its `}` never arrives
+        // and the `[^}]*` form cannot see it. What is left is a live `${`
+        // that rode into the signature as class tokens: Input's read
+        // `…focus:outline-none${className ?`, and the inspector identifies
+        // SERVER components by this string. An unterminated expression breaks
+        // the segment the way a resolvable one does, keeping the valid prefix.
+        .replace(/\$\{[\s\S]*$/, BREAK);
     const classy = (tokens: string[]) =>
       tokens.filter((t) => t.includes("-") || t.includes(":")).length >= tokens.length * 0.6;
     let signature: string[] | null = null;
@@ -523,7 +572,16 @@ export function getComponentDetails(): ComponentDetail[] {
       }
     }
 
-    return { ...c, docblock, signature, rootTags, variants, usage: { count, files: files.sort() } };
+    return {
+      ...c,
+      docblock,
+      whenToUse,
+      whenNot,
+      signature,
+      rootTags,
+      variants,
+      usage: { count, files: files.sort() },
+    };
   });
   return detailCache;
 }

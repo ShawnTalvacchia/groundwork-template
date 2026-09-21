@@ -7,6 +7,13 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
  * ghost) × two sizes. Styled entirely from the semantic design tokens
  * (globals.css), so it re-themes for dark automatically. A basic starting
  * point — extend with icons, loading state, etc. as the project needs.
+ *
+ * @when An action that happens in place — submitting, toggling a mode,
+ * opening a dialog, running something.
+ * @whenNot For anything that navigates. A call to action that goes somewhere
+ * has to render an anchor, or middle-click, copy-link-address and assistive
+ * semantics all break — so that is a separate component wearing this skin,
+ * not a prop on this one.
  */
 
 export type ButtonVariant = "primary" | "secondary" | "ghost";

@@ -14,6 +14,13 @@
  * it just looked like the /system nav at a smaller size. Labels survive as
  * `title` + `aria-label`. Re-syncs across instances via the `theme-changed`
  * event.
+ *
+ * @when The one place a surface offers appearance as a setting — a header, a
+ * preferences row. It is self-contained: no props are needed beyond an
+ * optional class.
+ * @whenNot More than once on a screen. Instances do stay in sync, but a
+ * second copy states a global setting twice, and this is a control rather
+ * than a status.
  */
 
 import { useEffect, useState } from "react";

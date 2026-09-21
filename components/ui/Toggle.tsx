@@ -4,6 +4,12 @@
  * Toggle — a starter on/off switch. Controlled: pass `checked` + `onChange`.
  * Styled from the semantic tokens; the track turns brand when on. A basic
  * starting point.
+ *
+ * @when A single setting that takes effect immediately — the reader flips it
+ * and the thing is on.
+ * @whenNot For a choice that only applies on submit, which is a checkbox, and
+ * for one of several options, which is PillToggle. It carries no label of its
+ * own beyond `aria-label`, so a visible one belongs beside it.
  */
 
 export function Toggle({

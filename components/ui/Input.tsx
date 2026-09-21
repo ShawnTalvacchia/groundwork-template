@@ -6,6 +6,12 @@ import type { InputHTMLAttributes } from "react";
  * Input — the starter text field, with an optional label + hint. Styled from
  * the semantic tokens. A basic starting point — extend with icons, error
  * state, and validation as the project needs.
+ *
+ * @when A single-line value the reader types — a name, an email, a search
+ * term. Pass `id` and `label` together; the label is wired with `htmlFor`.
+ * @whenNot For a choice from a known set, which is PillToggle or a select,
+ * and for anything multi-line. There is no error state here yet, so a field
+ * that has to report one needs that built first rather than faked with a hint.
  */
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {

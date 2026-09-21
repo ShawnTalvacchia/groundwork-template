@@ -21,7 +21,7 @@ The element inspector (`?inspect` on any page) reads this file. **Each rule is o
 Two homes, one test:
 
 - **A rule that spans components lands here** — why two components share one skin, where styling constants may live, what an action that navigates must render as. If it constrains the *next* component someone builds, it is cross-cutting.
-- **A rule about exactly one component lives in that component's leading doc comment** — the docblock is a component's one-home "why". The inspector and the styleguide surface it automatically; writing it twice is the drift this system exists to prevent.
+- **A rule about exactly one component lives in that component's leading doc comment** — the docblock is a component's one-home "why". The inspector and the styleguide surface it automatically; writing it twice is the drift this system exists to prevent. Two tags inside that comment are parsed out and rendered on their own: **`@when`** (when to reach for the component) and **`@whenNot`** (when to reach for something else, named). A tag runs to the next tag or the end of the comment, so either may wrap. The nine components this template ships are worked examples, and the styleguide prints a named absence where one is missing. **The comment has to open at column 0** — that is how the parser tells it from a comment on a field inside the file.
 
 The nudge is built in: pin a component and the inspector reports "No rules recorded" with a link back here, at exactly the moment someone cares. That is the intended way this doc fills up.
 

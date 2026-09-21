@@ -3,6 +3,13 @@ import type { ReactNode } from "react";
 /**
  * Badge — a small status pill. Five tones mapped to the status token families
  * (neutral / brand / success / warning / error). A basic starting point.
+ *
+ * @when A short, non-interactive status mark beside the thing it describes —
+ * a state, a count, a category.
+ * @whenNot For anything clickable: this renders a `<span>`, so a badge that
+ * filters or navigates is PillToggle or a Button. And never as a second mark
+ * for a state the row already states in words — a thing marked twice reads as
+ * loud however you tune it (`component-patterns.md`).
  */
 
 export type BadgeTone = "neutral" | "brand" | "success" | "warning" | "error";
