@@ -790,11 +790,13 @@ body {
 }
 /* Tab badge — small brand-filled count next to a tab label. The label is
    `--text-inverse`, not `--text-white`, for the reason the primary button's
-   is (components/ui/Button.tsx): white on `--brand-main` measures 2.79:1 in
-   dark, where the brand lifts to #d18a62 to stay readable AS text on dark
-   surfaces, so darkening the ramp would break the brand's other job.
-   `--text-inverse` already flips with the theme and reads 6.38:1 light,
-   5.92:1 dark. */
+   is (components/ui/Button.tsx): white on `--brand-main` measures 2.98:1 in
+   dark, where the brand lifts to stay readable AS text on dark surfaces, so
+   darkening the ramp would break the brand's other job. `--text-inverse`
+   already flips with the theme and reads 7.43:1 light, 5.54:1 dark.
+
+   Measured on this palette. Re-measure if you re-skin: the RELATIONSHIP
+   survives any brand, the figures do not. */
 .tab-badge {
   display: inline-flex;
   align-items: center;

@@ -16,6 +16,14 @@ import { headingSlug } from "@/lib/system";
  * route is open in dev, public only under an explicit SYSTEM_GATE=off, and
  * otherwise behind the password. The overlay degrades to stylesheet-derived
  * token names when this route is unreachable.
+ *
+ * THE EDGE GATE IS THE ONLY ONE THAT REACHES A ROUTE HANDLER. Route handlers
+ * sit outside the layout tree, so a gate wired INSIDE the app — a layout's
+ * notFound(), a page-level env check — never runs for this file: /system
+ * renders as closed while this route keeps answering with the record's
+ * derived data. proxy.ts is edge middleware matching /system/:path*, which
+ * is why it covers both. Swapping it for an in-app gate means gating every
+ * route handler under /system too, this one included.
  */
 
 export const dynamic = "force-static";

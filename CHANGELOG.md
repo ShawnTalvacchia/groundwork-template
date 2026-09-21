@@ -16,6 +16,28 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 11 · Orient gets its body back, the contrast comments measure this palette, and the inspector's route names the gate it needs
+
+**Class:** convention
+**Depends on:** the *Chat levels* bullet and the phase pipeline (`ea479e0`) · the element inspector's route and the primary button's `fg-inverse` label (`3a9e01b`)
+**Resolves:** none
+
+**What changed.**
+
+- **`CLAUDE.md`'s *Orient, then edit* bullet has its body back.** It read as a bold lead and nothing else, while its body — the orient step, the three bands, align-or-challenge, the kickoff exception — sat on the end of the *Chat levels* bullet below it. `ea479e0` inserted *Chat levels* by splitting Orient's line instead of adding one. Both bullets now say their own thing; neither's wording changed.
+- **The `.tab-badge` and primary-button comments measure the ramps this template ships.** They quoted 2.79 / 6.38 / 5.92 and a brand hex that is not in this palette. On the shipped ramps, white on `--brand-main` is **2.98:1** in dark, `--text-inverse` reads **7.43:1** light and **5.54:1** dark, and hover is **9.34 / 8.29**. The reasoning was always right; the figures were another skin's. Entry 9 quoted the same wrong numbers and is corrected in place.
+- **A quoted ratio now says to re-measure it.** Both comments end the way `--brand-faded`'s already did: measured on this palette, re-measure if you re-skin, the relationship survives any brand and the figures do not. **If you have re-skinned, these numbers are not yours** — that sentence is the part to take, not the digits.
+- **`app/system/inspector.json/route.ts` names the gate it depends on.** Its privacy rests entirely on `proxy.ts`, and nothing said so. Route handlers sit outside the layout tree, so a gate wired *inside* the app — a layout's `notFound()`, a page-level env check — never runs for one: the pages render as closed while the route keeps serving the record's derived data. The route's docblock says it, and `docs/implementation/system-surface.md` → The gate says it beside the alternatives table, where the swap actually gets made.
+
+**If you replaced `proxy.ts` with an in-app gate, this route is public right now.** That is the finding behind the last bullet, and it is worth checking before anything else here. Host password protection and a second private deployment sit above the app and are unaffected.
+
+**How to adopt.**
+
+1. **`CLAUDE.md`:** move the text from `Every mode's opening ritual reads its core set whole` to the end of the *Chat levels* bullet back onto the end of *Orient, then edit*. Two bullets, one cut and paste. If you rewrote either bullet, keep your wording and just put the body under the right lead.
+2. **`app/globals.css` (`.tab-badge`) and `components/ui/Button.tsx`:** comments only, no property changes. **On the shipped ramps,** take both comments as written. **If you re-skinned,** take only the closing two lines and measure your own pair — white on your `--brand-main` in dark, and `--text-inverse` on it in both themes. A ratio under 4.5:1 for the label is the thing these comments exist to warn about.
+3. **`app/system/inspector.json/route.ts`:** take the new paragraph in the docblock. If your gate is not `proxy.ts`, this is the step that matters: add your own check to this route, and to any other route handler you have added under `/system`.
+4. **`docs/implementation/system-surface.md` → The gate:** take the paragraph above the `SYSTEM_GATE=off` line.
+
 ## 10 · The upgrade prompt needs no numbers, a finding for the template goes to your outbox, and a repo your product reads gets written down
 
 **Class:** convention
@@ -47,8 +69,8 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **What changed.**
 
-- **`.tab-badge` paints its count with `--text-inverse` instead of `--text-white`.** White on `--brand-main` measures 6.79:1 in light and **2.79:1 in dark**, against the 4.5:1 floor for small text. `--text-inverse` reads 6.38:1 and 5.92:1.
-- **This is the same call the primary button already made, at a callsite that was missed.** In dark the brand lifts to `#d18a62` so it stays readable as brand *text* on dark surfaces, which is why the fix is the label token and not the ramp: darkening `--brand-main` would break its other job. `--text-inverse` already flips with the theme, so one token covers both.
+- **`.tab-badge` paints its count with `--text-inverse` instead of `--text-white`.** White on `--brand-main` measures 7.90:1 in light and **2.98:1 in dark**, against the 4.5:1 floor for small text. `--text-inverse` reads 7.43:1 and 5.54:1. Figures are the shipped ramps'; re-measure against your own.
+- **This is the same call the primary button already made, at a callsite that was missed.** In dark the brand lifts so it stays readable as brand *text* on dark surfaces, which is why the fix is the label token and not the ramp: darkening `--brand-main` would break its other job. `--text-inverse` already flips with the theme, so one token covers both.
 - The rule it illustrates is worth keeping: **a measured contrast failure is fixed where the token resolves, not at the callsite — except where the token has a second job that moving it would break.** Then the fix moves the *other* side of the pair.
 
 **If you pass `badge` to a `TabBar`, this was failing for your readers in dark.** The starter app does not use the prop, so the components page's demo is where it shows.

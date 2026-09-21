@@ -42,6 +42,8 @@ The cookie value is a hash of the secret, so rotating `SYSTEM_PASSWORD` invalida
 | Identity provider (SSO, OAuth) | Real teams, per-person access, revocation, an audit trail. | A dependency and a login flow to maintain. |
 | Second private deployment | The record must never share an origin with the product. | Two deploys of one repo to keep in sync. |
 
+**Whatever you swap in, check that it reaches the route handlers.** `/system` is not only pages — `app/system/inspector.json/route.ts` serves the element inspector's feed — and a route handler sits outside the layout tree. A gate wired *inside* the app, such as a layout's `notFound()` or a page-level env check, never runs for one: the pages render as closed while the route keeps answering. The shipped gate is edge middleware matching `/system/:path*`, so it covers both; host protection and a second deployment sit above the app and cover both too. An in-app gate is the one shape that has to be repeated in every route handler under `/system`.
+
 Set `SYSTEM_GATE=off` only for a deliberately public dashboard — a demo, a template, or a project whose record is meant to be read.
 
 ## The law: derived, never authored
