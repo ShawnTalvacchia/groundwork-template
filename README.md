@@ -68,7 +68,9 @@ Your copy tracks where it stands in `docs/upstream.md`. Its marker is the last e
 
 When entries wait past your marker, run an upgrade:
 
-`Run a system phase, upgrade: template entries 3 to 5.`
+`Run a system phase, upgrade.`
+
+You never look the entries up. The session reads your marker, then the changelog past it.
 
 It takes each entry in, adapts it, or declines it with a reason. Then it moves the marker.
 

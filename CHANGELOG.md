@@ -16,6 +16,29 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 10 · The upgrade prompt needs no numbers, a finding for the template goes to your outbox, and a repo your product reads gets written down
+
+**Class:** convention
+**Depends on:** the rule *A phase belongs to one project* (`a752c73`)
+**Resolves:** none
+
+**Does this affect you?** Every project: three small patches to `docs/CONTRIBUTING.md`, step 1. Steps 2 and 3 are for the rare project that needs them. Most have nothing more to do.
+
+**What changed.**
+
+- **The upgrade prompt is just `Run a system phase, upgrade.`** The old example named entry numbers, which read as if you had to look them up first. You never do. The session reads your marker, then the changelog past it. Changed in Session starters and in `README.md`.
+- **A close checks for waiting entries by reading one line.** The newest entry is this file's first `## N ·` heading. The rule *Every close hands off the next opening line* now says to read that line, never the file, so the check stays cheap as this changelog grows.
+- A second rule gains two sentences: `docs/CONTRIBUTING.md` → Rules shared by all modes → **A phase belongs to one project**.
+- **A finding for the template goes to your outbox.** The rule used to send any other repo's problem "to a session running in that project." You hold no session in the template, so that route led nowhere. The outbox in `docs/upstream.md` was already the route. The rule now says so.
+- **A repo your product reads gets written down.** The rule fences your sessions out of other repos. It never said that reading them is fine. It is. But if your product needs another repo's files to work, say a tool that parses a sibling project's docs, name that repo in `strategy/Scope & Constraints.md` → Hard constraints. Otherwise a later phase breaks it and nothing says why.
+- **Reading this changelog does not count.** Your `docs/upstream.md` already names the template.
+
+**How to adopt.**
+
+1. Patch `docs/CONTRIBUTING.md` from this entry's commit: the Upgrade row's example prompt in Session starters, and two shared rules, *Every close hands off the next opening line* and *A phase belongs to one project*. If you already wrote a local clause for a read dependency or the outbox, keep your wording and drop what this duplicates.
+2. Only if your product reads another repo: add the line to your Hard constraints.
+3. Only if your briefing has a rule saying the template is not editable from here: point it at your outbox.
+
 ## 9 · The tab badge's count is readable in dark
 
 **Class:** convention
