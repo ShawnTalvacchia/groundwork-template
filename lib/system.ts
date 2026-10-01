@@ -468,21 +468,200 @@ export function getMolds(): Mold[] {
    Method renders these — the rules ARE the page, not a link to a wall of
    text. Derived, never authored: change CONTRIBUTING, the page follows. */
 
+/** One member of a set a glossary term names — a field's values, the kinds,
+ *  the bands — written as a bullet indented under its owner. Never a term:
+ *  the hub counts terms, and a value is part of its owner's definition. */
+export interface GlossaryValue {
+  name: string;
+  def: string; // markdown kept; empty when the bullet carries no gloss
+  /** The owner's anchor, then the value's. Two owners may share a value
+   *  name — Kind's `export` and Touch bands' `export` — so a value's anchor
+   *  is never its name alone. */
+  anchor: string;
+}
+
+/** A `### Name — tagline` heading in § Glossary: the canon's own form for a
+ *  heading that says what it holds. The tagline is empty where the heading
+ *  carries none. Every term under the heading shares the one object. */
+export interface GlossaryGroup {
+  name: string;
+  tagline: string;
+}
+
 /** The system's terms, parsed from CONTRIBUTING.md § Glossary. */
 export interface GlossaryTerm {
   term: string;
-  def: string;
+  def: string; // markdown kept — render inline; `stripMd` it for plain text
+  /** The term's in-page anchor on the glossary page: `headingSlug(term)`. */
+  anchor: string;
+  /** The `### Group` heading the term sits under, or null in a glossary with
+   *  none — a flat glossary parses as one unnamed group, so a project
+   *  holding the old shape renders as before. */
+  group: GlossaryGroup | null;
+  values: GlossaryValue[];
+}
+
+/** The section read line by line. Three shapes count — a `### Group`
+ *  heading, a `- **Term** — definition` bullet, and an indented
+ *  `- **value** — gloss` bullet under the term above it — and everything else
+ *  is prose the page does not render. One exception is collected rather than
+ *  dropped: an indented bullet that parses as no value. A value's text lives
+ *  in its bullet, not in its owner's definition, so a malformed one is
+ *  content that renders nowhere (`glossaryStrays`). */
+function parseGlossary(): { terms: GlossaryTerm[]; strays: string[] } {
+  const parsed = readDoc("CONTRIBUTING.md");
+  if (!parsed) return { terms: [], strays: [] };
+  const terms: GlossaryTerm[] = [];
+  const strays: string[] = [];
+  let group: GlossaryGroup | null = null;
+  for (const line of sectionOf(parsed.body, "Glossary").split("\n")) {
+    const g = line.match(/^###\s+(.+?)\s*$/);
+    if (g) {
+      const [name, ...tagline] = stripMd(g[1]).split(" — ");
+      group = { name: name.trim(), tagline: tagline.join(" — ").trim() };
+      continue;
+    }
+    const t = line.match(/^- \*\*(.+?)\*\* — (.+)$/);
+    if (t) {
+      terms.push({ term: t[1], def: t[2].trim(), anchor: headingSlug(t[1]), group, values: [] });
+      continue;
+    }
+    if (!/^\s+[-*+]\s/.test(line)) continue;
+    const v = line.match(/^\s+- \*\*(.+?)\*\*(?: — (.+?))?\s*$/);
+    const owner = terms[terms.length - 1];
+    if (v && owner) {
+      owner.values.push({ name: v[1], def: (v[2] ?? "").trim(), anchor: `${owner.anchor}-${headingSlug(v[1])}` });
+    } else strays.push(line.trim());
+  }
+  return { terms, strays };
 }
 
 export function getGlossary(): GlossaryTerm[] {
-  const parsed = readDoc("CONTRIBUTING.md");
-  if (!parsed) return [];
-  const section = sectionOf(parsed.body, "Glossary");
-  const terms: GlossaryTerm[] = [];
-  const re = /^- \*\*(.+?)\*\* — (.+)$/gm;
-  let m;
-  while ((m = re.exec(section))) terms.push({ term: m[1], def: stripMd(m[2]) });
-  return terms;
+  return parseGlossary().terms;
+}
+
+/** Indented bullets in § Glossary that parse as no value, as written. The
+ *  drift alarm reads these: each is text the glossary page cannot render. */
+export function glossaryStrays(): string[] {
+  return parseGlossary().strays;
+}
+
+/** A word right after one of these is being used as a noun, which is the
+ *  only use a glossary link may claim. The canon's terms are ordinary words
+ *  too — "a phase **runs** one", "the level it **runs** at" — and a link on
+ *  the verb sends the reader to a definition of something the sentence never
+ *  said. Missing a link costs a reader nothing; a wrong one teaches them the
+ *  wrong word. */
+const NOUN_CUE = /(?:^|[^\w-])(?:a|an|the|one|each|every|any|another|its|their|per|no|several)\s+$/i;
+
+/** Spans a term link may never land inside: code, an existing link, and a
+ *  `§ Name` reference, which the page links to its section instead. */
+const LINK_PROTECTED = /`[^`]*`|\[[^\]]*\]\([^)]*\)|§ [^().,;:\n]+/g;
+
+/** The glossary with its cross-references linked, derived rather than
+ *  authored: a term's **first mention as a noun** in another entry — its
+ *  definition, then its values' glosses, in reading order — becomes a link to
+ *  that term's anchor. Self-mentions never link, a plural `s` counts as the
+ *  term, an all-caps term (`PO`) matches its own case only, and a word joined
+ *  to its neighbour by `-` or `→` (`board-kind`, `tier→model`) is part of a
+ *  compound, not a mention. Longer names win where two start together
+ *  (`Queue-shaping` over `Queue`).
+ *
+ *  Returns new terms whose `def`s carry markdown links to `href(anchor)`; the
+ *  parse itself stays link-free, because `glossaryLede` and any other plain
+ *  reader want the canon's words, not the page's. */
+export function linkGlossary(terms: GlossaryTerm[], href: (anchor: string) => string): GlossaryTerm[] {
+  const byLength = [...terms].sort((a, b) => b.term.length - a.term.length);
+  const patterns = byLength.map((t) => ({
+    t,
+    re: new RegExp(
+      `(?<![\\w-])${t.term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}s?(?![\\w\\-→])`,
+      /[a-z]/.test(t.term) ? "gi" : "g",
+    ),
+  }));
+
+  const linkText = (text: string, linked: Set<string>): string => {
+    // Protected spans are blanked to same-length filler, so a match's index in
+    // the masked text is its index in the real one.
+    const masked = text.replace(LINK_PROTECTED, (s) => "\0".repeat(s.length));
+    const hits: { start: number; end: number; anchor: string }[] = [];
+    for (const { t, re } of patterns) {
+      if (linked.has(t.anchor)) continue;
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(masked))) {
+        const start = m.index;
+        const end = start + m[0].length;
+        if (!NOUN_CUE.test(masked.slice(0, start))) continue;
+        if (hits.some((h) => start < h.end && end > h.start)) continue;
+        hits.push({ start, end, anchor: t.anchor });
+        linked.add(t.anchor);
+        break;
+      }
+    }
+    let out = text;
+    for (const h of hits.sort((a, b) => b.start - a.start)) {
+      out = `${out.slice(0, h.start)}[${out.slice(h.start, h.end)}](${href(h.anchor)})${out.slice(h.end)}`;
+    }
+    return out;
+  };
+
+  return terms.map((term) => {
+    const linked = new Set([term.anchor]);
+    const def = linkText(term.def, linked);
+    const values = term.values.map((v) => ({ ...v, def: linkText(v.def, linked) }));
+    return { ...term, def, values };
+  });
+}
+
+/** `§ Name` references, resolved to the anchor of the section each names in
+ *  a doc — for the names that resolve; the rest are absent, so the inline
+ *  renderer leaves them as text rather than linking to nowhere.
+ *
+ *  A name matches a `##`–`####` heading by the text before its ` — `
+ *  tagline (`§ The parts` is `### The parts — the model is a kit`), or the
+ *  whole heading. Failing that, it matches a bold lead at the start of a line
+ *  (`**Rules shared by all modes:**`), which has no anchor of its own and
+ *  resolves to the heading it sits under. The anchor is `headingSlug` of the
+ *  heading's text, the same id the doc reader stamps. */
+export function sectionAnchors(relPath: string, names: string[]): Record<string, string> {
+  const parsed = readDoc(relPath);
+  if (!parsed || names.length === 0) return {};
+  const headings = new Map<string, string>();
+  const leads = new Map<string, string>();
+  let current: string | null = null;
+  let fence: string | null = null;
+  for (const line of parsed.body.split("\n")) {
+    const f = line.match(/^\s{0,3}(```+|~~~+)/);
+    if (f) {
+      if (fence === null) fence = f[1][0];
+      else if (f[1][0] === fence) fence = null;
+      continue;
+    }
+    if (fence !== null) continue;
+    const h = line.match(/^#{2,4}\s+(.*?)\s*#*\s*$/);
+    if (h) {
+      const text = stripMd(h[1]);
+      current = headingSlug(text);
+      for (const key of [text, text.split(" — ")[0]]) {
+        if (!headings.has(key.toLowerCase())) headings.set(key.toLowerCase(), current);
+      }
+      continue;
+    }
+    const b = line.match(/^\*\*([^*]+?)[:.]?\*\*/);
+    if (b && current && !leads.has(b[1].toLowerCase())) leads.set(b[1].toLowerCase(), current);
+  }
+  const out: Record<string, string> = {};
+  for (const name of names) {
+    const anchor = headings.get(name.toLowerCase()) ?? leads.get(name.toLowerCase());
+    if (anchor) out[name] = anchor;
+  }
+  return out;
+}
+
+/** The `§ Name` references a text makes, by name. */
+export function sectionRefs(text: string): string[] {
+  return [...text.matchAll(/§ ([^().,;:\n]+)/g)].map((m) => m[1].trim());
 }
 
 /** One glossary term's definition, first sentence only.
@@ -496,10 +675,11 @@ export function getGlossary(): GlossaryTerm[] {
 export function glossaryLede(term: string): string | null {
   const found = getGlossary().find((t) => t.term === term);
   if (!found) return null;
+  const def = stripMd(found.def);
   // The definitions are single-clause sentences with no abbreviations; the
   // first `. ` is the sentence end, and a one-sentence definition has none.
-  const i = found.def.indexOf(". ");
-  const s = (i === -1 ? found.def : found.def.slice(0, i + 1)).trim();
+  const i = def.indexOf(". ");
+  const s = (i === -1 ? def : def.slice(0, i + 1)).trim();
   if (!s) return null;
   // A glossary definition continues its own term ("Walkthrough — a
   // collaborative review doc…"), so it starts lowercase by convention. Lifted

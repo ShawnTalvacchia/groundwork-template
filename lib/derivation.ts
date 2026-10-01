@@ -7,6 +7,7 @@ import {
   getFeatureAreas,
   getFutureItems,
   getGlossary,
+  glossaryStrays,
   getMolds,
   getOpenQuestions,
   getPhasePipeline,
@@ -196,6 +197,12 @@ export function getDriftAlarms(): DriftAlarm[] {
 
   if (getGlossary().length < 5) {
     alarm("getGlossary", "CONTRIBUTING.md § Glossary", `parsed ${getGlossary().length} terms, expected 5+`);
+  }
+  // A value's text lives only in its bullet, so one the parser cannot read is
+  // content the page drops. Presence-not-count: a glossary with no indented
+  // bullets, the shape every glossary had before values, hears nothing.
+  for (const stray of glossaryStrays()) {
+    alarm("getGlossary", "CONTRIBUTING.md § Glossary", `an indented bullet is not a value ('  - **value** — gloss') and renders nowhere: "${stray.slice(0, 60)}"`);
   }
 
   /* ── The trackers ────────────────────────────────────────────────── */

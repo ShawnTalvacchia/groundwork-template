@@ -16,6 +16,34 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 12 · The glossary gets groups, its lists become values, and its cross-references link
+
+**Class:** protocol · parser · convention
+**Depends on:** § Glossary and `getGlossary` (`feb807b`) · `MdInline`'s `§` anchor map (`ea479e0`) · `glossaryLede`, and `MdInline` rendering an in-app path as a link (`8542a40`) · the `paused` board status, which the shipped Board entry lists (`1249f34`)
+**Resolves:** none
+
+**Does this affect you?** Every project gets the new glossary page by taking the code, step 1. Reshaping your own glossary, steps 2 to 4, is optional: a flat glossary parses exactly as it did.
+
+**What changed.**
+
+- **§ Glossary may carry `### Group — what it holds` headings.** A term belongs to the heading above it, and the page shows the tagline after ` — ` on a line under the group's name. The shipped glossary uses three: **The work** (how it is divided, and who does it), **The documents** (where it is written down) and **The rules** (when steps run, and what may change). A glossary with no headings parses as one unnamed group, and the page renders it with no group heading.
+- **A term's values are bullets indented under it:** `  - **value** — what it means`. Seven shipped entries listed a set as running prose: Board's statuses, Mode, Kind, Trigger, Touch bands, Tracker and Tier. Each now ends on a value list. A value is never a term, so the hub's count is unchanged.
+- **The glossary page links, and you write no links.** Every term and value gets an anchor (`#board`, `#board-paused`). A term's first mention in another entry links to it, but only where the prose uses it as a noun: right after *a*, *the*, *each*, *its* or a word like them. So "a phase runs one" never links to Run. A `§ Name` reference links to that section in the doc reader. An A–Z strip above the groups lists every term alphabetically.
+- **A new drift alarm:** an indented bullet in § Glossary that does not parse as a value. A value's text lives only in its bullet, so a malformed one would render nowhere.
+- **`getGlossary` keeps a definition's markdown** now, so the page can render code and bold in it. `glossaryLede` strips it first and returns what it always did.
+- **Three wording fixes in the shipped glossary.** **Tier** said "a doc's review cadence", which § Doc Tiers contradicts: a tier says how guarded a doc is, "and nothing else". It now says that. **Kickoff**'s `See "The Kickoff" above` is now `See § The Kickoff`, so it links. **Future Considerations** reads "trigger pending", the trackers section's own phrase, so it does not link to Trigger, which means something else. The lists' counts ("Nine exist", "three editing tiers") went too: the list under each entry is the count now.
+
+**How to adopt.**
+
+1. **The code, from this entry's commit.** In `lib/system.ts`, the glossary block from `GlossaryValue` through `sectionRefs`, plus the `stripMd` line in `glossaryLede`. In `lib/derivation.ts`, the stray-bullet alarm and its import. **If you never changed `app/system/glossary/page.tsx`,** take it whole. **If you did,** the new parts are the `linkGlossary` and `sectionAnchors` calls, the group loop, the A–Z strip and the value list. Your glossary renders grouped or flat, either way with anchors and links.
+2. **Groups, if you want them.** Add `### Name — what it holds` headings over your terms. The tagline is optional, and the shipped three are a suggestion. Any headings work, in any order.
+3. **Values, if you want them.** Where one of your entries lists a set in prose, move each member to an indented bullet under it and end the definition with a line saying what the list is. Patch your own entries. Copying the shipped glossary over yours would drop every term you added and revert every one you changed.
+4. **The parsed-shape comment** at the head of § Glossary: take the new one, so the next person to edit it knows the shape. Do this whenever you take step 2 or 3.
+5. **The three wording fixes,** wherever your glossary still carries the shipped text.
+6. **`docs/implementation/system-surface.md`:** the Method → Glossary row, and the new bullet under the drift alarms.
+
+**Check:** open `/system/glossary`. Every `§` reference should be a link that lands on its section, and no amber band should show.
+
 ## 11 · Orient gets its body back, the contrast comments measure this palette, and the inspector's route names the gate it needs
 
 **Class:** convention

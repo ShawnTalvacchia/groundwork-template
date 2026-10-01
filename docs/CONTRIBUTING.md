@@ -318,32 +318,79 @@ A project copied from a template keeps changing after the copy, and so does the 
 ## Glossary
 
 <!-- PARSED by lib/system.ts (getGlossary) -> /system/glossary + the hub. Changing this section's SHAPE
-     (the '- **Term** — definition' bullet form) breaks that page silently - the /system drift banner will name it.
+     breaks that page silently - the /system drift banner will name it. The shape:
+     - '- **Term** — definition', one bullet per term. Only these are terms: the hub counts them.
+     - '### Group — what it holds' headings, optional. A term belongs to the heading above it, and a
+       glossary with none parses as one unnamed group. The tagline after ' — ' renders under the name.
+     - A term's values as bullets indented under it, '  - **value** — what it means': the members of a set
+       the term names, such as a field's values or the kinds. Never counted as terms. An indented bullet that
+       does not parse as a value trips the banner, because its text would render nowhere.
+     Links derive, so write none: every term and value gets an anchor, a term's first mention in another
+     entry links to it, and '§ Name' links to that heading in this file.
      Check /system after editing. Spec: docs/implementation/system-surface.md -->
 
 The system's terms, defined once. Used consistently everywhere — docs, boards, the `/system` surface (which renders these definitions from this section).
 
-- **PO** — the product owner: the human the work is done with and for. Every close ritual hands off to the PO; walkthroughs are driven by the PO. In a solo project, that's you wearing the reviewer hat.
+### The work — how it is divided, and who does it
+
 - **Phase** — the work unit: any chunk of work run through the rituals, in exactly one mode. Opens as a board, closes by distill + delete.
-- **Session** — one chat, holding one capability level fixed at open and serving one **board-kind**: a split board's single kind, or a collapsed board's whole arc (§ The phase pipeline). Never two boards. A phase survives a force-ended chat, and a fresh session picking its board back up is continuation, not error-recovery. Names itself when its title is known — `Phase name · mode` collapsed, `kind · Phase name · mode` in a split phase — with each title recorded on the board.
-- **Mode** — a phase's flavor: the product phase (builds the thing), the system phase (tends the rules), the side phase (sweeps the small stuff), or the queue-shaping phase (shapes what's next). The mode sets the ritual's focus, the board's template, the orient set, and the touch bands; how heavy a phase runs is its board's **Levels** line — one level per kind.
-- **Level** — the capability a chat runs at, fixed at chat open and never changed mid-chat. Named in the project's own tier words, never as a model — the tier→model mapping lives in the project's briefing file.
-- **Kind** — the shape of one session: what it reads, what it does, what it leaves behind, and the level it runs at, with its own open and close. A phase is a board passing through kinds in order, and the mode sets the sequence. Nine exist: open · build · basic layer · survey · deepen · close (§ The phase pipeline), sweep · research (side), upgrade (system, in a project built from the template — § The upgrade kind). Earned by recurrence, never declared for symmetry — the test lives in § Adjustments, each kind's opening line in § Session starters.
+- **Mode** — a phase's flavor. The mode sets the ritual's focus, the board's template, the orient set, and the touch bands; how heavy a phase runs is its board's **Levels** line — one level per kind. A board's `mode:` names one:
+  - **product** — builds the thing.
+  - **system** — tends the rules.
+  - **side** — sweeps the small stuff.
+  - **queue-shaping** — shapes what's next.
+- **Kind** — the shape of one session: what it reads, what it does, what it leaves behind, and the level it runs at, with its own open and close. A phase is a board passing through kinds in order, and the mode sets the sequence (§ The phase pipeline). Earned by recurrence, never declared for symmetry — the test lives in § Adjustments, each kind's opening line in § Session starters. The kinds, by the mode that runs them:
+  - **open** — opens a phase: verifies the seed, agrees scope, writes the board.
+  - **build** — builds a standalone phase and hosts its walkthrough.
+  - **basic layer** — builds the first pass of every surface in a run, and stops at basic.
+  - **survey** — walks a whole run with the PO, building nothing.
+  - **deepen** — makes one settled surface good.
+  - **close** — reads the phase cold from its paper and runs the close, always in a fresh chat.
+  - **sweep** — a side phase working several tracker items.
+  - **research** — a side phase whose deliverable is understanding, landed as a doc.
+  - **upgrade** — a system phase taking in the template's changes, in a project built from it (§ The upgrade kind).
 - **Stage** — the kind a board currently sits at, declared in its `stage:` frontmatter and advanced by each kind's close. What a session reads first when it picks a board up.
+- **Level** — the capability a chat runs at, fixed at chat open and never changed mid-chat. Named in the project's own tier words, never as a model — the tier→model mapping lives in the project's briefing file.
+- **Session** — one chat, holding one capability level fixed at open and serving one **board-kind**: a split board's single kind, or a collapsed board's whole arc (§ The phase pipeline). Never two boards. A phase survives a force-ended chat, and a fresh session picking its board back up is continuation, not error-recovery. Names itself when its title is known — `Phase name · mode` collapsed, `kind · Phase name · mode` in a split phase — with each title recorded on the board.
 - **Run** — many small product boards moving through the kinds together inside a stated bound, each naming the run in `run:`, plus a **run board** holding the thesis of the whole, Considered, the shown/launch/later table and the member list, and linking its **picture** (`planning/<run>-picture.md`: the loop, the aspirational site map, who owns which parts — reconciled against `/system/site` at the close, then deleted). Clear a kind across the run before advancing, by default. Shaped by queue-shaping; see § The phase pipeline.
-- **Kickoff** — the one-time bootstrap that runs before the mode loop: it writes the strategy shelf (rather than orienting against it) and opens all ground because it's creating everything. Not a mode — the ignition. See "The Kickoff" above.
-- **Board** — a phase's worklist and running record while open, in `phases/`, created from its mode's template. `status: active` while a session works it, `waiting` when it cleared its kind, `paused` when it stopped mid-kind with nobody on it (its `stage:` set back to the unfinished kind); one active per mode, and a paused board holds no slot. Scale varies by mode: product boards are heavy (workstreams + a walkthrough sibling); side boards are light (the tracker items pulled in); system boards fit the friction; queue-shaping boards are a few lines. Every mold carries `## Raised` whatever the scale — the section other boards write their finds into. Always `tier: working` while open; distilled and deleted at close — product phases leave a compact record.
+- **Kickoff** — the one-time bootstrap that runs before the mode loop: it writes the strategy shelf (rather than orienting against it) and opens all ground because it's creating everything. Not a mode — the ignition. See § The Kickoff.
+- **Queue-shaping** — the fourth mode: the phase that captures an idea and its context as a row + seed — adding, splitting, reordering or dropping queue rows when no phase's own open or close is doing it. A two-tier orient, one chat that never splits, done with the PO. See § The queue-shaping phase.
+- **PO** — the product owner: the human the work is done with and for. Every close ritual hands off to the PO; walkthroughs are driven by the PO. In a solo project, that's you wearing the reviewer hat.
+
+### The documents — where it is written down
+
+- **Board** — a phase's worklist and running record while open, in `phases/`, created from its mode's template. Scale varies by mode: product boards are heavy (workstreams + a walkthrough sibling); side boards are light (the tracker items pulled in); system boards fit the friction; queue-shaping boards are a few lines. Every mold carries `## Raised` whatever the scale — the section other boards write their finds into. Always `tier: working` while open; distilled and deleted at close — product phases leave a compact record. Its `status:` is one of these, and one board is active per mode:
+  - **active** — a session is working it.
+  - **waiting** — it cleared its kind and waits for the next.
+  - **paused** — it stopped mid-kind with nobody on it, its `stage:` set back to the unfinished kind. It holds no slot.
 - **Raised** — a find about a surface another **open** board owns, written into that board's `## Raised` section: what was found or changed, where, which board found it and when, and what the receiving session owes (judge · verify · nothing, FYI). Any mode may write one, because a note is not that board's work — and **a note is never an item**: the receiving session **drains** the section at its open, authors its own O or V item where a ruling or a check is owed, and deletes the entry. Crossing re-authors, which is how the receiver takes ownership. Undrained entries hold the close; a closed board has no section, so that find goes to a tracker row or the queue (§ Rules shared by all modes).
 - **Seed** — a queued phase's accumulation space, one file in `planning/queued/` for any mode: a pitch, dated notes, what is settled and what is still open, candidate scope, refs — never tasks. Folds into the board at phase open and is deleted.
 - **Queue** — the ROADMAP's What's Next: upcoming planned work of any mode, one mode-tagged list, every row carrying a seed. A staging area, not a gate. Each phase maintains its own row: removed at open, written as the work names it or at close.
-- **Queue-shaping** — the fourth mode: the phase that captures an idea and its context as a row + seed — adding, splitting, reordering or dropping queue rows when no phase's own open or close is doing it. A two-tier orient, one chat that never splits, done with the PO. See § The queue-shaping phase.
-- **Ritual** — a named set of steps bound to a trigger: a mode's opening steps (orient + touch-check included), during-rules, and closing steps — and not phase-only: session start, session end, and push run rituals too (§ The parts). No phase is ritual-free.
-- **Trigger** — the moment a ritual fires: phase open, phase close, session start, session end, push, or the run-once kickoff. Bind a ritual to a trigger by writing its steps where the person acting on it will read them (§ The parts).
-- **Touch bands** — a mode's three editing tiers: **home ground** (edit freely, per the board), **careful** (update deliberately when the work bears on it, never in passing), **gated** (another mode's ground — suggest, don't edit). Bands gate pens, not eyes: reading is never gated.
 - **Walkthrough** — a collaborative review doc: "Open for your call" + "Worth verifying" points, passed one by one with the PO before the phase can close. Every product and system phase runs one. Only the agent's own calls become O items, and a resolved one leaves the list for the Decisions log — so the list shows what still needs the PO, never what already got their answer. A **working surface**: consumed at close and deleted with the board, never archived.
+- **Tracker** — one of the standing lists holding *candidates* — quick, lean task notes waiting between phases. Phases pull items at open (a side phase usually pulls several — a sweep) and move the rows at close. Each holds one stance:
+  - **punch list** — known small fixes, 30 minutes or less (P##).
+  - **Open Questions log** — unanswered questions blocking future work (§N).
+  - **Future Considerations** — known directions, trigger pending (FC##).
+
+### The rules — when steps run, and what may change
+
+- **Ritual** — a named set of steps bound to a trigger: a mode's opening steps (orient + touch-check included), during-rules, and closing steps — and not phase-only: session start, session end, and push run rituals too (§ The parts). No phase is ritual-free.
+- **Trigger** — the moment a ritual fires. Bind a ritual to a trigger by writing its steps where the person acting on it will read them (§ The parts). The moments, each with what it fires:
+  - **phase open** — the mode's opening ritual.
+  - **phase close** — the mode's closing ritual.
+  - **session start** — reading the briefing, which is that ritual.
+  - **session end** — committing and pushing the open board.
+  - **push** — the publish.
+  - **kickoff** — the run-once bootstrap.
+- **Touch bands** — a mode's editing tiers. Bands gate pens, not eyes: reading is never gated. Each mode maps its docs onto them:
+  - **home ground** — edit freely, per the board.
+  - **careful** — update deliberately when the work bears on it, never in passing.
+  - **gated** — another mode's ground: suggest, don't edit.
 - **Canon diff** — the ratification gate at every close: before its board is deleted, a phase walks the PO through every change it made to bedrock- and commitments-tier docs (CLAUDE.md included). Runs inside the system and side phases' verification handoff and as its own step before the product phase's distill-and-delete.
-- **Tracker** — one of the three standing lists holding *candidates* — quick, lean task notes waiting between phases: the punch list (P##), the Open Questions log (§N), and Future Considerations (FC##). Phases pull items at open (a side phase usually pulls several — a sweep) and move the rows at close.
-- **Tier** — a doc's review cadence: bedrock · commitments · working. Docs sink toward bedrock by surviving; reopening a settled one takes a structured challenge.
+- **Tier** — how guarded a doc is: what it takes to change it. Docs sink toward bedrock by surviving; reopening a settled one takes a structured challenge.
+  - **bedrock** — the settled vision. Changed only by a structured challenge.
+  - **commitments** — strategy, references, feature docs, the rules and the ROADMAP. Changing one is a decision.
+  - **working** — boards, docs mid-revision and the trackers. Changed freely.
 - **The law** — "derived, never authored": every `/system` page renders from the docs at build time. To change a page, change its source doc; if they disagree, the docs win.
 
 ---
