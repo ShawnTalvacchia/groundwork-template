@@ -1,7 +1,9 @@
 import { BookOpen, Check, Eye, Lock } from "@phosphor-icons/react/dist/ssr";
 import {
+  getGlossary,
   getPhasePipeline,
   getWorkModel,
+  sectionHrefs,
   stripMd,
   MODE_META,
   MODE_SEQUENCES,
@@ -11,7 +13,7 @@ import {
   type RitualStep,
   type WorkTrigger,
 } from "@/lib/system";
-import { InsetNote, MdInline, SourceNote, StarterRows } from "../ui";
+import { InsetNote, MdInline, SourceNote, StarterRows, termUnits } from "../ui";
 
 // Method = how we work. The flow ARE this page, rendered from CONTRIBUTING —
 // not a link to a wall of text.
@@ -117,7 +119,17 @@ const BAND_META = {
   reads: { label: "Reads first", Icon: BookOpen },
 } as const;
 
-function Scope({ kind, text }: { kind: keyof typeof BAND_META; text: string }) {
+function Scope({
+  kind,
+  text,
+  link,
+  anchors,
+}: {
+  kind: keyof typeof BAND_META;
+  text: string;
+  link: (text: string) => string;
+  anchors: Record<string, string>;
+}) {
   const { label, Icon } = BAND_META[kind];
   return (
     <div className="sys-scope">
@@ -126,7 +138,7 @@ function Scope({ kind, text }: { kind: keyof typeof BAND_META; text: string }) {
         {label}
       </span>
       <span className="text-xs text-fg-secondary leading-relaxed">
-        <MdInline text={text} />
+        <MdInline text={link(text)} anchors={anchors} />
       </span>
     </div>
   );
@@ -143,12 +155,14 @@ function Steps({
   label,
   trigger,
   steps,
+  link,
   anchors,
 }: {
   label: string;
   trigger?: WorkTrigger;
   steps: RitualStep[];
-  anchors?: Record<string, string>;
+  link: (text: string) => string;
+  anchors: Record<string, string>;
 }) {
   return (
     <div className="flex flex-col gap-sm">
@@ -164,7 +178,7 @@ function Steps({
             <span className="sys-step-num">{i + 1}</span>
             <span>
               {step.withPO && <span className="sys-actor">with the {PO_TERM}</span>}
-              <MdInline text={step.text} anchors={anchors} />
+              <MdInline text={link(step.text)} anchors={anchors} />
             </span>
           </li>
         ))}
@@ -177,16 +191,18 @@ function Steps({
  *  content as the body. The same fold the hub's starters strip uses, reused
  *  for every layer of this page that is consulted rather than read. */
 function Shelf({
+  id,
   label,
   note,
   children,
 }: {
+  id: string;
   label: string;
   note: string;
   children: React.ReactNode;
 }) {
   return (
-    <details className="sys-starters">
+    <details id={id} className="sys-starters scroll-mt-2xl">
       <summary className="flex items-baseline gap-sm text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">
         <span className="sys-caret" aria-hidden>
           ›
@@ -199,15 +215,55 @@ function Shelf({
   );
 }
 
+// The canon's sections this page renders, each under the canon's own name
+// for it: the heading the page prints and the key a `§ Name` reference is
+// matched by are one constant, so the two cannot disagree. A canon that
+// renames one still links — to the doc reader, where every section renders.
+// The modes and the run are keyed by the names their own headings carry,
+// which the parsers already read.
+const STARTERS = "Session starters";
+const PIPELINE = "The phase pipeline";
+const SHARED_RULES = "Rules shared by all modes";
+const PARTS = "The parts";
+const ADJUSTMENTS = "Adjustments";
+
 export default function MethodPage() {
   const pipeline = getPhasePipeline();
-  // § references become in-page links only for sections this page renders;
-  // the rest stay plain text rather than linking to nowhere.
-  const anchors = pipeline ? { "The phase pipeline": "#phase-pipeline" } : undefined;
   const {
     lede, sharedRules, modes, startersLede, starters,
     partsLede, parts, adjustmentsLede, adjustments, triggers,
   } = getWorkModel();
+
+  // A `§ Name` links to the section it names: here, where this page renders
+  // it, and in the doc reader where it does not. A name that resolves
+  // nowhere stays text rather than linking to nowhere.
+  const texts = [
+    lede, startersLede, ...sharedRules, partsLede, adjustmentsLede,
+    ...starters.map((s) => s.openBy),
+    ...modes.flatMap((m) => [m.purpose, m.reads, m.homeGround, m.careful, m.gated, m.during, ...[...m.open, ...m.close].map((s) => s.text)]),
+    ...parts.flatMap((p) => [p.is, p.properties]),
+    ...adjustments.flatMap((a) => [a.when, a.what]),
+    ...triggers.map((t) => t.fires),
+    ...(pipeline
+      ? [pipeline.readWhen, pipeline.lede, ...pipeline.kinds.map((k) => k.text), ...pipeline.rules.map((r) => r.text),
+         ...(pipeline.run ? [pipeline.run.lede, ...pipeline.run.rules.map((r) => r.text)] : [])]
+      : []),
+  ].filter((t): t is string => Boolean(t));
+  const inPage: Record<string, string> = {
+    [STARTERS]: "#session-starters",
+    [SHARED_RULES]: "#shared-rules",
+    [PARTS]: "#the-parts",
+    [ADJUSTMENTS]: "#adjustments",
+    ...Object.fromEntries(modes.map((m) => [m.label, `#mode-${m.key}`])),
+    ...(pipeline ? { [PIPELINE]: "#phase-pipeline" } : {}),
+    ...(pipeline?.run ? { [pipeline.run.title]: "#the-run" } : {}),
+  };
+  const anchors = sectionHrefs("CONTRIBUTING.md", texts, (id) => `/system/docs/CONTRIBUTING.md#${id}`, inPage);
+  // Glossary terms link at their first noun-use in each reading unit: the
+  // open text under a heading, a card naming its subject (a mode, a kind, a
+  // part), a fold's body. Summaries stay plain — a link there takes the
+  // click that opens the fold.
+  const unit = termUnits(getGlossary());
 
   // The rule that rations the modes' slot renders with them; the rest stay
   // folded at the foot. A canon with no such rule lifts nothing.
@@ -249,7 +305,7 @@ export default function MethodPage() {
       <header className="flex flex-col gap-sm">
         <h1 className="text-2xl font-semibold text-fg-primary">How we work</h1>
         <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
-          <MdInline text={lede} anchors={anchors} />
+          <MdInline text={unit()(lede)} anchors={anchors} />
         </p>
       </header>
 
@@ -257,15 +313,15 @@ export default function MethodPage() {
           something, so the page starts where they do. */}
       {starters.length > 0 && (
         <section id="session-starters" className="flex flex-col gap-md scroll-mt-2xl">
-          <h2 className="text-lg font-semibold text-fg-primary">Session starters</h2>
+          <h2 className="text-lg font-semibold text-fg-primary">{STARTERS}</h2>
           {startersLede && (
             <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
-              <MdInline text={startersLede} anchors={anchors} />
+              <MdInline text={unit()(startersLede)} anchors={anchors} />
             </p>
           )}
           <div className="sys-starters">
             <div className="sys-starters-body flex flex-col">
-              <StarterRows starters={starters} />
+              <StarterRows starters={starters} unit={unit} anchors={anchors} />
             </div>
           </div>
         </section>
@@ -294,15 +350,18 @@ export default function MethodPage() {
               </span>
             )}
             <span className="text-xs text-fg-secondary leading-relaxed">
-              <MdInline text={concurrency.split.text} anchors={anchors} />
+              <MdInline text={unit()(concurrency.split.text)} anchors={anchors} />
             </span>
           </InsetNote>
         )}
         <div className="flex flex-col gap-lg">
           {modes.map((m) => {
             const stops = [...m.open, ...m.close].filter((s) => s.withPO).length;
+            // Two units: the card's open face, and its folded ritual.
+            const face = unit();
+            const ritual = unit();
             return (
-              <article key={m.key} className={`sys-mode ${MODE_ACCENT[m.key] ?? ""}`}>
+              <article key={m.key} id={`mode-${m.key}`} className={`sys-mode scroll-mt-2xl ${MODE_ACCENT[m.key] ?? ""}`}>
                 <div className="flex items-baseline gap-sm flex-wrap">
                   <h3 className="text-lg font-semibold text-fg-primary">{m.label}</h3>
                   <span className="text-sm text-fg-tertiary">{m.tagline}</span>
@@ -314,14 +373,14 @@ export default function MethodPage() {
               <div className="grid gap-lg lg:grid-cols-[1fr_1.1fr]">
                   <div className="flex flex-col gap-md">
                     <p className="text-sm text-fg-secondary leading-relaxed">
-                      <MdInline text={m.purpose} anchors={anchors} />
+                      <MdInline text={face(m.purpose)} anchors={anchors} />
                     </p>
-                    <Scope kind="reads" text={m.reads} />
+                    <Scope kind="reads" text={m.reads} link={face} anchors={anchors} />
                   </div>
                   <div className="flex flex-col gap-sm">
-                    <Scope kind="home" text={m.homeGround} />
-                    <Scope kind="careful" text={m.careful} />
-                    <Scope kind="gated" text={m.gated} />
+                    <Scope kind="home" text={m.homeGround} link={face} anchors={anchors} />
+                    <Scope kind="careful" text={m.careful} link={face} anchors={anchors} />
+                    <Scope kind="gated" text={m.gated} link={face} anchors={anchors} />
                   </div>
                 </div>
 
@@ -340,16 +399,16 @@ export default function MethodPage() {
                     </span>
                   </summary>
                   <div className="flex flex-col gap-lg pt-lg">
-                    <Steps label="Opening ritual" trigger={openTrigger} steps={m.open} anchors={anchors} />
+                    <Steps label="Opening ritual" trigger={openTrigger} steps={m.open} link={ritual} anchors={anchors} />
                     <div className="flex flex-col gap-sm">
                       <span className="flex items-baseline gap-sm text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">
                         During
                       </span>
                       <p className="text-sm text-fg-secondary leading-relaxed">
-                        <MdInline text={m.during} anchors={anchors} />
+                        <MdInline text={ritual(m.during)} anchors={anchors} />
                       </p>
                     </div>
-                    <Steps label="Closing ritual" trigger={closeTrigger} steps={m.close} anchors={anchors} />
+                    <Steps label="Closing ritual" trigger={closeTrigger} steps={m.close} link={ritual} anchors={anchors} />
                   </div>
                 </details>
               </article>
@@ -361,45 +420,51 @@ export default function MethodPage() {
       {/* The moments rituals hang off. Two of these are the open and close
           above, tagged in place; the other four fire outside a phase
           altogether, and had no home on this page until now. */}
-      {triggers.length > 0 && (
-        <section className="flex flex-col gap-md">
-          <h2 className="text-lg font-semibold text-fg-primary">{triggerPart?.name ?? "Triggers"}</h2>
-          {triggersLede && (
-            <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
-              <MdInline text={triggersLede} />
-            </p>
-          )}
-          <div className="sys-trigger-grid">
-            {triggers.map((t) => (
-              <div key={t.name} className="sys-scope">
-                <span className="sys-scope-head">{t.name}</span>
-                {t.fires && (
-                  <span className="text-xs text-fg-secondary leading-relaxed">
-                    <MdInline text={t.fires} anchors={anchors} />
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {triggers.length > 0 && (() => {
+        // One unit: the lede and the grid read as one list of short phrases.
+        const t = unit();
+        return (
+          <section className="flex flex-col gap-md">
+            <h2 className="text-lg font-semibold text-fg-primary">{triggerPart?.name ?? "Triggers"}</h2>
+            {triggersLede && (
+              <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
+                <MdInline text={t(triggersLede)} anchors={anchors} />
+              </p>
+            )}
+            <div className="sys-trigger-grid">
+              {triggers.map((tr) => (
+                <div key={tr.name} className="sys-scope">
+                  <span className="sys-scope-head">{tr.name}</span>
+                  {tr.fires && (
+                    <span className="text-xs text-fg-secondary leading-relaxed">
+                      <MdInline text={t(tr.fires)} anchors={anchors} />
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* The role layer — the heavy path, and the last thing the page teaches
           rather than the first. Its own `Read when:` line leads it, because
           that line is the condition under which any of it applies: a collapsed
           board has no planner, and a side phase never splits at all. */}
-      {pipeline && (
+      {pipeline && (() => {
+        const open = unit();
+        return (
         <section id="phase-pipeline" className="flex flex-col gap-md scroll-mt-2xl">
-          <h2 className="text-lg font-semibold text-fg-primary">The phase pipeline</h2>
+          <h2 className="text-lg font-semibold text-fg-primary">{PIPELINE}</h2>
           {pipeline.readWhen && (
             <InsetNote label="Read when">
               <span className="text-xs text-fg-secondary leading-relaxed">
-                <MdInline text={pipeline.readWhen} />
+                <MdInline text={open(pipeline.readWhen)} anchors={anchors} />
               </span>
             </InsetNote>
           )}
           <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
-            <MdInline text={pipeline.lede} />
+            <MdInline text={open(pipeline.lede)} anchors={anchors} />
           </p>
 
           {/* The sequences, above the cards they order. They are the one
@@ -448,7 +513,7 @@ export default function MethodPage() {
                     </span>
                     <span className="sys-pill self-start">{k.level}</span>
                     <span className="text-xs text-fg-secondary leading-relaxed">
-                      <MdInline text={k.text} anchors={anchors} />
+                      <MdInline text={unit()(k.text)} anchors={anchors} />
                     </span>
                   </div>
                 );
@@ -461,7 +526,7 @@ export default function MethodPage() {
               carry it last (everything under a `###` reads as part of it);
               the page puts it where it is read. */}
           {pipeline.run && (
-            <div className="sys-run-note flex flex-col gap-sm">
+            <div id="the-run" className="sys-run-note flex flex-col gap-sm scroll-mt-2xl">
               <div className="flex items-baseline gap-sm flex-wrap">
                 <h3 className="text-base font-semibold text-fg-primary">{pipeline.run.title}</h3>
                 {pipeline.run.tagline && (
@@ -469,7 +534,7 @@ export default function MethodPage() {
                 )}
               </div>
               <p className="text-sm leading-relaxed text-fg-secondary max-w-[72ch]">
-                <MdInline text={pipeline.run.lede} anchors={anchors} />
+                <MdInline text={unit()(pipeline.run.lede)} anchors={anchors} />
               </p>
               {pipeline.run.rules.length > 0 && (
                 <div className="flex flex-col">
@@ -485,7 +550,7 @@ export default function MethodPage() {
                       </summary>
                       <div className="pb-md pl-lg max-w-[72ch]">
                         <p className="text-xs text-fg-secondary leading-relaxed">
-                          <MdInline text={r.text} anchors={anchors} />
+                          <MdInline text={unit()(r.text)} anchors={anchors} />
                         </p>
                       </div>
                     </details>
@@ -509,7 +574,7 @@ export default function MethodPage() {
                   </summary>
                   <div className="pb-md pl-lg max-w-[72ch]">
                     <p className="text-xs text-fg-secondary leading-relaxed">
-                      <MdInline text={r.text} />
+                      <MdInline text={unit()(r.text)} anchors={anchors} />
                     </p>
                   </div>
                 </details>
@@ -517,23 +582,28 @@ export default function MethodPage() {
             </div>
           )}
         </section>
-      )}
+        );
+      })()}
 
       {/* Shared rules — reference, consulted not read: each rule folds to its
           own bold lead. A rule without one renders as a plain row. One rule
           is missing from this list on purpose: Concurrency renders with the
           modes, and a rule stated twice on one page is the two-descriptions
           drift the record warns about. */}
-      {footRules.length > 0 && (
-        <section className="flex flex-col gap-md">
-          <h2 className="text-lg font-semibold text-fg-primary">Rules shared by all modes</h2>
+      {footRules.length > 0 && (() => {
+        // Rules with no bold lead render open, one unit between them; each
+        // folded rule is a unit of its own.
+        const plain = unit();
+        return (
+        <section id="shared-rules" className="flex flex-col gap-md scroll-mt-2xl">
+          <h2 className="text-lg font-semibold text-fg-primary">{SHARED_RULES}</h2>
           <div className="flex flex-col">
             {footRules.map((r, i) => {
               const lead = splitLead(r);
               if (!lead) {
                 return (
                   <p key={i} className="sys-rule-plain text-sm text-fg-secondary leading-relaxed">
-                    <MdInline text={r} anchors={anchors} />
+                    <MdInline text={plain(r)} anchors={anchors} />
                   </p>
                 );
               }
@@ -549,7 +619,7 @@ export default function MethodPage() {
                   </summary>
                   <div className="pb-md pl-lg max-w-[72ch]">
                     <p className="text-xs text-fg-secondary leading-relaxed">
-                      <MdInline text={lead.text} anchors={anchors} />
+                      <MdInline text={unit()(lead.text)} anchors={anchors} />
                     </p>
                   </div>
                 </details>
@@ -557,57 +627,66 @@ export default function MethodPage() {
             })}
           </div>
         </section>
-      )}
+        );
+      })()}
 
       {/* The kit — the concept layer and the reshaping map, demoted to
           collapsed shelves: meta about the model, not the flow itself. */}
       {parts.length > 0 && (
-        <Shelf label="The parts" note={partsLede ? "the model is a kit — every part is yours to reshape" : ""}>
+        <Shelf id="the-parts" label={PARTS} note={partsLede ? "the model is a kit — every part is yours to reshape" : ""}>
           {partsLede && (
             <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
-              <MdInline text={partsLede} />
+              <MdInline text={unit()(partsLede)} anchors={anchors} />
             </p>
           )}
           <div className="grid gap-md md:grid-cols-2">
-            {parts.map((p) => (
-              <article key={p.name} className="sys-part">
-                <h3 className="text-base font-semibold text-fg-primary">{p.name}</h3>
-                <p className="text-sm text-fg-secondary leading-relaxed">
-                  <MdInline text={p.is} />
-                </p>
-                <div className="sys-scope">
-                  <span className="sys-scope-head">Properties</span>
-                  <span className="text-xs text-fg-secondary leading-relaxed">
-                    <MdInline text={p.properties} anchors={anchors} />
-                  </span>
-                </div>
-              </article>
-            ))}
+            {parts.map((p) => {
+              const card = unit();
+              return (
+                <article key={p.name} className="sys-part">
+                  <h3 className="text-base font-semibold text-fg-primary">{p.name}</h3>
+                  <p className="text-sm text-fg-secondary leading-relaxed">
+                    <MdInline text={card(p.is)} anchors={anchors} />
+                  </p>
+                  <div className="sys-scope">
+                    <span className="sys-scope-head">Properties</span>
+                    <span className="text-xs text-fg-secondary leading-relaxed">
+                      <MdInline text={card(p.properties)} anchors={anchors} />
+                    </span>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </Shelf>
       )}
 
-      {adjustments.length > 0 && (
-        <Shelf label="Adjustments" note="allowed, never required">
+      {adjustments.length > 0 && (() => {
+        // The fold is the unit: its items are moments in one list, not
+        // cards each naming a subject of its own.
+        const shelf = unit();
+        return (
+        <Shelf id="adjustments" label={ADJUSTMENTS} note="allowed, never required">
           {adjustmentsLede && (
             <p className="text-sm leading-relaxed text-fg-secondary max-w-[64ch]">
-              <MdInline text={adjustmentsLede} />
+              <MdInline text={shelf(adjustmentsLede)} anchors={anchors} />
             </p>
           )}
           <ul className="flex flex-col gap-sm">
             {adjustments.map((a) => (
               <li key={a.when} className="sys-scope">
                 <span className="text-sm font-semibold text-fg-primary leading-snug">
-                  <MdInline text={a.when} />
+                  <MdInline text={shelf(a.when)} anchors={anchors} />
                 </span>
                 <span className="text-xs text-fg-secondary leading-relaxed">
-                  <MdInline text={a.what} anchors={anchors} />
+                  <MdInline text={shelf(a.what)} anchors={anchors} />
                 </span>
               </li>
             ))}
           </ul>
         </Shelf>
-      )}
+        );
+      })()}
 
       <SourceNote
         href="/system/docs/CONTRIBUTING.md"

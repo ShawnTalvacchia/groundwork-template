@@ -551,26 +551,35 @@ export function glossaryStrays(): string[] {
  *  too — "a phase **runs** one", "the level it **runs** at" — and a link on
  *  the verb sends the reader to a definition of something the sentence never
  *  said. Missing a link costs a reader nothing; a wrong one teaches them the
- *  wrong word. */
-const NOUN_CUE = /(?:^|[^\w-])(?:a|an|the|one|each|every|any|another|its|their|per|no|several)\s+$/i;
+ *  wrong word. Emphasis may open between the two: the canon bolds a term
+ *  where it introduces one (`a **seam**`, `its **board**`), and that mention
+ *  is the one a reader most wants defined. */
+const NOUN_CUE = /(?:^|[^\w-])(?:a|an|the|one|each|every|any|another|its|their|per|no|several)\s+\*{0,2}$/i;
 
-/** Spans a term link may never land inside: code, an existing link, and a
- *  `§ Name` reference, which the page links to its section instead. */
-const LINK_PROTECTED = /`[^`]*`|\[[^\]]*\]\([^)]*\)|§ [^().,;:\n]+/g;
+/** Spans a term link may never land inside: a path into another doc
+ *  (`product-lifecycle.md → Closing a Phase`, whose words are that doc's
+ *  heading, not a mention), code, a bracketed span (an existing link, or a
+ *  placeholder like `[phase name]` in an example prompt), and a `§ Name`
+ *  reference, which the page links to its section instead. The path comes
+ *  first, so a filename in backticks does not end it at the code. */
+const LINK_PROTECTED = /`?[\w./-]+\.md`?\s*→\s*[^().,;:\n]+|`[^`]*`|\[[^\]]*\](?:\([^)]*\))?|§ [^().,;:\n]+/g;
 
-/** The glossary with its cross-references linked, derived rather than
- *  authored: a term's **first mention as a noun** in another entry — its
- *  definition, then its values' glosses, in reading order — becomes a link to
- *  that term's anchor. Self-mentions never link, a plural `s` counts as the
- *  term, an all-caps term (`PO`) matches its own case only, and a word joined
- *  to its neighbour by `-` or `→` (`board-kind`, `tier→model`) is part of a
- *  compound, not a mention. Longer names win where two start together
- *  (`Queue-shaping` over `Queue`).
+/** Links glossary terms in a text against a set the caller holds: a term's
+ *  **first mention as a noun** becomes a markdown link to `href(anchor)`, and
+ *  its anchor joins the set so a later text handed the same set leaves it
+ *  alone. One set is one reading unit — a glossary entry, a card, a fold — so
+ *  a page decides what a unit is by when it starts a fresh one; seeding the
+ *  set with an anchor keeps that term from linking in that unit at all.
  *
- *  Returns new terms whose `def`s carry markdown links to `href(anchor)`; the
- *  parse itself stays link-free, because `glossaryLede` and any other plain
- *  reader want the canon's words, not the page's. */
-export function linkGlossary(terms: GlossaryTerm[], href: (anchor: string) => string): GlossaryTerm[] {
+ *  A plural `s` counts as the term, an all-caps term (`PO`) matches its own
+ *  case only, and a word joined to its neighbour by `-` or `→`
+ *  (`board-kind`, `tier→model`) is part of a compound, not a mention. Longer
+ *  names win where two start together (`Queue-shaping` over `Queue`). Only
+ *  terms link, never their values: `open`, `build` and `active` are ordinary
+ *  words far more often than they are the field's. */
+export type GlossaryLinker = (text: string, linked: Set<string>) => string;
+
+export function glossaryLinker(terms: GlossaryTerm[], href: (anchor: string) => string): GlossaryLinker {
   const byLength = [...terms].sort((a, b) => b.term.length - a.term.length);
   const patterns = byLength.map((t) => ({
     t,
@@ -580,7 +589,7 @@ export function linkGlossary(terms: GlossaryTerm[], href: (anchor: string) => st
     ),
   }));
 
-  const linkText = (text: string, linked: Set<string>): string => {
+  return (text, linked) => {
     // Protected spans are blanked to same-length filler, so a match's index in
     // the masked text is its index in the real one.
     const masked = text.replace(LINK_PROTECTED, (s) => "\0".repeat(s.length));
@@ -605,11 +614,22 @@ export function linkGlossary(terms: GlossaryTerm[], href: (anchor: string) => st
     }
     return out;
   };
+}
 
+/** The glossary with its cross-references linked, derived rather than
+ *  authored: each entry is one reading unit (`glossaryLinker`) — its
+ *  definition, then its values' glosses, in reading order — and never links
+ *  to itself.
+ *
+ *  Returns new terms whose `def`s carry markdown links; the parse itself
+ *  stays link-free, because `glossaryLede` and any other plain reader want
+ *  the canon's words, not the page's. */
+export function linkGlossary(terms: GlossaryTerm[], href: (anchor: string) => string): GlossaryTerm[] {
+  const link = glossaryLinker(terms, href);
   return terms.map((term) => {
     const linked = new Set([term.anchor]);
-    const def = linkText(term.def, linked);
-    const values = term.values.map((v) => ({ ...v, def: linkText(v.def, linked) }));
+    const def = link(term.def, linked);
+    const values = term.values.map((v) => ({ ...v, def: link(v.def, linked) }));
     return { ...term, def, values };
   });
 }
@@ -622,12 +642,22 @@ export function linkGlossary(terms: GlossaryTerm[], href: (anchor: string) => st
  *  tagline (`§ The parts` is `### The parts — the model is a kit`), or the
  *  whole heading. Failing that, it matches a bold lead at the start of a line
  *  (`**Rules shared by all modes:**`), which has no anchor of its own and
- *  resolves to the heading it sits under. The anchor is `headingSlug` of the
- *  heading's text, the same id the doc reader stamps. */
+ *  resolves to the heading it sits under. Failing both, a name of two words
+ *  or more matches the first heading that starts with it, which is how the
+ *  canon's short form `§ Doc Tiers` reaches `## Doc Tiers & Review Physics`.
+ *  The anchor is `headingSlug` of the heading's text, the same id the doc
+ *  reader stamps.
+ *
+ *  A name is read the way `sectionRefs` captured it, which runs to the next
+ *  punctuation mark and so often past the name itself (`§ Session starters
+ *  and the rules…`, `§ Doc Tiers → Stamping…`). It is trimmed a word at a
+ *  time from the end until it resolves, and the result is keyed by the words
+ *  that did — the text the inline renderer will find and link. */
 export function sectionAnchors(relPath: string, names: string[]): Record<string, string> {
   const parsed = readDoc(relPath);
   if (!parsed || names.length === 0) return {};
   const headings = new Map<string, string>();
+  const order: { text: string; anchor: string }[] = [];
   const leads = new Map<string, string>();
   let current: string | null = null;
   let fence: string | null = null;
@@ -643,6 +673,7 @@ export function sectionAnchors(relPath: string, names: string[]): Record<string,
     if (h) {
       const text = stripMd(h[1]);
       current = headingSlug(text);
+      order.push({ text: text.toLowerCase(), anchor: current });
       for (const key of [text, text.split(" — ")[0]]) {
         if (!headings.has(key.toLowerCase())) headings.set(key.toLowerCase(), current);
       }
@@ -651,12 +682,49 @@ export function sectionAnchors(relPath: string, names: string[]): Record<string,
     const b = line.match(/^\*\*([^*]+?)[:.]?\*\*/);
     if (b && current && !leads.has(b[1].toLowerCase())) leads.set(b[1].toLowerCase(), current);
   }
+  // A heading's start stands in for its whole name only where the reference
+  // ends there, or turns down a `→` path into it: trimmed back from
+  // anywhere else, `§ The phase pipeline's general…` would reach "The phase".
+  const resolve = (name: string, whole: boolean): string | undefined => {
+    const key = name.toLowerCase();
+    return (
+      headings.get(key) ??
+      leads.get(key) ??
+      (whole && key.includes(" ") ? order.find((h) => h.text.startsWith(`${key} `))?.anchor : undefined)
+    );
+  };
   const out: Record<string, string> = {};
   for (const name of names) {
-    const anchor = headings.get(name.toLowerCase()) ?? leads.get(name.toLowerCase());
-    if (anchor) out[name] = anchor;
+    const words = name.trim().split(/\s+/);
+    for (let n = words.length; n > 0; n--) {
+      // A possessive reads off: `§ The phase pipeline's` names the pipeline.
+      const candidate = words.slice(0, n).join(" ").replace(/['’]s$/, "");
+      const anchor = resolve(candidate, n === words.length || words[n] === "→");
+      if (anchor) {
+        out[candidate] = anchor;
+        break;
+      }
+    }
   }
   return out;
+}
+
+/** Every `§ Name` a page's texts make, as the href each should link to: the
+ *  page's own anchor where it renders that section (`inPage`, keyed by the
+ *  canon's name for it), else that section in the doc reader, the one place
+ *  every section renders (`docHref`). A name that resolves nowhere is absent,
+ *  so the inline renderer leaves it as text rather than linking to nowhere. */
+export function sectionHrefs(
+  relPath: string,
+  texts: string[],
+  docHref: (anchor: string) => string,
+  inPage: Record<string, string> = {},
+): Record<string, string> {
+  const anchors = sectionAnchors(relPath, [...new Set(texts.flatMap(sectionRefs))]);
+  const local = new Map(Object.entries(inPage).map(([name, href]) => [name.toLowerCase(), href]));
+  return Object.fromEntries(
+    Object.entries(anchors).map(([name, anchor]) => [name, local.get(name.toLowerCase()) ?? docHref(anchor)]),
+  );
 }
 
 /** The `§ Name` references a text makes, by name. */

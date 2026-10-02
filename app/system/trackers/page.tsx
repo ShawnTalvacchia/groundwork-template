@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { getFutureItems, getOpenQuestions, getPunchItems, getTrackerModel, stripMd } from "@/lib/system";
-import { MdInline, PageIntro, SourceNote } from "../ui";
+import { getFutureItems, getGlossary, getOpenQuestions, getPunchItems, getTrackerModel, headingSlug, sectionHrefs } from "@/lib/system";
+import { MdInline, PageIntro, SourceNote, termUnits } from "../ui";
 
 // Where candidates wait between phases — the model (from CONTRIBUTING) shown
 // against the live counts.
@@ -13,6 +13,18 @@ const TRACKER_LINKS: Record<string, { href: string; label: string }> = {
 
 export default function TrackersPage() {
   const { lede, trackers, flow, sharedRule } = getTrackerModel();
+  // `§ Name` references link to their section in the doc reader, and glossary
+  // terms at their first noun-use per reading unit: the lede, each tracker's
+  // card, the flow list, the shared rule.
+  const anchors = sectionHrefs(
+    "CONTRIBUTING.md",
+    [lede, ...trackers.flatMap((t) => [t.holds, t.unit, t.exit]), ...flow, sharedRule].filter(Boolean),
+    (id) => `/system/docs/CONTRIBUTING.md#${id}`,
+  );
+  // The page's own subject never links: a reader here is already reading
+  // the full account of it, and the glossary's line is the short one.
+  const unit = termUnits(getGlossary(), [headingSlug("Tracker")]);
+  const flowUnit = unit();
   const counts: Record<string, number> = {
     "punch-list": getPunchItems().length,
     "Open Questions & Assumptions Log": getOpenQuestions().reduce((n, t) => n + t.questions.length, 0),
@@ -21,11 +33,12 @@ export default function TrackersPage() {
 
   return (
     <>
-      <PageIntro title="Trackers" blurb={stripMd(lede)} />
+      <PageIntro title="Trackers" blurb={<MdInline text={unit()(lede)} anchors={anchors} />} />
 
       <section className="flex flex-col gap-md">
         {trackers.map((t) => {
           const link = TRACKER_LINKS[t.name];
+          const card = unit();
           return (
             <div key={t.name} className="sys-card flex flex-col gap-md">
               <div className="flex items-baseline justify-between gap-md">
@@ -47,7 +60,7 @@ export default function TrackersPage() {
                   <div key={label} className="flex flex-col gap-xs">
                     <dt className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">{label}</dt>
                     <dd className="text-xs text-fg-secondary leading-relaxed">
-                      <MdInline text={value} />
+                      <MdInline text={card(value)} anchors={anchors} />
                     </dd>
                   </div>
                 ))}
@@ -64,7 +77,7 @@ export default function TrackersPage() {
             <li key={i} className="text-xs text-fg-secondary leading-relaxed flex gap-sm">
               <span className="sys-step-num">{i + 1}</span>
               <span>
-                <MdInline text={f} />
+                <MdInline text={flowUnit(f)} anchors={anchors} />
               </span>
             </li>
           ))}
@@ -77,7 +90,7 @@ export default function TrackersPage() {
             Shared rule — prune on resolve
           </span>
           <p className="text-xs text-fg-secondary leading-relaxed">
-            <MdInline text={sharedRule} />
+            <MdInline text={unit()(sharedRule)} anchors={anchors} />
           </p>
         </section>
       )}

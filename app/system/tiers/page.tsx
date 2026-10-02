@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { getAllDocs, getTierPhysics, getTiers } from "@/lib/system";
-import { MdInline, PageIntro, SourceNote } from "../ui";
+import { getAllDocs, getGlossary, getTierPhysics, getTiers, headingSlug, sectionHrefs } from "@/lib/system";
+import { MdInline, PageIntro, SourceNote, termUnits } from "../ui";
 
 // The tier MODEL (what a tier means, what guards it). Which doc sits at
 // which tier is Structure → Docs.
@@ -14,6 +14,19 @@ export default function TiersPage() {
   const physics = getTierPhysics();
   const tiers = getTiers();
   const docs = getAllDocs();
+  // `§ Name` references link to their section in the doc reader, and glossary
+  // terms at their first noun-use per reading unit: each tier's rung, each
+  // card, the closing note.
+  const anchors = sectionHrefs(
+    "CONTRIBUTING.md",
+    [...tiers.flatMap((t) => [t.lives, t.toChange, t.recheck]), ...Object.values(physics)].filter(
+      (t): t is string => typeof t === "string" && t.length > 0,
+    ),
+    (id) => `/system/docs/CONTRIBUTING.md#${id}`,
+  );
+  // The page's own subject never links: a reader here is already reading
+  // the full account of it, and the glossary's line is the short one.
+  const unit = termUnits(getGlossary(), [headingSlug("Tier")]);
   const count = (t: string) => docs.filter((d) => d.tier === t).length;
   const docLabel = (n: number) => `${n} ${n === 1 ? "doc" : "docs"}`;
 
@@ -30,26 +43,29 @@ export default function TiersPage() {
           <p className="text-xs leading-relaxed text-fg-tertiary">Most guarded first.</p>
         </div>
         <div className="flex flex-col gap-sm">
-          {tiers.map((tier) => (
+          {tiers.map((tier) => {
+            const rung = unit();
+            return (
             <div key={tier.key} className={`sys-tier-rung sys-tier-rung--${tier.key}`}>
               <div className="flex items-baseline gap-sm">
                 <span className="text-sm font-semibold text-fg-primary">{tier.label}</span>
                 <span className="text-2xs text-fg-tertiary tabular-nums">{docLabel(count(tier.key))}</span>
               </div>
               <span className="text-xs text-fg-secondary leading-relaxed">
-                <MdInline text={tier.lives} />
+                <MdInline text={rung(tier.lives)} anchors={anchors} />
               </span>
               <span className="sys-tier-guard">
                 <span className="text-2xs text-fg-tertiary">
-                  <span className="font-semibold">To change it:</span> <MdInline text={tier.toChange} />
+                  <span className="font-semibold">To change it:</span> <MdInline text={rung(tier.toChange)} anchors={anchors} />
                 </span>
                 <span className="text-2xs text-fg-tertiary">
-                  <span className="font-semibold">When to re-check:</span> <MdInline text={tier.recheck} />
+                  <span className="font-semibold">When to re-check:</span> <MdInline text={rung(tier.recheck)} anchors={anchors} />
                   {tier.staleAfterDays !== null && ` · flagged stale after ${tier.staleAfterDays}d`}
                 </span>
               </span>
             </div>
-          ))}
+            );
+          })}
         </div>
         <p className="text-xs leading-relaxed text-fg-tertiary">
           Which doc sits where:{" "}
@@ -74,7 +90,7 @@ export default function TiersPage() {
             <div key={m.title} className="sys-card flex flex-col gap-sm">
               <h3 className="text-sm font-semibold text-fg-primary">{m.title}</h3>
               <p className="text-xs text-fg-secondary leading-relaxed">
-                <MdInline text={m.text} />
+                <MdInline text={unit()(m.text)} anchors={anchors} />
               </p>
             </div>
           ))}
@@ -95,7 +111,7 @@ export default function TiersPage() {
             <div key={m.title} className="sys-card flex flex-col gap-sm">
               <h3 className="text-sm font-semibold text-fg-primary">{m.title}</h3>
               <p className="text-xs text-fg-secondary leading-relaxed">
-                <MdInline text={m.text} />
+                <MdInline text={unit()(m.text)} anchors={anchors} />
               </p>
             </div>
           ))}
@@ -104,7 +120,7 @@ export default function TiersPage() {
 
       {physics.antiStuck && (
         <p className="text-xs leading-relaxed text-fg-tertiary max-w-[70ch]">
-          <MdInline text={physics.antiStuck} />
+          <MdInline text={unit()(physics.antiStuck)} anchors={anchors} />
         </p>
       )}
 

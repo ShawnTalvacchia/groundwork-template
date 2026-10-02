@@ -2,8 +2,8 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ReactNode } from "react";
-import type { ActivePhase, BoardGroup, BoardMode, BoardStatus, Tier, WalkthroughCounts } from "@/lib/system";
-import { boardName, MODE_KINDS, MODE_META, STATUS_LABEL, TIER_META, headingSlug, stripMd } from "@/lib/system";
+import type { ActivePhase, BoardGroup, BoardMode, BoardStatus, GlossaryTerm, Tier, WalkthroughCounts } from "@/lib/system";
+import { boardName, glossaryLinker, MODE_KINDS, MODE_META, STATUS_LABEL, TIER_META, headingSlug, stripMd } from "@/lib/system";
 import type { DriftAlarm } from "@/lib/derivation";
 import { Mermaid } from "./mermaid";
 
@@ -43,7 +43,7 @@ export function DriftBanner({ alarms }: { alarms: DriftAlarm[] }) {
   );
 }
 
-export function PageIntro({ title, count, blurb }: { title: string; count?: number; blurb: string }) {
+export function PageIntro({ title, count, blurb }: { title: string; count?: number; blurb: ReactNode }) {
   return (
     <header className="flex flex-col gap-sm">
       <h1 className="text-2xl font-semibold text-fg-primary">
@@ -149,11 +149,22 @@ export function StartersStrip({
 /** The starter rows themselves — one collapsed card per arrival, expanding to
  *  the prompt you'd type. Shared by the hub's shelf (inside `.sys-starters`)
  *  and the method page (inside a plain `.sys-starters > .sys-starters-body`
- *  card without the shelf summary), so the two surfaces stay one markup. */
+ *  card without the shelf summary), so the two surfaces stay one markup.
+ *
+ *  `unit` opts a caller into glossary links (`termUnits`), one unit per row,
+ *  on what-happens only: the prompt is what a person types, quoted, and the
+ *  summary is the fold's toggle. `anchors` links its `§` references the way
+ *  the rest of the caller's page does. The method page opts into both; the
+ *  hub's strip does not, since a shelf of folded rows is not where anyone
+ *  reads. */
 export function StarterRows({
   starters,
+  unit,
+  anchors,
 }: {
   starters: { arriving: string; shape: string; mode: string; prompt: string; openBy: string }[];
+  unit?: TermUnit;
+  anchors?: Record<string, string>;
 }) {
   return (
     <>
@@ -185,7 +196,7 @@ export function StarterRows({
               <MdInline text={s.prompt} />
             </p>
             <p className="text-xs text-fg-secondary leading-relaxed">
-              <MdInline text={s.openBy} />
+              <MdInline text={unit ? unit()(s.openBy) : s.openBy} anchors={anchors} />
             </p>
           </div>
         </details>
@@ -691,6 +702,36 @@ export function resolveDocHref(href: string, docDir: string): string {
   return `/system/docs/${out.join("/")}${hash ? `#${hash}` : ""}`;
 }
 
+/** Where a glossary term is defined: its entry on the glossary page. One
+ *  home, so the glossary's own cross-references and every other page's term
+ *  links cannot point at two different addresses. */
+export function glossaryHref(anchor: string): string {
+  return `/system/glossary#${anchor}`;
+}
+
+/** Opens a reading unit: returns a function that links glossary terms in the
+ *  texts handed to it, each term at its first noun-use inside the unit. */
+export type TermUnit = () => (text: string) => string;
+
+/** Canon prose with its glossary terms linked, one reading unit at a time.
+ *  `unit()` opens a fresh unit and returns its linker; hand its output to
+ *  `MdInline`. Inside a unit each term links at its first noun-use and
+ *  nowhere after (`glossaryLinker`). A unit is what a reader reads alone — a
+ *  card naming its subject, a fold's body, the open text under a heading —
+ *  so a page states its units by where it calls `unit()`. A fold's summary
+ *  stays unlinked: a link inside `<summary>` takes the click that should open
+ *  the fold.
+ *
+ *  `seed` names anchors that never link on the page at all — its own
+ *  subject, which a reader is already reading about. */
+export function termUnits(terms: GlossaryTerm[], seed: string[] = []): TermUnit {
+  const link = glossaryLinker(terms, glossaryHref);
+  return () => {
+    const linked = new Set(seed);
+    return (text: string) => link(text, linked);
+  };
+}
+
 /** `docDir` is the directory the text was READ from, relative to the docs
  *  root — needed only when the source doc is not at the root. The parsed
  *  sources this renderer was built for (CONTRIBUTING, ROADMAP, decisions.md)
@@ -722,10 +763,12 @@ export function MdInline({
     }
     let rest = t;
     for (;;) {
+      // The earliest reference wins, and the longer name where two start at
+      // once: `§ Doc Tiers & Review Physics` is not `§ Doc Tiers` plus text.
       let best: { i: number; name: string } | null = null;
       for (const name of Object.keys(anchors)) {
         const i = rest.indexOf(`§ ${name}`);
-        if (i !== -1 && (!best || i < best.i)) best = { i, name };
+        if (i !== -1 && (!best || i < best.i || (i === best.i && name.length > best.name.length))) best = { i, name };
       }
       if (!best) {
         if (rest) nodes.push(rest);

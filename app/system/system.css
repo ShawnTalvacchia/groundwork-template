@@ -49,6 +49,20 @@
   gap: var(--space-8);
 }
 
+/* A link to a glossary entry is a term defined elsewhere, and a page of canon
+   prose carries dozens: dotted until hovered, as on the glossary page, so it
+   stays marked as a link in the text's own colour and contrast without being
+   the loudest thing in the sentence. Keyed to the route rather than a class,
+   because the inline renderer draws every link alike and the href is the one
+   thing that says what this one is. */
+.sys-main a[href*="/glossary#"] {
+  text-decoration-style: dotted;
+}
+
+.sys-main a[href*="/glossary#"]:hover {
+  text-decoration-style: solid;
+}
+
 /* ── Nav ── */
 
 /* Header + both tab rows stick together; the body scrolls under. */

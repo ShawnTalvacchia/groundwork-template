@@ -16,6 +16,32 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 13 · Every page that renders the rules links its terms, and the glossary defines seam and mold
+
+**Class:** parser · convention
+**Depends on:** `MdInline`'s `§` anchor map and `StarterRows` (`ea479e0`) · `PageIntro` and the trackers and tiers pages (`feb807b`)
+**Resolves:** none
+
+**Does this affect you?** Every project gets the links by taking the code, step 1. The glossary additions, step 3, are wording: take them wherever your glossary still carries the shipped entries.
+
+**What changed.**
+
+- **The method, trackers and tiers pages link the glossary's terms,** the way the glossary page already did. A term links at its first use as a noun in each reading unit: a card, a fold's body, or the open text under a heading. So a term you meet in a folded rule links there, even when the page linked it higher up. A fold's summary never carries a link, since a link there takes the click that opens the fold. A page never links its own subject: Tier on the tiers page, Tracker on the trackers page.
+- **A bolded term now counts.** `a **seam**` links, where it used to fail the noun test because the `**` sat between the two words. The rules bold a term where they introduce it, so that is the mention most worth linking.
+- **Never inside a path into another doc.** `product-lifecycle.md → Closing a Phase` no longer links "Phase": those words are that doc's heading. A bracketed placeholder like `[phase name]` is skipped too.
+- **Every `§ Name` on those pages links.** It goes to the section on the page where the page renders it (the method page's starters, modes, pipeline, run, shared rules, parts and adjustments), and to the doc reader otherwise. `§ Doc Tiers` now resolves, to the section whose heading starts with those words. A reference that runs on past its name, like `§ Session starters and the rules…`, is trimmed back until it resolves.
+- **Term links are dotted until hovered** on every page, as they were on the glossary page.
+- **The glossary.** Two new entries: **Seam**, where a split phase changes chats, and **Mold**, the template a doc is cut from. **Level** now names the Levels line and says what split and collapsed mean. **Walkthrough** names its O and V items. **Trigger** names its second sense, a Future Consideration's trigger, because the trackers page now links that word. The Kind chat row in § Session starters and Kind's `close` say "documents" where they said "paper".
+
+**How to adopt.**
+
+1. **The code, from this entry's commit.** In `lib/system.ts`, the block from `NOUN_CUE` through `sectionRefs`: `glossaryLinker` is new and `linkGlossary` calls it, `sectionAnchors` gained its fallbacks, and `sectionHrefs` is new. In `app/system/ui.tsx`: `glossaryHref`, `termUnits` and `TermUnit`, the `unit` and `anchors` props on `StarterRows`, `PageIntro`'s `blurb` taking a node, and the tie-break in `MdInline`'s `§` matcher. In `app/system/system.css`, the two `a[href*="/glossary#"]` rules under `.sys-main`. **If you never changed** the method, trackers, tiers and glossary pages under `app/system/`, take them whole. **If you did,** the pattern is the same on each: build `anchors` with `sectionHrefs`, build `unit` with `termUnits`, call `unit()` once per card or fold, and hand `MdInline` the linked text.
+2. **`docs/implementation/system-surface.md`:** the Method, Trackers, Tiers and Glossary rows, and the new paragraph *Terms link where the canon renders* under the table.
+3. **The glossary,** in `docs/CONTRIBUTING.md`: Seam after Session, Mold after Walkthrough, and the new sentences on Level, Walkthrough and Trigger. Patch your own entries. Copying the shipped glossary over yours drops every term you added.
+4. **"paper" becomes "documents"** in the Kind chat row and Kind's `close`, wherever yours still says paper.
+
+**Check:** open `/system/method` and open any folded rule. Its terms are dotted links into the glossary, and its `§` references land on their section. No amber band should show.
+
 ## 12 · The glossary gets groups, its lists become values, and its cross-references link
 
 **Class:** protocol · parser · convention

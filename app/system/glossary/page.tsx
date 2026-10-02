@@ -1,15 +1,17 @@
-import { getGlossary, linkGlossary, sectionAnchors, sectionRefs, type GlossaryGroup, type GlossaryTerm } from "@/lib/system";
-import { MdInline, PageIntro, SourceNote } from "../ui";
+import { getGlossary, linkGlossary, sectionHrefs, type GlossaryGroup, type GlossaryTerm } from "@/lib/system";
+import { glossaryHref, MdInline, PageIntro, SourceNote } from "../ui";
 
 export default function GlossaryPage() {
   const canon = "/system/docs/CONTRIBUTING.md";
-  const terms = linkGlossary(getGlossary(), (anchor) => `/system/glossary#${anchor}`);
+  const terms = linkGlossary(getGlossary(), glossaryHref);
 
   // `§ Name` references link to the section they name, in the doc reader —
-  // the one place every section of the canon renders, parsed or not.
-  const refs = terms.flatMap((t) => [t.def, ...t.values.map((v) => v.def)].flatMap(sectionRefs));
-  const anchors = Object.fromEntries(
-    Object.entries(sectionAnchors("CONTRIBUTING.md", [...new Set(refs)])).map(([name, id]) => [name, `${canon}#${id}`]),
+  // the one place every section of the canon renders, parsed or not. This
+  // page renders none of them, so nothing resolves in-page.
+  const anchors = sectionHrefs(
+    "CONTRIBUTING.md",
+    terms.flatMap((t) => [t.def, ...t.values.map((v) => v.def)]),
+    (id) => `${canon}#${id}`,
   );
 
   // The canon's own grouping, in its own order. A glossary with no `###`
