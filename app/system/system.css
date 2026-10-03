@@ -270,7 +270,7 @@
 
 .sys-starters > summary .sys-caret {
   transition: transform 120ms ease;
-  color: var(--text-light);
+  color: var(--text-gray);
 }
 
 .sys-starters[open] > summary .sys-caret {
@@ -347,14 +347,15 @@
 
    Fill and ring fail on opposite grounds and cover for each other, which is
    what the overlay was reaching for and got by flattening both. The fill
-   vanishes on `--surface-top` (1.00:1) where the ring is 3.15; the ring
-   vanishes into `--surface-inset` where the fill carries. Strongest edge per
-   ground: 3.15 / 2.83 / 2.66 in light and 3.50 / 3.87 / 4.03 in dark,
-   against the overlay's flat 1.45 and 1.58-1.69 — plus a 3.15:1 (3.50 dark)
+   vanishes on `--surface-top` (1.00:1) where the ring is 3.68; the ring
+   is weakest on `--surface-inset`, where the fill carries. Strongest edge per
+   ground: 3.68 / 3.31 / 3.10 in light and 3.45 / 3.82 / 3.98 in dark,
+   against the overlay's flat 1.45 and 1.58-1.69 — plus a 3.68:1 (3.45 dark)
    ring-against-fill edge that exists on every ground and that the overlay
-   had none of.
+   had none of. The ring is `--border-stronger`, the ramp's control boundary,
+   because a boundary that has to be seen is that token's whole job.
 
-   The text needs no token: `--text-secondary` reads 8.95:1 on this fill
+   The text needs no token: `--text-secondary` reads 10.95:1 on this fill
    against 5.22-6.16 on the overlay. Raising it was the fix for the symptom;
    this is the fix for the cause. The 1px border keeps the box the same size
    it has been — it is painted now rather than transparent. */
@@ -364,7 +365,7 @@
   padding: 0 var(--space-2);
   height: 20px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border-strongest);
+  border: 1px solid var(--border-stronger);
   background: var(--surface-top);
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
@@ -377,13 +378,13 @@
    commitments' #e5e5e5 ring: a 10x jump that read as a *thicker* pill, not a
    darker one. That gap is what P33 closed by moving the neutral steps into
    the fill, and it is gone for a different reason now — commitments' ring is
-   `--border-strongest` at 3.15:1, so a heavier bedrock ring is a step, not a
+   `--border-stronger` at 3.68:1, so a heavier bedrock ring is a step, not a
    leap.)
 
    The raised chip lets the RING carry every step again, neutral ones
    included. P33 had to put the neutral steps in the fill because on its grey
-   overlay `--border-strongest` measured 1.15:1 and died one layer in; on
-   this fill the same token is 3.15:1 and `--text-tertiary` 6.54 (8.62 dark).
+   overlay the neutral ring measured 1.15:1 and died one layer in; on this
+   fill the ring is 3.68:1 and `--text-tertiary` 7.74 (7.28 dark).
    So bedrock is a heavier ring plus primary text (15.20:1 on the fill), and
    commitments IS the regular chip — no rule of its own, which is why
    `.sys-pill-tier-commitments` appears in the markup and not here.
@@ -393,10 +394,9 @@
    read "at 4.4:1 and up" on its fill; that held for working's brand and never
    for stale, whose amber measured **1.33:1** on the grey chip — invisible,
    and unnoticed because nothing re-measured it. The raised fill alone takes
-   it to 2.15 and `--status-warning-strong` to 3.19: over the 3:1 floor for a
-   ring, under the 4.5 one for text. So the ring stays amber and the label
-   takes `--text-primary` (15.20:1).
-   The darker ramp step passes as text and is still not where the colour
+   it to 2.15, and `--status-warning-strong` on the 700 rung to 5.02. So the
+   ring is amber and the label takes `--text-primary` (15.20:1).
+   An amber label passes as text now and is still not where the colour
    belongs, for a reason that depends on the ramp you set: on a warm brand
    ramp `--warning-850` lands within a hair of `--brand-strong`, and stale's
    label stops being distinguishable from the working tier's. On the indigo
@@ -405,7 +405,7 @@
    in the ring is independent of the brand; a dark amber label is not.
    **If you change the brand ramp, measure `--warning-850` against
    `--brand-strong` before moving stale's label onto it.**
-   Working needs no change and gains anyway: 6.79 light, 5.92 dark. */
+   Working needs no change and gains anyway: 7.90 light, 5.54 dark. */
 .sys-pill-tier-bedrock {
   border-color: var(--text-tertiary);
   color: var(--text-primary);
@@ -461,7 +461,7 @@
 
 /* The same box with none of the pull, for a control that is a destination
    rather than an ask. It takes the raised chip's pair — `--surface-top` under
-   a painted `--border-strongest` ring, `--text-secondary` label — which is
+   a painted `--border-stronger` ring, `--text-secondary` label — which is
    `.sys-pill` exactly, so the two neutral marks on a board agree. Geometry
    stays `.sys-button`'s: the slot is the same slot, and only its weight
    changes with what it is asking for.
@@ -470,7 +470,7 @@
    specificity, so these must follow it. */
 .sys-button--quiet {
   background: var(--surface-top);
-  border-color: var(--border-strongest);
+  border-color: var(--border-stronger);
   color: var(--text-secondary);
 }
 
@@ -538,7 +538,7 @@
    stays a card at the same size on the same ground, marked by the neutral ring
    the rest of the board's chrome is drawn in. */
 .sys-callout--done {
-  border-left-color: var(--border-strongest);
+  border-left-color: var(--border-stronger);
 }
 
 /* Items, on the walkthrough page. A list that is a list of THINGS TO DO, so it
@@ -589,7 +589,7 @@
      checkbox is a radio button. The ramp's smallest step is the only one that
      reads as a square this size. */
   border-radius: var(--radius-tiny);
-  border: 1px solid var(--border-strongest);
+  border: 1px solid var(--border-stronger);
   background: var(--surface-top);
 }
 
@@ -650,8 +650,8 @@
    this pill was *fainter* than the neutral one it was meant to emphasize:
    `--brand-subtle` is a ~4% tint and the chip under it was 16% dark. The
    fill is kept for the tint (1.08:1 over the chip, a warmth rather than an
-   edge) and the brand ring carries the emphasis at 6.28:1 against it, twice
-   the neutral ring's 3.15. Its text reads 8.07:1. */
+   edge) and the brand ring carries the emphasis at 7.07:1 against it, well
+   over the neutral ring's 3.68. Its text reads 8.88:1. */
 .sys-pill-active {
   border-color: var(--brand-main);
   color: var(--brand-strong);
@@ -878,7 +878,7 @@
 
 .sys-details > summary .sys-caret {
   transition: transform 120ms ease;
-  color: var(--text-light);
+  color: var(--text-gray);
 }
 
 .sys-details[open] > summary .sys-caret {
@@ -1403,7 +1403,7 @@
 
 .sys-ritual > summary .sys-caret {
   transition: transform 120ms ease;
-  color: var(--text-light);
+  color: var(--text-gray);
 }
 
 .sys-ritual[open] > summary .sys-caret {
@@ -1415,7 +1415,7 @@
   min-width: 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: var(--text-2xs);
-  color: var(--text-light);
+  color: var(--text-gray);
   padding-top: 3px;
 }
 

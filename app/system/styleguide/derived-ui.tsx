@@ -23,6 +23,19 @@ export function cleanNote(note: string | null): string | null {
   return cleaned || null;
 }
 
+export type Resolved = { light: string; dark: string };
+
+/** Every token's resolved value per theme, by name — what a contrast
+ *  measurement reads, so the page and the CSS cannot disagree. */
+export function tokenTable(): Map<string, Resolved> {
+  const data = getStyleguide();
+  const out = new Map<string, Resolved>();
+  for (const t of [...data.root, ...data.theme].flatMap((s) => s.tokens)) {
+    if (!out.has(t.name)) out.set(t.name, { light: t.light, dark: t.dark ?? t.light });
+  }
+  return out;
+}
+
 /** The two page backings, parsed — used to render cross-theme previews. */
 export function getBackings(): { light: string; dark: string; darkText: string } {
   const all = getStyleguide().root.flatMap((s) => s.tokens);

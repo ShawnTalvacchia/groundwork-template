@@ -1,10 +1,101 @@
 import { getStyleguide, getTokenHealth, utilityByRootToken } from "@/lib/styleguide";
-import { Ramp, SgSection, TokenRow, displayTitle, getBackings } from "./derived-ui";
+import { AA_NON_TEXT, AA_SMALL_TEXT, measure } from "@/lib/contrast";
+import { Ramp, SgSection, TokenRow, displayTitle, getBackings, tokenTable } from "./derived-ui";
 
 // Colors — the styleguide's index. Everything on this page is parsed from
 // globals.css at build time (lib/styleguide.ts): the semantic families first
 // (what product code should reach for), the primitive ramps under them, and
 // the health checks that make CLAUDE.md rule 5 machine-true.
+
+/* The ladder's contract, stated once: the rungs that carry information and
+ * the floor each must clear on EVERY ground a callsite can put it on. The
+ * components page measures what each demo paints; this measures what the
+ * tokens promise, which is the claim a callsite relies on when it reaches for
+ * a rung without measuring. `--text-light` is not here because it promises
+ * nothing: it is disabled and decorative only (globals.css). */
+const LADDER = [
+  { token: "--text-primary", floor: AA_SMALL_TEXT },
+  { token: "--text-secondary", floor: AA_SMALL_TEXT },
+  { token: "--text-tertiary", floor: AA_SMALL_TEXT },
+  { token: "--text-gray", floor: AA_SMALL_TEXT },
+  { token: "--border-stronger", floor: AA_NON_TEXT },
+] as const;
+const GROUNDS = ["--surface-top", "--surface-popout", "--surface-base", "--surface-inset"] as const;
+
+/** Every rung on every ground, both themes. The lowest figure in each theme
+ *  is set heavier: it names that theme's hard surface, which is the one a
+ *  re-skin has to measure first. */
+function LadderTable() {
+  const tokens = tokenTable();
+  const themes = ["light", "dark"] as const;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[640px] border-collapse text-2xs">
+        <thead>
+          <tr className="text-left text-fg-tertiary">
+            <th scope="col" className="py-xs pr-md font-semibold">
+              Rung
+            </th>
+            {themes.map((theme) =>
+              GROUNDS.map((g) => (
+                <th key={`${theme}${g}`} scope="col" className="py-xs pr-md font-normal">
+                  <span className="block font-semibold">{theme}</span>
+                  <code className="font-mono">{g.replace("--surface-", "")}</code>
+                </th>
+              )),
+            )}
+            <th scope="col" className="py-xs font-semibold">
+              Floor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {LADDER.map(({ token, floor }) => {
+            const cells = themes.map((theme) =>
+              GROUNDS.map((g) => {
+                const fg = tokens.get(token)?.[theme];
+                const bg = tokens.get(g)?.[theme];
+                return fg && bg ? measure(fg, bg, floor) : null;
+              }),
+            );
+            return (
+              <tr key={token} className="border-t border-edge-light">
+                <th scope="row" className="py-xs pr-md text-left font-normal">
+                  {/* A text rung names itself in its own colour, so the row
+                      is also the specimen: the reader judges the steps here,
+                      in whichever theme they are in. A border is not text,
+                      and painting its name at 3:1 would be the defect. */}
+                  <code
+                    className="font-mono text-fg-primary"
+                    style={token.startsWith("--text-") ? { color: `var(${token})` } : undefined}
+                  >
+                    {token}
+                  </code>
+                </th>
+                {cells.map((row, i) => {
+                  const low = Math.min(...row.map((m) => m?.ratio ?? Infinity));
+                  return row.map((m, j) => (
+                    <td key={`${i}${j}`} className="py-xs pr-md font-mono tabular-nums text-fg-secondary">
+                      {m ? (
+                        <span className={m.ratio === low ? "font-semibold text-fg-primary" : undefined}>
+                          {m.ratio.toFixed(2)}
+                          {!m.passes && <span className="ml-xs font-sans font-semibold text-fg-primary">under</span>}
+                        </span>
+                      ) : (
+                        <span className="italic text-fg-gray">unreadable</span>
+                      )}
+                    </td>
+                  ));
+                })}
+                <td className="py-xs font-mono tabular-nums text-fg-gray">{floor}:1</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function ColorsPage() {
   const data = getStyleguide();
@@ -79,6 +170,13 @@ export default function ColorsPage() {
               </div>
             ))}
         </div>
+      </SgSection>
+
+      <SgSection
+        title="The ladder on every surface"
+        note="Each rung that carries information, measured on each surface it can land on, in both themes. A rung clears its floor everywhere or it is not a rung. The heavier figure per theme is that theme's hard surface. Computed at build from the values above."
+      >
+        <LadderTable />
       </SgSection>
 
       <SgSection

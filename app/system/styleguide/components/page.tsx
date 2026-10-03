@@ -2,11 +2,10 @@ import type { ReactNode } from "react";
 import {
   getComponentInventory,
   getComponentDetails,
-  getStyleguide,
   type ComponentDetail,
 } from "@/lib/styleguide";
 import { measure, AA_SMALL_TEXT } from "@/lib/contrast";
-import { ThemePanesStyle } from "../derived-ui";
+import { ThemePanesStyle, tokenTable, type Resolved } from "../derived-ui";
 import { DEMOS, type DemoEntry, type PaintedPair } from "./demos";
 
 /* The components page.
@@ -80,17 +79,6 @@ function ThemePane({ theme, entry }: { theme: "light" | "dark"; entry: DemoEntry
 
 /* ── The measurements ────────────────────────────────────────────────── */
 
-type Resolved = { light: string; dark: string };
-
-function tokenTable(): Map<string, Resolved> {
-  const data = getStyleguide();
-  const out = new Map<string, Resolved>();
-  for (const t of [...data.root, ...data.theme].flatMap((s) => s.tokens)) {
-    if (!out.has(t.name)) out.set(t.name, { light: t.light, dark: t.dark ?? t.light });
-  }
-  return out;
-}
-
 function Ratio({ pair, tokens }: { pair: PaintedPair; tokens: Map<string, Resolved> }) {
   const floor = pair.floor ?? AA_SMALL_TEXT;
   const cells = (["light", "dark"] as const).map((theme) => {
@@ -121,12 +109,11 @@ function Ratio({ pair, tokens }: { pair: PaintedPair; tokens: Map<string, Resolv
               </code>
               {/* The verdict is a WORD, not a colour, for the two reasons
                   this page exists to catch. Colour alone fails WCAG 1.4.1,
-                  and `--status-error-strong` on `--surface-base` measures
-                  4.34:1 in light — the marker saying "under the floor" was
-                  itself under it. Fixing the ramp is a design-system call and
-                  a punch row; making the mark not depend on the colour is
-                  this page's own to get right. The word carries the meaning
-                  and the red is now emphasis on top of it. */}
+                  and a palette can always put the red under its own floor:
+                  `--status-error-strong` on `--surface-base` once measured
+                  4.34:1 in light, so the marker saying "under the floor" was
+                  itself under it. The word carries the meaning and the red is
+                  emphasis on top of it, whatever the palette does. */}
               {!m.passes && (
                 <span className="text-2xs font-semibold text-fg-primary">under</span>
               )}

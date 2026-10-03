@@ -16,6 +16,39 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 14 · The quiet end of the starter palette clears its floors, and the Colors page measures every rung on every surface
+
+**Class:** parser · convention
+**Depends on:** the styleguide's Colors page and `lib/styleguide.ts` (`feb807b`)
+**Resolves:** none
+
+**Does this affect you?** Every project should take the method, step 1. The values, step 2, only fit a palette still on the starter neutral and status ramps; a re-skinned one re-solves its own. The table, step 3, is code any project can take whole.
+
+**What changed.**
+
+- **The text ladder is re-spaced so every rung that carries information clears 4.5:1 on every surface, in both themes.** Primary, secondary, tertiary and gray sit about ×1.41 apart in contrast, measured on each theme's **hard surface**: `--surface-inset` in light (the darkest ground under dark text), `--surface-popout` in dark (the lightest ground under light text). A rung that clears the hard one clears every other surface. The surfaces did not move: the room is between primary and the floor, and moving light inset all the way to white buys a rung's worth of contrast and no more.
+- **`--text-light` leaves the ladder.** It is disabled and decorative only now, such as a separator glyph. Input's placeholder, the dashboard's disclosure carets and its ritual step numbers moved to `--text-gray`.
+- **Borders split by job at `--border-stronger`.** `-light`, `-regular` and `-strong` are dividers with no floor. `-stronger` is the boundary that has to be seen: a control's resting edge, a chip's ring, a checkbox. It clears the 3:1 floor for a component on every surface. `-strongest` sits a step above, at the gray rung's value. On the dashboard, `.sys-pill`, `.sys-button--quiet`, `.sys-callout--done` and `.sys-wt-box` moved from `-strongest` to `-stronger`, so they keep the weight they had while `-strongest` got heavier.
+- **Toggle's off state is an outlined switch:** a `-stronger` ring and knob on an inset track. A white knob on the `--surface-gray` track measured 1.65:1, and it is the pair the eye reads.
+- **The status `-strong` steps for success, warning and error point at a new 700 rung** and clear 4.5:1 on their own `-light` fills. Info already did.
+- **The Colors page has a new table, *The ladder on every surface*:** each text rung and the control boundary, on top, popout, base and inset, in both themes, against its floor. The lowest figure per theme is set heavier, which names that theme's hard surface. Each text rung's name paints in its own colour, so the row doubles as a specimen. The token comments in `globals.css` point at the table rather than quoting figures. `tokenTable()` moved from the components page to `derived-ui.tsx`, so both pages read one resolver.
+- **Entry 8 said to expect failures on day one.** On the starter palette the components page now reports none.
+
+**The values, light.** `--neutral-600` `#4c5360`, `-500` `#636977`, `-400` `#7d8694` (each was `#565e6b`, `#6b7280`, `#8892a0`). `--text-secondary` → `--neutral-750`, `--text-gray` → `--neutral-500`, `--border-stronger` → `--neutral-400`, `--border-strongest` → `--neutral-500`. New: `--success-700` `#047857`, `--warning-700` `#b45309`, `--error-700` `#b91c1c`, and the three `--status-*-strong` point at them.
+
+**The values, dark.** `--text-secondary` `#c5ccd6`, `--text-tertiary` `#a4adb9`, `--text-gray` `#88919c`, `--border-stronger` `#6c737d`, `--border-strongest` `#88919c`. The three new 700 primitives repeat their ramp's 600 value, as every dark status rung does.
+
+**How to adopt.**
+
+1. **The method, whatever your palette.** Find each theme's hard surface: the one closest in luminance to your text. Fix primary. Space three rungs evenly in contrast between primary and just over 4.5:1 on that surface, keeping your ramp's hue. Put `--border-stronger` just over 3:1 on the same surface. Then read the table from step 3: every cell should clear its floor.
+2. **The values,** if your neutral and status ramps are still the starter's: take the light and dark values above into `app/globals.css`, and the comments over the Text and Border blocks from this entry's commit. Your brand ramp is untouched.
+3. **The code, from this entry's commit.** `app/system/styleguide/page.tsx` (`LADDER`, `GROUNDS`, `LadderTable`), `tokenTable` into `derived-ui.tsx` with the components page importing it, the paints in `demos.tsx` for Input and Toggle, and `components/ui/Input.tsx` and `Toggle.tsx`. If you changed those two components, the change is the placeholder class and Toggle's off-state classes.
+4. **`app/system/system.css`:** the four ring re-points above, the carets and `.sys-step-num` to `--text-gray`, and the re-measured comments on the pills.
+5. **Your own callsites.** Anything you paint in `--text-light` that a reader needs moves to `--text-gray`. A card or panel edge on `--border-stronger` moves to `--border-strong`.
+6. **`docs/implementation/system-surface.md`:** the Styleguide row.
+
+**Check:** open `/system/styleguide` and read *The ladder on every surface* in either theme. No cell says `under`. Then `/system/styleguide/components`: no pair says `under` either.
+
 ## 13 · Every page that renders the rules links its terms, and the glossary defines seam and mold
 
 **Class:** parser · convention

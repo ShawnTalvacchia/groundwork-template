@@ -25,7 +25,7 @@ export function Input({ label, hint, id, className, ...rest }: InputProps) {
       {label && <span className="text-xs font-semibold text-fg-secondary">{label}</span>}
       <input
         id={id}
-        className={`rounded-sm border border-edge-stronger bg-surface-top px-md py-sm text-sm text-fg-primary placeholder:text-fg-light focus:border-brand-main focus:outline-none${className ? ` ${className}` : ""}`}
+        className={`rounded-sm border border-edge-stronger bg-surface-top px-md py-sm text-sm text-fg-primary placeholder:text-fg-gray focus:border-brand-main focus:outline-none${className ? ` ${className}` : ""}`}
         {...rest}
       />
       {hint && <span className="text-2xs text-fg-tertiary">{hint}</span>}

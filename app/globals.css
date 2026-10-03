@@ -188,9 +188,9 @@
   --neutral-150: #d5dae0;
   --neutral-200: #c3cad2;
   --neutral-300: #a7b0bb;
-  --neutral-400: #8892a0;
-  --neutral-500: #6b7280;
-  --neutral-600: #565e6b;
+  --neutral-400: #7d8694;
+  --neutral-500: #636977;
+  --neutral-600: #4c5360;
   --neutral-700: #434a54;
   --neutral-750: #373d46;
   --neutral-800: #2c313a;
@@ -219,6 +219,7 @@
   --success-300: #6ee7b7;
   --success-500: #10b981;
   --success-600: #059669;
+  --success-700: #047857;
   --success-850: #064e3b;
 
   /* ---- _Status: Warning ---- */
@@ -228,6 +229,7 @@
   --warning-300: #fcd34d;
   --warning-500: #f59e0b;
   --warning-600: #d97706;
+  --warning-700: #b45309;
   --warning-850: #78350f;
 
   /* ---- _Status: Error ---- */
@@ -237,6 +239,7 @@
   --error-300: #fca5a5;
   --error-500: #ef4444;
   --error-600: #dc2626;
+  --error-700: #b91c1c;
   --error-850: #7f1d1d;
 
   /* ---- _Status: Info ---- */
@@ -322,11 +325,30 @@
      SEMANTIC TOKENS — Text
      ================================================ */
 
+  /* THE TEXT LADDER. Four rungs that carry information, primary to gray,
+     each a step of about x1.41 in contrast below the one above, so the
+     quietest lands just over the 4.5:1 floor. Measured on each theme's
+     HARDEST surface for its text: `--surface-inset` in light (the darkest
+     ground under dark text), `--surface-popout` in dark (the lightest ground
+     under light text). Every other surface reads higher, so a rung that
+     clears the hard one clears them all. The styleguide's Colors page
+     measures every rung on every surface in both themes, so the figures live
+     there and not here.
+
+     The room is between primary and the floor, not in the surfaces: moving
+     inset all the way to white buys a rung's worth of contrast and no more.
+
+     `--text-light` is OFF the ladder: disabled and decorative only (a
+     separator glyph, a disabled field). Anything a reader needs takes
+     `--text-gray` or above.
+
+     Re-skinning: the METHOD survives any palette, the values do not. Change
+     a surface or a rung, then read that table. */
   --text-primary: var(--neutral-850); /* #21262e */
-  --text-secondary: var(--neutral-700); /* #434a54 */
-  --text-tertiary: var(--neutral-600); /* #565e6b — one rung down from neutral-500: 500 measured 4.08:1 on --surface-inset, under the 4.5 AA floor */
-  --text-gray: var(--neutral-400); /* #8892a0 — inactive tabs, de-emphasized */
-  --text-light: var(--neutral-300); /* #a7b0bb */
+  --text-secondary: var(--neutral-750); /* #373d46 */
+  --text-tertiary: var(--neutral-600); /* #4c5360 */
+  --text-gray: var(--neutral-500); /* #636977 — the quietest text rung: inactive tabs, metadata */
+  --text-light: var(--neutral-300); /* #a7b0bb — disabled and decorative only, never text a reader needs */
   --text-inverse: var(--neutral-25); /* #f7f8f9 */
   --text-white: var(--neutral-white); /* #ffffff */
   --text-black: var(--neutral-950); /* #0d1013 */
@@ -335,13 +357,19 @@
      SEMANTIC TOKENS — Border
      ================================================ */
 
-  /* Colours */
+  /* Colours. Two jobs, split at `-stronger`. The quiet steps up to
+     `-strong` are DIVIDERS: they separate regions that already read apart,
+     and carry no floor. `-stronger` is the CONTROL BOUNDARY: the only edge an
+     input, a secondary button or a pill has, so it clears the 3:1 floor for
+     a component boundary on every surface, measured beside the text ladder
+     on the Colors page. `-strongest` sits a step above it at the
+     `--text-gray` value, for a hover or an emphasised ring. */
   --border-lightest: var(--neutral-white); /* #ffffff */
   --border-light: var(--neutral-50); /* #f1f3f5 */
   --border-regular: var(--neutral-75); /* #e9ecef */
   --border-strong: var(--neutral-100); /* #e2e5e9 */
-  --border-stronger: var(--neutral-150); /* #d5dae0 */
-  --border-strongest: var(--neutral-400); /* #8892a0 */
+  --border-stronger: var(--neutral-400); /* #7d8694 — the control boundary, 3:1 on every surface */
+  --border-strongest: var(--neutral-500); /* #636977 */
 
   /* Widths */
   --border-width-reg: 1px;
@@ -374,15 +402,15 @@
 
   --status-success-light: var(--success-25);
   --status-success-main: var(--success-500);
-  --status-success-strong: var(--success-600);
+  --status-success-strong: var(--success-700);
 
   --status-warning-light: var(--warning-25);
   --status-warning-main: var(--warning-500);
-  --status-warning-strong: var(--warning-600);
+  --status-warning-strong: var(--warning-700);
 
   --status-error-light: var(--error-25);
   --status-error-main: var(--error-500);
-  --status-error-strong: var(--error-600);
+  --status-error-strong: var(--error-700);
   --status-error-surface: var(--status-error-light);
   --status-error-border: var(--status-error-main);
   --status-error-text: var(--status-error-strong);
@@ -555,6 +583,7 @@
   --success-300: #57b87d;
   --success-500: #34d399;
   --success-600: #6ee7b7;
+  --success-700: #6ee7b7;
   --success-850: #6ee7b7;
   --warning-25: #2a2410;
   --warning-50: #33290f;
@@ -562,6 +591,7 @@
   --warning-300: #c79a2e;
   --warning-500: #fbbf24;
   --warning-600: #fcd34d;
+  --warning-700: #fcd34d;
   --warning-850: #fcd34d;
   --error-25: #2a1614;
   --error-50: #331a17;
@@ -569,6 +599,7 @@
   --error-300: #e0574c;
   --error-500: #f87171;
   --error-600: #fca5a5;
+  --error-700: #fca5a5;
   --error-850: #fca5a5;
   --info-25: #191e33;
   --info-50: #1f2540;
@@ -596,9 +627,9 @@
 
   /* ---- Text (light on dark) ---- */
   --text-primary: #edeff2;
-  --text-secondary: #b7bec8;
-  --text-tertiary: #8a929e;
-  --text-gray: #6c747f;
+  --text-secondary: #c5ccd6;
+  --text-tertiary: #a4adb9;
+  --text-gray: #88919c;
   --text-light: #545b65;
   --text-inverse: #1c1f24;
   --text-white: #ffffff;
@@ -609,8 +640,8 @@
   --border-light: #2a2e34;
   --border-regular: #343941;
   --border-strong: #3f454e;
-  --border-stronger: #4c525c;
-  --border-strongest: #6c747f;
+  --border-stronger: #6c737d;
+  --border-strongest: #88919c;
 
   /* ---- Brand — lifted for contrast on dark ---- */
   --brand-subtle: #24204a;

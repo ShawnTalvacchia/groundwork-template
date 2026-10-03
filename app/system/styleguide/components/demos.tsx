@@ -140,7 +140,7 @@ export const DEMOS: Record<string, DemoEntry> = {
     ],
     paints: [
       { what: "field text", fg: "--text-primary", bg: "--surface-top", floor: TEXT },
-      { what: "placeholder", fg: "--text-light", bg: "--surface-top", floor: TEXT },
+      { what: "placeholder", fg: "--text-gray", bg: "--surface-top", floor: TEXT },
       { what: "label", fg: "--text-secondary", bg: "--surface-top", floor: TEXT },
       { what: "hint", fg: "--text-tertiary", bg: "--surface-top", floor: TEXT },
       { what: "resting border", fg: "--border-stronger", bg: "--surface-top", floor: GRAPHIC },
@@ -231,9 +231,9 @@ export const DEMOS: Record<string, DemoEntry> = {
     ],
     paints: [
       { what: "knob on the on-track", fg: "--surface-top", bg: "--brand-main", floor: GRAPHIC },
-      { what: "knob on the off-track", fg: "--surface-top", bg: "--surface-gray", floor: GRAPHIC },
+      { what: "knob on the off-track", fg: "--border-stronger", bg: "--surface-inset", floor: GRAPHIC },
       { what: "on-track against the card", fg: "--brand-main", bg: "--surface-top", floor: GRAPHIC },
-      { what: "off-track against the card", fg: "--surface-gray", bg: "--surface-top", floor: GRAPHIC },
+      { what: "off-track ring against the card", fg: "--border-stronger", bg: "--surface-top", floor: GRAPHIC },
     ],
   },
 };
