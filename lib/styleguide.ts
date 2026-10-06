@@ -10,6 +10,13 @@ import path from "node:path";
 // Scopes: light (:root), dark (:root[data-theme="dark"] overlaid on light),
 // mobile (the max-width:767px :root block overlaid on light). Values shown in
 // the styleguide are resolved through the same var() chains the browser walks.
+//
+// A local `@import "./x.css"` in globals.css is followed: its :root joins the
+// light scope as a base layer, so a token re-pointed onto a product's own
+// tokens resolves to a value rather than printing a bare var(). Imported
+// tokens are the product's, not this file's: they never render as sections,
+// never count, and are never censused. A token whose chain lands on one says
+// so (`TokenDef.product`).
 
 const CSS_PATH = path.join(process.cwd(), "app", "globals.css");
 
@@ -27,6 +34,9 @@ export interface TokenDef {
   mobile: string | null;
   /** Trailing /* comment *​/ on the declaration, cleaned. */
   note: string | null;
+  /** The imported token its light value comes from, or null when the value
+   *  is this file's own. Derived by walking the alias chain. */
+  product: string | null;
 }
 
 export interface TokenSection {
@@ -45,12 +55,14 @@ export interface StyleguideData {
   /** Token names the dark theme overrides directly. */
   darkOverridden: string[];
   definedCount: number;
+  /** Token names defined by a locally imported stylesheet. */
+  imported: string[];
+  /** The local stylesheets globals.css imports, relative to the project. */
+  importedFrom: string[];
 }
 
 export interface TokenHealth {
   defined: number;
-  /** :root tokens nothing references — candidates to prune. */
-  orphans: string[];
   /** var(--x) references with no definition anywhere. `guarded` = every
    *  occurrence carries a fallback (degrades quietly); unguarded ones
    *  render as `unset` — silent bugs. */
@@ -135,6 +147,7 @@ function parseBlock(body: string): TokenSection[] {
         dark: null,
         mobile: null,
         note,
+        product: null,
       });
     }
   }
@@ -159,6 +172,10 @@ function resolveValue(value: string, map: Map<string, string>): string {
 /* ── The parse ─────────────────────────────────────────────────────── */
 
 let cache: StyleguideData | null = null;
+/** Every alias edge in every scope: token -> the tokens its value reads.
+ *  The census walks these, so a primitive is reached through the semantic
+ *  token that names it, in whichever theme does the naming. */
+let aliasEdges = new Map<string, Set<string>>();
 
 export function getStyleguide(): StyleguideData {
   if (cache) return cache;
@@ -177,7 +194,20 @@ export function getStyleguide(): StyleguideData {
   const asMap = (defs: TokenDef[]) =>
     new Map(defs.filter((d) => d.target !== d.name).map((d) => [d.name, d.raw]));
 
-  const lightMap = new Map([...asMap(flat(rootSections)), ...asMap(flat(themeSections))]);
+  // Local imports only (`./x.css`, `../x.css`), never a package like
+  // "tailwindcss": their :root is the base this file's tokens override.
+  const imported = new Map<string, string>();
+  const importedFrom: string[] = [];
+  for (const m of css.matchAll(/@import\s+["'](\.{1,2}\/[^"']+\.css)["']/g)) {
+    const file = path.resolve(path.dirname(CSS_PATH), m[1]);
+    if (!fs.existsSync(file)) continue;
+    importedFrom.push(path.relative(process.cwd(), file));
+    const body = blockOf(fs.readFileSync(file, "utf-8"), /^:root\s*(?=\{)/m);
+    for (const [k, v] of asMap(flat(parseBlock(body)))) imported.set(k, v);
+  }
+
+  const ownMap = new Map([...asMap(flat(rootSections)), ...asMap(flat(themeSections))]);
+  const lightMap = new Map([...imported, ...ownMap]);
   const darkOnly = asMap(flat(darkSections));
   const darkMap = new Map([...lightMap, ...darkOnly]);
   const mobileOnly = asMap(flat(mobileSections));
@@ -192,6 +222,24 @@ export function getStyleguide(): StyleguideData {
       t.dark = dark !== t.light ? dark : null;
       const mobile = resolveValue(mobileOnly.get(t.name) ?? t.raw, mobileMap);
       t.mobile = mobile !== t.light ? mobile : null;
+      // Follow the alias chain until it leaves this file's own tokens.
+      let hop = t.target;
+      for (let depth = 0; hop && depth < 12; depth++) {
+        if (!ownMap.has(hop)) {
+          t.product = imported.has(hop) ? hop : null;
+          break;
+        }
+        hop = ownMap.get(hop)!.match(/^var\((--[\w-]+)\)$/)?.[1] ?? null;
+      }
+    }
+  }
+
+  aliasEdges = new Map();
+  for (const t of [...flat(rootSections), ...flat(themeSections), ...flat(darkSections), ...flat(mobileSections)]) {
+    if (t.target === t.name) continue;
+    for (const m of t.raw.matchAll(/var\((--[\w-]+)/g)) {
+      if (!aliasEdges.has(t.name)) aliasEdges.set(t.name, new Set());
+      aliasEdges.get(t.name)!.add(m[1]);
     }
   }
 
@@ -199,28 +247,56 @@ export function getStyleguide(): StyleguideData {
     root: rootSections,
     theme: themeSections,
     darkOverridden: [...darkOnly.keys()],
-    definedCount: lightMap.size,
+    definedCount: ownMap.size,
+    imported: [...imported.keys()],
+    importedFrom,
   };
   return cache;
 }
 
-/* ── Health: orphans + undefined references ────────────────────────────
+/* ── Health: undefined references ──────────────────────────────────────
    Scanned across app/, components/, lib/, contexts/, hooks/ (.tsx + .css).
-   A :root token is in use if anything references it via var() outside its
-   own definition, or the @theme layer maps it into a Tailwind utility.
    The styleguide's own pages are excluded — they reference tokens
-   dynamically and must never count as product usage. */
+   dynamically and must never count as usage. Which tokens nothing reaches
+   for is the census's question (`getCensus`), not this one. */
 
 const SCAN_DIRS = ["app", "components", "lib", "contexts", "hooks"];
+// Both styleguide homes: this repo mounts the dashboard at app/[surface],
+// the template at app/system. Each repo has exactly one of the two, and the
+// other entry matches nothing — cheaper than re-rendering on export.
+const STYLEGUIDE = [path.join("app", "system", "styleguide"), path.join("app", "[surface]", "styleguide")];
 const EXCLUDE = [
-  // Both styleguide homes: this repo mounts the dashboard at app/[surface],
-  // the template at app/system. Each repo has exactly one of the two, and the
-  // other entry matches nothing — cheaper than re-rendering on export.
-  path.join("app", "system", "styleguide"),
-  path.join("app", "[surface]", "styleguide"),
+  ...STYLEGUIDE,
   path.join("lib", "styleguide.ts"), // this parser's own regexes aren't usage
   path.join("lib", "system.ts"),
 ];
+/** The census reads the styleguide's own chrome, which is the dashboard's,
+ *  and skips only its demo registry: mounting every component to show it is
+ *  not reaching for one. */
+const CENSUS_EXCLUDE = [
+  ...STYLEGUIDE.map((d) => path.join(d, "components", "demos")),
+  ...EXCLUDE.slice(STYLEGUIDE.length),
+];
+
+/** The dashboard's own code: the one authored list the census reads. Every
+ *  other route file is the product's, and a component or module belongs to
+ *  whoever imports it. Both mount points are listed for the same reason
+ *  EXCLUDE lists both styleguide homes. The inspector is here because it is
+ *  the system's tool laid over any page, not part of the page it inspects.
+ *  A project whose root page is the record's own front door, not a product,
+ *  adds `app/page.tsx` here. */
+export const DASHBOARD = [
+  path.join("app", "system"),
+  path.join("app", "[surface]"),
+  path.join("components", "inspector"),
+];
+
+/** The frame every page sits in: the root layout, and globals.css's element
+ *  rules (`body`; its declarations are definitions, not usage). Reaching for a
+ *  token here serves the dashboard always, and the product whenever there is
+ *  one. A class rule in globals.css is not the frame: it belongs to whoever
+ *  writes the class (`getCensus`). */
+const BASE = [path.join("app", "layout.tsx"), path.join("app", "globals.css")];
 
 /** Comments don't count — a token named in prose is neither used nor broken. */
 function stripComments(text: string, isCss: boolean): string {
@@ -229,7 +305,7 @@ function stripComments(text: string, isCss: boolean): string {
   return out;
 }
 
-function scanFiles(): { file: string; text: string }[] {
+function scanFiles(exclude = EXCLUDE): { file: string; text: string }[] {
   const out: { file: string; text: string }[] = [];
   const walk = (dir: string) => {
     if (!fs.existsSync(dir)) return;
@@ -237,7 +313,7 @@ function scanFiles(): { file: string; text: string }[] {
       if (entry.name.startsWith(".") || entry.name === "node_modules") continue;
       const full = path.join(dir, entry.name);
       const rel = path.relative(process.cwd(), full);
-      if (EXCLUDE.some((e) => rel.startsWith(e))) continue;
+      if (exclude.some((e) => rel.startsWith(e))) continue;
       if (entry.isDirectory()) walk(full);
       else if (/\.(tsx|ts|css)$/.test(entry.name))
         out.push({ file: rel, text: stripComments(fs.readFileSync(full, "utf-8"), rel.endsWith(".css")) });
@@ -245,6 +321,14 @@ function scanFiles(): { file: string; text: string }[] {
   };
   for (const d of SCAN_DIRS) walk(path.join(process.cwd(), d));
   return out;
+}
+
+/** A file's text with globals.css's own declarations masked, so a token's
+ *  definition is never read as its usage. */
+function usageText(file: string, text: string): string {
+  return file === path.join("app", "globals.css")
+    ? text.replace(/^\s*--[\w-]+\s*:[^;]*;/gm, (decl) => decl.replace(/var\(/g, "ref("))
+    : text;
 }
 
 let healthCache: TokenHealth | null = null;
@@ -257,15 +341,11 @@ export function getTokenHealth(): TokenHealth {
   const defined = new Set<string>();
   for (const s of [...data.root, ...data.theme]) for (const t of s.tokens) defined.add(t.name);
 
-  // Every var(--x) reference, everywhere — with globals.css's own
-  // definitions masked out so a token's declaration isn't its own usage.
+  // Every var(--x) reference, everywhere.
   const refs = new Map<string, Set<string>>(); // name -> files
   const unguarded = new Set<string>(); // names referenced ≥once with NO fallback
   for (const { file, text } of files) {
-    const scannable = file === path.join("app", "globals.css")
-      ? text.replace(/^\s*--[\w-]+\s*:[^;]*;/gm, (decl) => decl.replace(/var\(/g, "ref("))
-      : text;
-    for (const m of scannable.matchAll(/var\((--[\w-]+)\s*([,)])/g)) {
+    for (const m of usageText(file, text).matchAll(/var\((--[\w-]+)\s*([,)])/g)) {
       if (!refs.has(m[1])) refs.set(m[1], new Set());
       refs.get(m[1])!.add(file);
       if (m[2] === ")") unguarded.add(m[1]);
@@ -283,32 +363,10 @@ export function getTokenHealth(): TokenHealth {
     }
   }
 
-  // @theme references keep a :root token alive (it's public Tailwind API).
-  const themeTargets = new Set<string>();
-  for (const s of data.theme)
-    for (const t of s.tokens)
-      for (const m of t.raw.matchAll(/var\((--[\w-]+)/g)) themeTargets.add(m[1]);
-
-  // globals.css-internal chains: --a: var(--b) keeps --b alive when --a is a
-  // semantic alias — but only transitively from a token that IS used. To stay
-  // honest without over-engineering, treat any var() target inside globals'
-  // :root/dark blocks as a reference (the dark safety-net repoints alone
-  // never save a token, since they redefine rather than reference).
-  const rootTargets = new Set<string>();
-  for (const s of data.root)
-    for (const t of s.tokens)
-      for (const m of t.raw.matchAll(/var\((--[\w-]+)/g)) rootTargets.add(m[1]);
-
-  const orphans: string[] = [];
-  for (const s of data.root) {
-    for (const t of s.tokens) {
-      const referenced = refs.has(t.name) || themeTargets.has(t.name) || rootTargets.has(t.name);
-      if (!referenced) orphans.push(t.name);
-    }
-  }
-
+  // A product's imported tokens are real definitions, just not this file's.
+  const known = new Set([...defined, ...data.imported]);
   const undefinedRefs = [...refs.entries()]
-    .filter(([name]) => !defined.has(name) && !inlineDefs.has(name) && !name.startsWith("--tw-"))
+    .filter(([name]) => !known.has(name) && !inlineDefs.has(name) && !name.startsWith("--tw-"))
     .map(([name, fileSet]) => ({
       name,
       count: fileSet.size,
@@ -317,7 +375,7 @@ export function getTokenHealth(): TokenHealth {
     }))
     .sort((a, b) => Number(a.guarded) - Number(b.guarded) || b.count - a.count);
 
-  healthCache = { defined: defined.size, orphans, undefinedRefs };
+  healthCache = { defined: defined.size, undefinedRefs };
   return healthCache;
 }
 
@@ -419,7 +477,8 @@ export interface ComponentDetail extends ComponentEntry {
    *  LinkButton wear the same base classes on different tags. */
   rootTags: string[];
   variants: ComponentVariant[];
-  /** Callsites outside the component's own file and the styleguide demos. */
+  /** Callsites outside the component's own file and the styleguide's demo
+   *  registry. */
   usage: { count: number; files: string[] };
 }
 
@@ -488,7 +547,9 @@ let detailCache: ComponentDetail[] | null = null;
 export function getComponentDetails(): ComponentDetail[] {
   if (detailCache) return detailCache;
   const inventory = getComponentInventory().flatMap((g) => g.components);
-  const scanned = scanFiles(); // comment-stripped: right for the census
+  // Comment-stripped, and the census's scan: the styleguide's own chrome is a
+  // real callsite, its demo registry is not.
+  const scanned = scanFiles(CENSUS_EXCLUDE);
   const moduleCache = new Map<string, { consts: Map<string, string>; maps: ComponentVariant[] }>();
 
   detailCache = inventory.map((c) => {
@@ -588,4 +649,238 @@ export function getComponentDetails(): ComponentDetail[] {
     };
   });
   return detailCache;
+}
+
+/* ── The census: who reaches for each token and component ──────────────
+   Every label the page carries about whose a token is comes from here, and
+   from nothing authored but DASHBOARD above. A route file is the dashboard's
+   when it sits in DASHBOARD and the product's otherwise; a component or a
+   module is whoever's imports it, followed to a fixpoint, so `Button` used
+   only by the dashboard is the dashboard's. A file reaches a token through
+   `var(--x)` or through the Tailwind utility the @theme layer exposes for it,
+   and a token reaches the tokens its value reads, in every scope, so a
+   primitive is reached through the semantic token that names it.
+
+   A mount whose project has no code in this codebase (an example that ships
+   docs only) passes `withProduct: false`: the product side is not there to
+   reach anything, and every label reads from the dashboard alone. */
+
+export type Reach = "product" | "dashboard" | "both" | "none";
+
+export interface Census {
+  /** Whether a product side exists: code outside DASHBOARD and the frame
+   *  reaches for at least one token. */
+  product: boolean;
+  /** :root and @theme tokens. Imported tokens are never censused. */
+  tokens: Map<string, Reach>;
+  /** Shared components, by name, from who imports them. */
+  components: Map<string, Reach>;
+}
+
+type Side = "product" | "dashboard" | "base";
+
+/** The Tailwind v4 utility namespaces each @theme family feeds, as regex
+ *  alternations. Wider than `utilityFor`, which names the one class a
+ *  developer is shown; the census has to catch every class that reads it. */
+const UTILITY_PREFIXES: [RegExp, string][] = [
+  [/^--color-(.+)/, "bg|text|border(?:-[trblxyse])?|outline|ring(?:-offset)?|fill|stroke|decoration|divide|placeholder|caret|accent|shadow|from|via|to"],
+  [/^--spacing-(.+)/, "p[xytrblse]?|m[xytrblse]?|gap(?:-[xy])?|space-[xy]|w|h|size|min-[wh]|max-[wh]|inset(?:-[xy])?|top|right|bottom|left|start|end|translate-[xy]|scroll-[mp][xytrblse]?|indent|basis"],
+  [/^--radius-(.+)/, "rounded(?:-(?:[trblse]|tl|tr|bl|br|ss|se|es|ee))?"],
+  [/^--shadow-(.+)/, "shadow"],
+  [/^--text-(.+)/, "text"],
+  [/^--font-weight-(.+)/, "font"],
+  [/^--font-(.+)/, "font"],
+  [/^--leading-(.+)/, "leading"],
+  [/^--tracking-(.+)/, "tracking"],
+  [/^--container-(.+)/, "max-w|w|min-w|basis"],
+];
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** One regex per @theme token, matching any utility class that reads it. */
+function utilityMatchers(theme: TokenSection[]): { name: string; re: RegExp }[] {
+  const out: { name: string; re: RegExp }[] = [];
+  for (const t of theme.flatMap((s) => s.tokens)) {
+    const bp = t.name.match(/^--breakpoint-(.+)/);
+    if (bp) {
+      out.push({ name: t.name, re: new RegExp(`(?<![\\w-])${escapeRe(bp[1])}:`) });
+      continue;
+    }
+    for (const [ns, prefixes] of UTILITY_PREFIXES) {
+      const m = t.name.match(ns);
+      if (!m) continue;
+      out.push({ name: t.name, re: new RegExp(`(?<![\\w-])-?(?:${prefixes})-${escapeRe(m[1])}(?![\\w-])`) });
+      break;
+    }
+  }
+  return out;
+}
+
+/** `@/x`, `./x`, `../x` → the scanned file it names, or null. */
+function resolveImport(from: string, spec: string, known: Set<string>): string | null {
+  let base: string;
+  if (spec.startsWith("@/")) base = spec.slice(2);
+  else if (spec.startsWith(".")) base = path.join(path.dirname(from), spec);
+  else return null;
+  for (const ext of ["", ".tsx", ".ts", path.join("/", "index.tsx"), path.join("/", "index.ts")]) {
+    const candidate = path.normalize(base + ext);
+    if (known.has(candidate)) return candidate;
+  }
+  return null;
+}
+
+const censusCache = new Map<boolean, Census>();
+
+export function getCensus(withProduct = true): Census {
+  const cached = censusCache.get(withProduct);
+  if (cached) return cached;
+  const data = getStyleguide();
+  const files = scanFiles(CENSUS_EXCLUDE);
+  const known = new Set(files.map((f) => f.file));
+
+  // 1. Each file's sides. Route files are rooted by where they sit; every
+  //    other file inherits from whoever imports it.
+  const sides = new Map<string, Set<Side>>();
+  const importers = new Map<string, Set<string>>();
+  for (const { file, text } of files) {
+    const own = new Set<Side>();
+    if (DASHBOARD.some((d) => file.startsWith(d))) own.add("dashboard");
+    else if (BASE.includes(file)) own.add("base");
+    else if (file.startsWith(`app${path.sep}`)) own.add("product");
+    sides.set(file, own);
+    for (const m of text.matchAll(/(?:from\s+|import\s*\(\s*|import\s+)["']([^"']+)["']/g)) {
+      const target = resolveImport(file, m[1], known);
+      if (!target || target === file) continue;
+      if (!importers.has(target)) importers.set(target, new Set());
+      importers.get(target)!.add(file);
+    }
+  }
+  const rooted = new Set(files.filter((f) => sides.get(f.file)!.size).map((f) => f.file));
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (const [target, from] of importers) {
+      if (rooted.has(target)) continue;
+      const mine = sides.get(target)!;
+      for (const f of from) {
+        for (const s of sides.get(f) ?? []) {
+          if (!mine.has(s)) {
+            mine.add(s);
+            changed = true;
+          }
+        }
+      }
+    }
+  }
+
+  // 2. What each piece of code reaches for directly, with the sides it
+  //    serves. A file is one piece. globals.css is one per rule: an element
+  //    rule (`body`) is the frame, and a class rule (`.pill`) is whoever
+  //    writes that class, so a component's styles kept there label their
+  //    tokens by the component's callers, not as everyone's.
+  const matchers = utilityMatchers(data.theme);
+  const reached = (body: string, css: boolean) => {
+    const hits = new Set<string>();
+    for (const m of body.matchAll(/var\((--[\w-]+)/g)) hits.add(m[1]);
+    if (!css) for (const { name, re } of matchers) if (re.test(body)) hits.add(name);
+    return hits;
+  };
+  const code = files.filter((f) => !f.file.endsWith(".css"));
+  const writers = (cls: string) => {
+    const re = new RegExp(`(?<![\\w-])${escapeRe(cls)}(?![\\w-])`);
+    const out = new Set<Side>();
+    for (const f of code) if (re.test(f.text)) for (const side of sides.get(f.file) ?? []) out.add(side);
+    return out;
+  };
+  const pieces: { sides: Set<Side>; hits: Set<string> }[] = [];
+  for (const { file, text } of files) {
+    const body = usageText(file, text);
+    if (file !== path.join("app", "globals.css")) {
+      const hits = reached(body, file.endsWith(".css"));
+      if (hits.size) pieces.push({ sides: sides.get(file) ?? new Set(), hits });
+      continue;
+    }
+    // Innermost blocks only, so a rule inside @media is read on its own.
+    for (const m of body.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const hits = reached(m[2], true);
+      if (!hits.size) continue;
+      const cls = m[1].match(/\.([\w-]+)/)?.[1];
+      pieces.push({ sides: cls ? writers(cls) : new Set<Side>(["base"]), hits });
+    }
+  }
+
+  // 3. Is there a product side? Something product-side reaches a token.
+  const product = withProduct && pieces.some((p) => p.sides.has("product"));
+  const settle = (s: Set<Side>): Set<"product" | "dashboard"> => {
+    const out = new Set<"product" | "dashboard">();
+    if (s.has("dashboard") || s.has("base")) out.add("dashboard");
+    if (product && (s.has("product") || s.has("base"))) out.add("product");
+    return out;
+  };
+
+  // 4. Tokens: direct reach, then down every alias edge to a fixpoint.
+  const tokenSides = new Map<string, Set<"product" | "dashboard">>();
+  const add = (name: string, from: Set<"product" | "dashboard">) => {
+    if (!tokenSides.has(name)) tokenSides.set(name, new Set());
+    const mine = tokenSides.get(name)!;
+    let grew = false;
+    for (const s of from) if (!mine.has(s)) (mine.add(s), (grew = true));
+    return grew;
+  };
+  for (const piece of pieces) {
+    const s = settle(piece.sides);
+    for (const name of piece.hits) add(name, s);
+  }
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (const [name, targets] of aliasEdges) {
+      const from = tokenSides.get(name);
+      if (!from?.size) continue;
+      for (const t of targets) if (add(t, from)) changed = true;
+    }
+  }
+
+  const reach = (s: Set<"product" | "dashboard"> | undefined): Reach =>
+    s?.has("product") && s.has("dashboard")
+      ? "both"
+      : s?.has("product")
+        ? "product"
+        : s?.has("dashboard")
+          ? "dashboard"
+          : "none";
+
+  const tokens = new Map<string, Reach>();
+  for (const t of [...data.root, ...data.theme].flatMap((s) => s.tokens)) {
+    if (!tokens.has(t.name)) tokens.set(t.name, reach(tokenSides.get(t.name)));
+  }
+  const components = new Map<string, Reach>();
+  for (const c of getComponentInventory().flatMap((g) => g.components)) {
+    components.set(c.name, reach(settle(sides.get(path.normalize(c.file)) ?? new Set())));
+  }
+
+  const census = { product, tokens, components };
+  censusCache.set(withProduct, census);
+  return census;
+}
+
+/* ── The product's design home, read from the record ───────────────────
+   Where a product's design lives outside this set (another app, its own
+   token file, a page of its own), the styleguide points at it rather than
+   describing it. The pointer is the feature doc carrying `area: design` in
+   its frontmatter, and the `routes:` it names; the feature registry already
+   parses both, so the page passes its docs in and nothing here is authored.
+   Several such docs are several doors. */
+
+export interface DesignHome {
+  title: string;
+  /** Path under docs/, for the doc reader. */
+  relPath: string;
+  routes: string[];
+}
+
+export function getDesignHomes(
+  docs: { dir: string; area: string | null; title: string; relPath: string; routes: string[] }[],
+): DesignHome[] {
+  return docs
+    .filter((d) => d.dir === "features" && d.area === "design")
+    .map((d) => ({ title: d.title, relPath: d.relPath, routes: d.routes }));
 }

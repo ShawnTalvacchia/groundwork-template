@@ -1,5 +1,5 @@
-import { getStyleguide, utilityFor, type TokenDef } from "@/lib/styleguide";
-import { SgSection, cleanNote } from "../derived-ui";
+import { getCensus, getStyleguide, utilityFor, type Reach, type TokenDef } from "@/lib/styleguide";
+import { ReachTag, SgSection, cleanNote } from "../derived-ui";
 
 // Typography — derived from globals.css. The canonical `--text-*` scale
 // (the @theme single source of truth) leads; the raw `--font-size-*`
@@ -9,7 +9,15 @@ const px = (v: string) => parseInt(v, 10) || 0;
 /** The first family in a font stack. */
 const leadFamily = (stack: string) => stack.split(",")[0].replace(/"/g, "").trim();
 
-function ScaleRows({ tokens, heading }: { tokens: TokenDef[]; heading: boolean }) {
+function ScaleRows({
+  tokens,
+  heading,
+  census,
+}: {
+  tokens: TokenDef[];
+  heading: boolean;
+  census: Map<string, Reach>;
+}) {
   return (
     <div className="flex flex-col">
       {tokens.map((t) => (
@@ -21,6 +29,7 @@ function ScaleRows({ tokens, heading }: { tokens: TokenDef[]; heading: boolean }
             <span className="flex items-baseline gap-sm">
               <code className="text-xs font-mono text-fg-primary">{t.name}</code>
               <code className="text-2xs font-mono text-brand-strong">{utilityFor(t.name)}</code>
+              <ReachTag reach={census.get(t.name)} />
             </span>
             <span className="text-2xs text-fg-tertiary tabular-nums">
               {t.light}
@@ -50,6 +59,7 @@ function ScaleRows({ tokens, heading }: { tokens: TokenDef[]; heading: boolean }
 }
 
 export default function TypographyPage() {
+  const census = getCensus().tokens;
   const data = getStyleguide();
   const themeOf = (title: string) => data.theme.find((s) => s.title === title)?.tokens ?? [];
   const rootOf = (frag: string) => data.root.find((s) => s.title.includes(frag))?.tokens ?? [];
@@ -76,6 +86,7 @@ export default function TypographyPage() {
               <div className="flex items-baseline gap-sm">
                 <code className="text-xs font-mono text-fg-primary">{t.name}</code>
                 <code className="text-2xs font-mono text-fg-tertiary">{t.light}</code>
+                <ReachTag reach={census.get(t.name)} />
               </div>
               <span style={{ fontFamily: t.light, fontSize: 28, lineHeight: 1.2, fontWeight: t.name.includes("heading") ? 600 : 400 }}>
                 {leadFamily(t.light)}
@@ -92,11 +103,11 @@ export default function TypographyPage() {
         <div className="flex flex-col gap-xl">
           <div className="flex flex-col gap-xs">
             <h3 className="text-sm font-semibold text-fg-primary">Headings — {familyOf("--font-heading")}</h3>
-            <ScaleRows tokens={headings} heading />
+            <ScaleRows tokens={headings} heading census={census} />
           </div>
           <div className="flex flex-col gap-xs">
             <h3 className="text-sm font-semibold text-fg-primary">Body — {familyOf("--font-body")}</h3>
-            <ScaleRows tokens={body} heading={false} />
+            <ScaleRows tokens={body} heading={false} census={census} />
           </div>
         </div>
       </SgSection>
@@ -106,7 +117,10 @@ export default function TypographyPage() {
           <div className="flex flex-col">
             {weights.map((t) => (
               <div key={t.name} className="flex flex-wrap items-baseline gap-x-lg gap-y-xs border-b border-edge-light py-sm last:border-b-0">
-                <code className="text-xs font-mono text-fg-primary w-[22ch] shrink-0">{t.name}</code>
+                <span className="flex w-[30ch] shrink-0 items-center gap-sm">
+                  <code className="text-xs font-mono text-fg-primary">{t.name}</code>
+                  <ReachTag reach={census.get(t.name)} />
+                </span>
                 <span className="min-w-0 flex-1 basis-40 text-sm" style={{ fontWeight: Number(t.light) }}>
                   {t.light} — The quick brown fox
                 </span>
@@ -119,7 +133,10 @@ export default function TypographyPage() {
           <div className="flex flex-col">
             {leadTrack.map((t) => (
               <div key={t.name} className="flex flex-wrap items-baseline gap-x-lg gap-y-xs border-b border-edge-light py-sm last:border-b-0">
-                <code className="text-xs font-mono text-fg-primary w-[22ch] shrink-0">{t.name}</code>
+                <span className="flex w-[30ch] shrink-0 items-center gap-sm">
+                  <code className="text-xs font-mono text-fg-primary">{t.name}</code>
+                  <ReachTag reach={census.get(t.name)} />
+                </span>
                 <span className="flex min-w-0 flex-1 basis-40 flex-col gap-[2px]">
                   <span className="text-sm tabular-nums">{t.light}</span>
                   {cleanNote(t.note) && (
@@ -147,6 +164,7 @@ export default function TypographyPage() {
               {cleanNote(t.note) && (
                 <span className="text-2xs text-fg-tertiary min-w-0 flex-1 basis-48 truncate">{cleanNote(t.note)}</span>
               )}
+              <ReachTag reach={census.get(t.name)} />
             </div>
           ))}
         </div>

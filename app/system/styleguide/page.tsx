@@ -1,11 +1,12 @@
-import { getStyleguide, getTokenHealth, utilityByRootToken } from "@/lib/styleguide";
+import { getCensus, getStyleguide, getTokenHealth, utilityByRootToken, type Reach } from "@/lib/styleguide";
 import { AA_NON_TEXT, AA_SMALL_TEXT, measure } from "@/lib/contrast";
 import { Ramp, SgSection, TokenRow, displayTitle, getBackings, tokenTable } from "./derived-ui";
 
 // Colors — the styleguide's index. Everything on this page is parsed from
 // globals.css at build time (lib/styleguide.ts): the semantic families first
 // (what product code should reach for), the primitive ramps under them, and
-// the health checks on the token set itself.
+// the health checks on the token set itself. Every row says who reaches for
+// it, from the census (lib/styleguide.ts → getCensus).
 
 /* The ladder's contract, stated once: the rungs that carry information and
  * the floor each must clear on EVERY ground a callsite can put it on. The
@@ -97,9 +98,17 @@ function LadderTable() {
   );
 }
 
+/** The census buckets, in the order the health card reads them. */
+const BUCKETS: { reach: Reach; label: string; note: string }[] = [
+  { reach: "none", label: "Unused", note: "nothing reaches for these; the ramps among them are palette" },
+  { reach: "dashboard", label: "Dashboard only", note: "the dashboard's own" },
+  { reach: "product", label: "Product only", note: "the product's own" },
+];
+
 export default function ColorsPage() {
   const data = getStyleguide();
   const health = getTokenHealth();
+  const { product, tokens: census } = getCensus();
   const utilities = utilityByRootToken();
   const backings = getBackings();
 
@@ -112,26 +121,43 @@ export default function ColorsPage() {
   const silent = health.undefinedRefs.filter((u) => !u.guarded);
   const guarded = health.undefinedRefs.filter((u) => u.guarded);
 
+  // Every :root token by who reaches for it, grouped by section so a list
+  // reads as "the ramps" and "the rest" rather than one run of names.
+  const byReach = (reach: Reach) =>
+    data.root
+      .map((s) => ({ title: displayTitle(s.title), names: s.tokens.filter((t) => census.get(t.name) === reach).map((t) => t.name) }))
+      .filter((g) => g.names.length);
+  const count = (reach: Reach) => byReach(reach).reduce((n, g) => n + g.names.length, 0);
+
   return (
     <main className="flex flex-col gap-3xl">
-      {/* Health — the two drifts a token set can carry, checked per build. */}
+      {/* Health — who reaches for the set, and the references it can't satisfy. */}
       <section className="sys-card flex flex-col gap-sm">
         <div className="flex flex-wrap items-baseline gap-x-lg gap-y-xs">
           <h2 className="text-sm font-semibold text-fg-primary">Token health</h2>
           <span className="text-xs text-fg-tertiary">
-            {health.defined} defined · {health.orphans.length} unreferenced ·{" "}
+            {health.defined} defined, {data.root.reduce((n, s) => n + s.tokens.length, 0)} in{" "}
+            <code className="font-mono">:root</code>:{" "}
+            {product && `${count("both")} both · ${count("product")} product · `}
+            {count("dashboard")} dashboard · {count("none")} unused ·{" "}
             {health.undefinedRefs.length} referenced-but-undefined ({silent.length} silent)
           </span>
         </div>
-        <details>
-          <summary className="text-xs text-fg-secondary cursor-pointer">
-            Unreferenced ({health.orphans.length}) — defined in globals.css, used by nothing;
-            candidates to prune
-          </summary>
-          <p className="mt-sm text-2xs font-mono text-fg-tertiary leading-relaxed max-w-[90ch]">
-            {health.orphans.join(" · ")}
-          </p>
-        </details>
+        {BUCKETS.filter((b) => count(b.reach) > 0).map((b) => (
+          <details key={b.reach}>
+            <summary className="text-xs text-fg-secondary cursor-pointer">
+              {b.label} ({count(b.reach)}): {b.note}
+            </summary>
+            <div className="mt-sm flex flex-col gap-xs">
+              {byReach(b.reach).map((g) => (
+                <p key={g.title} className="text-2xs font-mono text-fg-tertiary leading-relaxed max-w-[90ch]">
+                  <span className="font-sans font-semibold text-fg-secondary">{g.title}</span>{" "}
+                  {g.names.join(" · ")}
+                </p>
+              ))}
+            </div>
+          </details>
+        ))}
         <details>
           <summary className="text-xs text-fg-secondary cursor-pointer">
             Referenced but undefined ({health.undefinedRefs.length}) — silent ones render as{" "}
@@ -159,11 +185,15 @@ export default function ColorsPage() {
               <div key={s.title} className="flex flex-col gap-xs">
                 <h3 className="text-sm font-semibold text-fg-primary">{displayTitle(s.title)}</h3>
                 <div className="flex flex-col">
-                  {s.tokens
-                    .filter((t) => !t.name.startsWith("--border-width"))
-                    .map((t) => (
-                      <TokenRow key={t.name} token={t} utility={utilities.get(t.name)} backings={backings} />
-                    ))}
+                  {s.tokens.map((t) => (
+                    <TokenRow
+                      key={t.name}
+                      token={t}
+                      utility={utilities.get(t.name)}
+                      backings={backings}
+                      reach={census.get(t.name)}
+                    />
+                  ))}
                 </div>
               </div>
             ))}
@@ -177,34 +207,42 @@ export default function ColorsPage() {
         <LadderTable />
       </SgSection>
 
-      <SgSection
-        title="Interaction"
-        note="Hover overlays. lighten = on dark/brand fills · darken = on light surfaces · subtle = ghost buttons and nav. In dark mode every hover lightens — even the darken token."
-      >
-        <div className="flex flex-col">
-          {interaction.flatMap((s) =>
-            s.tokens.map((t) => (
-              <TokenRow key={t.name} token={t} utility={utilities.get(t.name)} backings={backings} checker />
-            )),
-          )}
-        </div>
-      </SgSection>
+      {interaction.length > 0 && (
+        <SgSection title="Interaction" note={interaction[0].note}>
+          <div className="flex flex-col">
+            {interaction.flatMap((s) =>
+              s.tokens.map((t) => (
+                <TokenRow
+                  key={t.name}
+                  token={t}
+                  utility={utilities.get(t.name)}
+                  backings={backings}
+                  reach={census.get(t.name)}
+                  checker
+                />
+              )),
+            )}
+          </div>
+        </SgSection>
+      )}
 
       <SgSection
         title="Primitive ramps"
         note="The raw palette: the _-prefixed sections of globals.css. Not for components — reach through a semantic token. Dark values are a safety net for any callsite that reaches a primitive directly; components never should."
       >
-        <div className="grid gap-xl sm:grid-cols-2">
+        <div className="grid gap-xl lg:grid-cols-2">
           {ramps.map((s) => (
-            <Ramp key={s.title} section={s} backings={backings} />
+            <Ramp key={s.title} section={s} backings={backings} census={census} />
           ))}
         </div>
       </SgSection>
 
+      {/* One column: these names differ only at the end, so a column narrow
+          enough to truncate them makes every row read the same. */}
       <SgSection title="Transparent overlays" note="Alpha layers for scrims, hovers, and photo overlays.">
-        <div className="grid gap-xl sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-xl">
           {overlays.map((s) => (
-            <Ramp key={s.title} section={s} backings={backings} checker />
+            <Ramp key={s.title} section={s} backings={backings} census={census} checker />
           ))}
         </div>
       </SgSection>

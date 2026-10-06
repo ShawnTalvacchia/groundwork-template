@@ -1,4 +1,5 @@
-import { getStyleguide, type TokenDef, type TokenSection } from "@/lib/styleguide";
+import { Badge } from "@/components/ui/Badge";
+import { getStyleguide, type Reach, type TokenDef, type TokenSection } from "@/lib/styleguide";
 
 // Shared display pieces for the derived styleguide pages. Server-only —
 // everything renders from parsed literals (never `var()`), so light and dark
@@ -102,6 +103,21 @@ export function SgSection({
   );
 }
 
+/** Who reaches for a token or component, from the census. The shared Badge
+ *  in its quiet tone, so it reads as a mark rather than as more of the name
+ *  beside it; the word carries the meaning on every row. */
+const REACH_LABEL: Record<Reach, string> = {
+  product: "product",
+  dashboard: "dashboard",
+  both: "both",
+  none: "unused",
+};
+
+export function ReachTag({ reach }: { reach: Reach | undefined }) {
+  if (!reach) return null;
+  return <Badge>{REACH_LABEL[reach]}</Badge>;
+}
+
 /** A color swatch + its literal value. `checker` shows alpha honestly. */
 export function Swatch({ value, checker }: { value: string; checker?: boolean }) {
   return (
@@ -111,6 +127,24 @@ export function Swatch({ value, checker }: { value: string; checker?: boolean })
       <span className="block h-full w-full rounded-[inherit]" style={{ background: value }} />
     </span>
   );
+}
+
+/** A colour value short enough for its cell. A translucent colour prints as
+ *  its hex and its alpha (`#92451f 45%`), whether the CSS writes it as
+ *  `rgba()` or as a `color-mix()` toward transparent: written out, either one
+ *  wrapped to five lines in a cell sized for a hex. The swatch still paints
+ *  the value as written, and the cell's title carries it in full. Anything
+ *  else prints as it is. */
+export function shortValue(value: string): string {
+  const rgba = value.match(/^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)[,\s/]+([\d.]+)(%?)\s*\)$/);
+  if (rgba) {
+    const hex = [rgba[1], rgba[2], rgba[3]].map((c) => Number(c).toString(16).padStart(2, "0")).join("");
+    const alpha = rgba[5] ? Number(rgba[4]) : Number(rgba[4]) * 100;
+    return `#${hex} ${Math.round(alpha)}%`;
+  }
+  const mix = value.match(/^color-mix\(in [\w-]+,\s*(#[0-9a-fA-F]{3,8})\s+([\d.]+)%,\s*transparent\s*\)$/);
+  if (mix) return `${mix[1]} ${Math.round(Number(mix[2]))}%`;
+  return value;
 }
 
 /** Light + dark value cells for one token. Dark sits on a dark backing so
@@ -128,7 +162,9 @@ export function ValuePair({
     <span className="flex items-center gap-sm shrink-0">
       <span className="flex items-center gap-xs">
         <Swatch value={token.light} checker={checker} />
-        <code className="text-2xs text-fg-tertiary font-mono w-[7.5ch]">{token.light}</code>
+        <code className="min-w-[7.5ch] whitespace-nowrap text-2xs text-fg-tertiary font-mono" title={token.light}>
+          {shortValue(token.light)}
+        </code>
       </span>
       <span
         className="flex items-center gap-xs rounded-xs px-xs py-[3px]"
@@ -137,8 +173,12 @@ export function ValuePair({
         {token.dark ? (
           <>
             <Swatch value={token.dark} checker={checker} />
-            <code className="text-2xs font-mono w-[7.5ch]" style={{ color: backings.darkText }}>
-              {token.dark}
+            <code
+              className="min-w-[7.5ch] whitespace-nowrap text-2xs font-mono"
+              style={{ color: backings.darkText }}
+              title={token.dark}
+            >
+              {shortValue(token.dark)}
             </code>
           </>
         ) : (
@@ -151,17 +191,20 @@ export function ValuePair({
   );
 }
 
-/** One semantic-token row: utility · token · alias target · light/dark. */
+/** One semantic-token row: utility · token · alias target · who reaches for
+ *  it · light/dark. A target that lands on an imported token names it. */
 export function TokenRow({
   token,
   utility,
   backings,
   checker,
+  reach,
 }: {
   token: TokenDef;
   utility?: string;
   backings: { dark: string; darkText: string };
   checker?: boolean;
+  reach?: Reach;
 }) {
   const note = cleanNote(token.note);
   return (
@@ -172,6 +215,12 @@ export function TokenRow({
           {token.target && (
             <code className="text-2xs font-mono text-fg-gray truncate">→ {token.target}</code>
           )}
+          {token.product && (
+            <code className="text-2xs font-mono text-fg-gray truncate">
+              {token.product === token.target ? "imported" : `from ${token.product}`}
+            </code>
+          )}
+          <ReachTag reach={reach} />
         </span>
         <span className="flex items-baseline gap-sm min-w-0">
           {utility && <code className="text-2xs font-mono text-brand-strong whitespace-nowrap">{utility}</code>}
@@ -188,18 +237,29 @@ export function Ramp({
   section,
   backings,
   checker,
+  census,
 }: {
   section: TokenSection;
   backings: { dark: string; darkText: string };
   checker?: boolean;
+  census: Map<string, Reach>;
 }) {
   return (
     <div className="flex flex-col gap-xs min-w-0">
       <h3 className="text-sm font-semibold text-fg-primary">{displayTitle(section.title)}</h3>
       <div className="flex flex-col">
         {section.tokens.map((t) => (
+          // The name gives way before anything else does: it truncates (the
+          // full name is its title) so the row never outgrows its column.
           <div key={t.name} className="flex items-center gap-sm py-[3px] min-w-0">
-            <code className="text-2xs font-mono text-fg-secondary w-[16ch] truncate shrink-0">{t.name}</code>
+            <span className="flex min-w-0 flex-1 items-center gap-sm">
+              <code className="min-w-0 truncate text-2xs font-mono text-fg-secondary" title={t.name}>
+                {t.name}
+              </code>
+              <span className="shrink-0">
+                <ReachTag reach={census.get(t.name)} />
+              </span>
+            </span>
             <ValuePair token={t} backings={backings} checker={checker} />
           </div>
         ))}

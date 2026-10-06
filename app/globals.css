@@ -286,7 +286,6 @@
   --surface-gray: var(--neutral-200); /* #c3cad2 — muted surfaces */
   --surface-disabled: var(--neutral-300); /* #a7b0bb — disabled backgrounds */
   --surface-base-inverse: var(--neutral-800); /* #2c313a — dark inverse surfaces */
-  --surface-neutral-dark: var(--neutral-900); /* #171b21 — deepest dark surfaces */
   /* A chip's fill, as a translucent step off whatever it sits on rather than
      a fixed value. A solid token can only separate from ONE surface
      (`--border-regular` and `--surface-inset` are the same value); an overlay
@@ -351,7 +350,6 @@
   --text-light: var(--neutral-300); /* #a7b0bb — disabled and decorative only, never text a reader needs */
   --text-inverse: var(--neutral-25); /* #f7f8f9 */
   --text-white: var(--neutral-white); /* #ffffff */
-  --text-black: var(--neutral-950); /* #0d1013 */
 
   /* ================================================
      SEMANTIC TOKENS — Border
@@ -364,37 +362,18 @@
      a component boundary on every surface, measured beside the text ladder
      on the Colors page. `-strongest` sits a step above it at the
      `--text-gray` value, for a hover or an emphasised ring. */
-  --border-lightest: var(--neutral-white); /* #ffffff */
   --border-light: var(--neutral-50); /* #f1f3f5 */
   --border-regular: var(--neutral-75); /* #e9ecef */
   --border-strong: var(--neutral-100); /* #e2e5e9 */
   --border-stronger: var(--neutral-400); /* #7d8694 — the control boundary, 3:1 on every surface */
   --border-strongest: var(--neutral-500); /* #636977 */
 
-  /* Widths */
-  --border-width-reg: 1px;
-  --border-width-lg: 2px;
-  --border-width-xl: 3px;
-  --border-width-xxl: 4px;
-
-  /* ================================================
-     SEMANTIC TOKENS — Interaction
-     ================================================ */
-
-  --interaction-hover-lighten: var(--transparent-light-16); /* overlay on dark bg */
-  --interaction-hover-darken: var(--transparent-dark-8); /* overlay on light bg */
-  --interaction-hover-subtle: var(--transparent-dark-4); /* gentlest overlay */
-
   /* ================================================
      CONVENIENCE ALIASES — shorthand tokens used in
      component-level CSS; map to semantic tokens above
      ================================================ */
 
-  --surface-page: var(--surface-top); /* nav bars, sticky headers */
-  --surface-hover: var(--interaction-hover-darken); /* subtle hover on light surfaces */
   --border-subtle: var(--border-strong); /* light dividers */
-  --border-default: var(--border-stronger); /* standard visible borders */
-  --text-muted: var(--text-tertiary); /* de-emphasised text */
 
   /* ================================================
      SEMANTIC TOKENS — Status
@@ -411,14 +390,10 @@
   --status-error-light: var(--error-25);
   --status-error-main: var(--error-500);
   --status-error-strong: var(--error-700);
-  --status-error-surface: var(--status-error-light);
-  --status-error-border: var(--status-error-main);
-  --status-error-text: var(--status-error-strong);
 
   --status-info-light: var(--info-25);
   --status-info-main: var(--info-500);
   --status-info-strong: var(--info-600);
-  --status-info-600: var(--info-600);
 
   /* ================================================
      RADIUS
@@ -469,7 +444,6 @@
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
-  --weight-extrabold: 800;
 
   /* ================================================
      TYPOGRAPHY — Heading sizes  (desktop defaults)
@@ -480,7 +454,6 @@
   --font-size-h3-plus: 28px;
   --font-size-h3: 24px;
   --font-size-h4: 20px;
-  --font-size-tagline: 16px;
 
   /* ================================================
      TYPOGRAPHY — Body sizes  (desktop defaults)
@@ -489,7 +462,6 @@
   /* Three body tiers — 13 / 15 / 17 — with 13 the reading floor. The caption
      size (12) is for micro UI labels only, below the reading floor. New
      callsites use the `--text-*` scale, not these raw primitives. */
-  --font-size-body-xxl: 32px;
   --font-size-body-lg: 18px; /* small heading / large body (→ text-lg) */
   --font-size-body-md: 17px; /* large body / emphasis (→ text-base) */
   --font-size-body-reg: 15px; /* body workhorse (→ text-sm) */
@@ -508,7 +480,6 @@
   --tracking-tight: -0.01em;
   --tracking-normal: 0em;
   --tracking-wide: 0.04em;
-  --tracking-wider: 0.05em;
 
   /* ================================================
      SHADOWS
@@ -607,7 +578,6 @@
   --surface-gray: #363c44;
   --surface-disabled: #282c32;
   --surface-base-inverse: #edeff2;
-  --surface-neutral-dark: #090a0c;
   --surface-chip: var(--transparent-light-16); /* lightens on dark, same step */
 
   /* ---- Text (light on dark) ---- */
@@ -618,10 +588,8 @@
   --text-light: #545b65;
   --text-inverse: #1c1f24;
   --text-white: #ffffff;
-  --text-black: #ffffff;
 
   /* ---- Borders — LIGHTER than the surface they sit on (the key dark rule) ---- */
-  --border-lightest: #24282e;
   --border-light: #2a2e34;
   --border-regular: #343941;
   --border-strong: #3f454e;
@@ -634,11 +602,6 @@
   --brand-main: #818cf8;
   --brand-strong: #a5b4fc;
 
-  /* ---- Interaction — on dark, "hover" lightens ---- */
-  --interaction-hover-lighten: rgba(255, 255, 255, 0.09);
-  --interaction-hover-darken: rgba(255, 255, 255, 0.06);
-  --interaction-hover-subtle: rgba(255, 255, 255, 0.04);
-
   /* ---- Status — dark-tinted bg / lifted text ---- */
   --status-success-light: #16271d;
   --status-success-main: #34d399;
@@ -649,13 +612,9 @@
   --status-error-light: #2a1614;
   --status-error-main: #f87171;
   --status-error-strong: #fca5a5;
-  --status-error-surface: #2a1614;
-  --status-error-border: #f87171;
-  --status-error-text: #fca5a5;
   --status-info-light: #191e33;
   --status-info-main: #60a5fa;
   --status-info-strong: #bfdbfe;
-  --status-info-600: #93c5fd;
 
   /* ---- Shadows — deeper on dark so elevation still reads ---- */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);

@@ -1,5 +1,5 @@
-import { getStyleguide, utilityFor, utilityByRootToken } from "@/lib/styleguide";
-import { SgSection, cleanNote, getBackings } from "../derived-ui";
+import { getCensus, getStyleguide, utilityFor, utilityByRootToken, type Reach } from "@/lib/styleguide";
+import { ReachTag, SgSection, cleanNote, getBackings } from "../derived-ui";
 
 // Layout — the measurement system: spacing, radius, shadows, border widths,
 // breakpoints, and the shell constants. Derived from globals.css.
@@ -14,6 +14,7 @@ function Row({
   note,
   utility,
   preview,
+  reach,
 }: {
   name: string;
   value: string;
@@ -21,6 +22,7 @@ function Row({
   note?: string | null;
   utility?: string;
   preview?: React.ReactNode;
+  reach?: Reach;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-lg gap-y-xs border-b border-edge-light py-sm last:border-b-0">
@@ -28,6 +30,7 @@ function Row({
         <span className="flex items-baseline gap-sm min-w-0">
           <code className="text-xs font-mono text-fg-primary whitespace-nowrap">{name}</code>
           {utility && <code className="text-2xs font-mono text-brand-strong truncate">{utility}</code>}
+          <ReachTag reach={reach} />
         </span>
         <span className="text-2xs text-fg-tertiary tabular-nums">
           {value}
@@ -41,6 +44,7 @@ function Row({
 }
 
 export default function LayoutScalePage() {
+  const census = getCensus().tokens;
   const data = getStyleguide();
   const backings = getBackings();
   const utilities = utilityByRootToken();
@@ -65,6 +69,7 @@ export default function LayoutScalePage() {
             <Row
               key={t.name}
               name={t.name}
+              reach={census.get(t.name)}
               value={t.light}
               utility={utilities.get(t.name)}
               note={cleanNote(t.note)}
@@ -86,6 +91,7 @@ export default function LayoutScalePage() {
               <Row
                 key={t.name}
                 name={t.name}
+                reach={census.get(t.name)}
                 value={t.light}
                 utility={utilities.get(t.name)}
                 preview={
@@ -105,6 +111,7 @@ export default function LayoutScalePage() {
               <Row
                 key={t.name}
                 name={t.name}
+                reach={census.get(t.name)}
                 value={`→ ${t.target} (${t.light})`}
                 utility={utilities.get(t.name)}
                 note={cleanNote(t.note)}
@@ -149,25 +156,37 @@ export default function LayoutScalePage() {
       </SgSection>
 
       <div className="grid gap-3xl lg:grid-cols-2">
-        <SgSection title="Border widths">
-          <div className="flex flex-col">
-            {borderWidths.map((t) => (
-              <Row
-                key={t.name}
-                name={t.name}
-                value={t.light}
-                preview={
-                  <span className="w-24 shrink-0" style={{ borderTop: `${t.light} solid var(--text-primary)` }} />
-                }
-              />
-            ))}
-          </div>
-        </SgSection>
+        {/* Only when the Border section declares widths: the starter ships
+            none, for the reason the shell constants below say. */}
+        {borderWidths.length > 0 && (
+          <SgSection title="Border widths">
+            <div className="flex flex-col">
+              {borderWidths.map((t) => (
+                <Row
+                  key={t.name}
+                  name={t.name}
+                  reach={census.get(t.name)}
+                  value={t.light}
+                  preview={
+                    <span className="w-24 shrink-0" style={{ borderTop: `${t.light} solid var(--text-primary)` }} />
+                  }
+                />
+              ))}
+            </div>
+          </SgSection>
+        )}
 
         <SgSection title="Breakpoints & containers" note="Tailwind variants (md:) and max-w-* stops.">
           <div className="flex flex-col">
             {[...breakpoints, ...containers].map((t) => (
-              <Row key={t.name} name={t.name} value={t.light} utility={utilityFor(t.name)} note={cleanNote(t.note)} />
+              <Row
+                key={t.name}
+                name={t.name}
+                value={t.light}
+                utility={utilityFor(t.name)}
+                note={cleanNote(t.note)}
+                reach={census.get(t.name)}
+              />
             ))}
           </div>
         </SgSection>
@@ -179,7 +198,14 @@ export default function LayoutScalePage() {
         <SgSection title="Shell constants" note="The layout skeleton. Mobile overrides shown where they exist.">
           <div className="flex flex-col">
             {layoutTokens.map((t) => (
-              <Row key={t.name} name={t.name} value={t.light} mobile={t.mobile} note={cleanNote(t.note)} />
+              <Row
+                key={t.name}
+                name={t.name}
+                value={t.light}
+                mobile={t.mobile}
+                note={cleanNote(t.note)}
+                reach={census.get(t.name)}
+              />
             ))}
           </div>
         </SgSection>

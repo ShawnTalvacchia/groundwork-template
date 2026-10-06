@@ -16,6 +16,38 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 16 · The styleguide says whose design it shows, and points at your product's where it lives elsewhere
+
+**Class:** parser · convention
+**Depends on:** the styleguide pages, `derived-ui.tsx`, `lib/styleguide.ts` and the feature registry's `area:` and `routes:` (`feb807b`) · the element inspector (`3a9e01b`)
+**Resolves:** none
+
+**Does this affect you?** Every web project. The census and the header are code you carry, steps 1 to 3. The token prune, step 4, is for a `globals.css` still holding the starter's semantic layer. Step 5 is only for a copy still in its kickoff.
+
+**What changed.**
+
+- **Every token and shared component is labelled by who reaches for it:** product, dashboard, both, or unused. A route file is the dashboard's when it sits in `DASHBOARD` in `lib/styleguide.ts` (`app/system` and `components/inspector`), and the product's otherwise. A component or module belongs to whoever imports it. The root layout and the element rules in `globals.css` (`body`) count for both. A class rule there, such as `.pill`, belongs to whoever writes the class. A file reaches a token through `var()` or through the utility the `@theme` layer exposes for it, and a token reaches whatever its value reads, in both themes.
+- **The label is a pill,** the shared `Badge` in its neutral tone, set beside the token's name. On the Colors page the primitive ramps sit two to a row only from the `lg` breakpoint, and a ramp name truncates before its row outgrows the column. The transparent overlays take one column, since their names differ only at the end.
+- **A translucent colour prints as its hex and its alpha,** `#92451f 45%`, whether `globals.css` writes it as `rgba()` or as a `color-mix()` toward transparent (`shortValue` in `derived-ui.tsx`). Written out, `--brand-faded` and the transparent ramps wrapped to five lines in a cell sized for a hex. The swatch still paints the value as written, and hovering the value shows it in full.
+- **Token health lists the set by that census.** Counts for both, product, dashboard and unused across `:root`, and a fold per bucket grouped by section. The old "unreferenced" list counted a token as used whenever `@theme` mapped it, so it missed every mapped token whose utility nobody writes. The `orphans` field is gone from `getTokenHealth`; `getCensus` replaces it.
+- **The header states the project's state.** Shared, when anything outside the dashboard reaches for a token. The dashboard's own, when nothing does. Then where your product's design lives: each feature doc whose frontmatter carries `area: design`, with its `routes:`, as a link, or a named absence.
+- **A local `@import` in `globals.css` is followed.** If your product keeps its own token file and `globals.css` imports it (`@import "./tokens.css"`), its `:root` becomes the base the page resolves through. Imported tokens are never sections, never counted, never censused, and never reported as undefined. A token whose chain lands on one is marked `imported` or `from --x`. The page never parses a product's CSS into its own sections: a product's design that renders elsewhere is better shown there, and the page points.
+- **The components page carries the census per component,** and its Used by row reads the styleguide's own chrome as a real callsite. Only the demo registry is skipped. `PillToggle` now shows the section switcher that uses it.
+- **22 tokens nothing used are gone,** each with its dark value: `--surface-neutral-dark`, `--text-black`, `--border-lightest`, the four `--border-width-*`, the three `--interaction-hover-*` and their banner, `--surface-page`, `--surface-hover`, `--border-default`, `--text-muted`, `--status-error-surface`, `-border`, `-text`, `--status-info-600`, `--weight-extrabold`, `--font-size-tagline`, `--font-size-body-xxl` and `--tracking-wider`. Most only renamed another token. `--interaction-hover-darken` was alive only through `--surface-hover`. The ramps stay as palette.
+- **The Colors page's Interaction section and the Layout page's Border widths render only when `globals.css` has those tokens.** The starter now has neither.
+- **`styleguide.css` keeps only what renders.** 29 of its 30 `sg-*` classes were left from the styleguide's old layout and matched nothing; one read `--color-brand-dark`, which nothing defines. The file is now the swatch checkerboard, `.sgd-checker`, alone.
+- **`KICKOFF.md` step 7's *Whose design it shows*** now describes what the page says itself, and how to give a product's design elsewhere its door.
+
+**How to adopt.**
+
+1. **`lib/styleguide.ts`, from this entry's commit.** If you never changed it, take it whole. If you did, the changes are the `@import` loop and `TokenDef.product` in `getStyleguide`, the `aliasEdges` it records, `DASHBOARD`, `BASE`, `CENSUS_EXCLUDE`, the per-rule reading of `globals.css` in `getCensus`, `getCensus`, `getDesignHomes`, `usageText`, the `orphans` field removed, and `getComponentDetails` scanning with `CENSUS_EXCLUDE`.
+2. **The pages, from this entry's commit:** `app/system/styleguide/layout.tsx`, `page.tsx`, `typography/page.tsx`, `layout/page.tsx`, `components/page.tsx` and `derived-ui.tsx` (`ReachTag`, which renders `components/ui/Badge`, and the `reach` and `census` props on `TokenRow` and `Ramp`). Take `styleguide.css` whole unless you style your own pages with its `sg-*` classes; search for them first. Take them whole unless you changed them; if you did, the changes are those props at each row and the census at each page's top.
+3. **Tune `DASHBOARD` to your project.** If your root page is the record's own front door rather than a product, add `app/page.tsx`. If your product's design lives elsewhere, give it a feature doc with `area: design` and `routes:`. **`docs/implementation/system-surface.md`:** the Styleguide row's new passage.
+4. **The prune.** Search your own code for each token above first. Anything you use, keep. Then delete the rest from `app/globals.css`, light and dark, with the Widths comment and the Interaction banners.
+5. **Still in your kickoff:** take `KICKOFF.md` step 7's *Whose design it shows* and the two bullets under *What it shows*.
+
+**Check:** open `/system/styleguide`. The header says shared or the dashboard's own, and a line about `area: design`. Every row carries a label, and Token health's four counts add up to the `:root` total beside them.
+
 ## 15 · The kickoff checks where your copy pushes and shows you the styleguide, which stops naming what your project never had
 
 **Class:** parser · convention

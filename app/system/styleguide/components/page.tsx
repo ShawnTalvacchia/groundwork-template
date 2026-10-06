@@ -1,18 +1,21 @@
 import type { ReactNode } from "react";
 import {
+  getCensus,
   getComponentInventory,
   getComponentDetails,
   type ComponentDetail,
+  type Reach,
 } from "@/lib/styleguide";
 import { measure, AA_SMALL_TEXT } from "@/lib/contrast";
-import { ThemePanesStyle, tokenTable, type Resolved } from "../derived-ui";
+import { ReachTag, ThemePanesStyle, tokenTable, type Resolved } from "../derived-ui";
 import { DEMOS, type DemoEntry, type PaintedPair } from "./demos";
 
 /* The components page.
  *
  * Everything on it derives from two sources and joins them by name: the
  * component's own file (`getComponentDetails` — the docblock and its `@when` /
- * `@whenNot` tags, the variant maps, the root tags, the usage census) and the
+ * `@whenNot` tags, the variant maps, the root tags, the usage census), whose
+ * it is (`getCensus` — product, dashboard, both, or nothing), and the
  * demo registry (`demos.tsx` — the mount, its container, what it paints).
  * The page itself authors no fact about any component.
  *
@@ -134,10 +137,12 @@ function ComponentCard({
   detail,
   entry,
   tokens,
+  reach,
 }: {
   detail: ComponentDetail;
   entry: DemoEntry | undefined;
   tokens: Map<string, Resolved>;
+  reach: Reach | undefined;
 }) {
   const demoed = Boolean(entry?.states?.length);
   const variantMaps = [...new Set(detail.variants.map((v) => v.map))];
@@ -147,6 +152,7 @@ function ComponentCard({
       <div className="flex flex-wrap items-baseline gap-sm">
         <h3 className="text-base font-semibold text-fg-primary">{detail.name}</h3>
         <code className="sys-code text-2xs">{detail.file}</code>
+        <ReachTag reach={reach} />
         {!demoed && !entry?.noDemoReason && (
           <span className="rounded-pill bg-error-light px-sm py-tiny text-2xs font-semibold text-error-strong">
             no demo, no reason given
@@ -285,6 +291,7 @@ function ComponentCard({
 /* ── The page ────────────────────────────────────────────────────────── */
 
 export default function ComponentsPage() {
+  const census = getCensus().components;
   const inventory = getComponentInventory();
   const details = new Map(getComponentDetails().map((d) => [d.name, d]));
   const tokens = tokenTable();
@@ -301,8 +308,9 @@ export default function ComponentsPage() {
           </h2>
           <p className="max-w-[72ch] text-xs leading-relaxed text-fg-tertiary">
             Every shared component, in one shape: what it is and when to reach for it, from the
-            component&apos;s own docblock; a live demo in both themes, from the demo registry; then
-            its composition, variants, measured contrast and callsites, derived at build. The
+            component&apos;s own docblock; whose it is, from who imports it; a live demo in both
+            themes, from the demo registry; then its composition, variants, measured contrast and
+            callsites, derived at build. The
             reuse-first checklist starts here. Feature components live beside their features and
             aren&apos;t listed.
           </p>
@@ -348,6 +356,7 @@ export default function ComponentsPage() {
                       detail={detail}
                       entry={DEMOS[c.name]}
                       tokens={tokens}
+                      reach={census.get(c.name)}
                     />
                   ) : null;
                 })}

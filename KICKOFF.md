@@ -97,13 +97,13 @@ Then:
    **No mark yet? Defer it deliberately, not silently.** A kickoff must never stall waiting on a designer, and "generic placeholder" is a legitimate answer on day one. Write a Future Consideration in your own words with your own trigger — "the first time someone outside the project sees a link preview," say — and move on. The one thing not to do is leave it unowned: the trigger you name is what brings it back.
 7. **Meet the styleguide** (web projects). Open [localhost:3000/system/styleguide](http://localhost:3000/system/styleguide), or Structure → Styleguide on the dashboard. Nobody writes it: it is parsed from `app/globals.css` and the shared components in `components/ui/` on every build, so it cannot drift from the code.
 
-   **Whose design it shows.** On day one, the dashboard's: the starter tokens and the components `/system` is built from. If your product is built in this app on the same tokens, the re-skin in step 6 makes this your product's design system too, documented from here on. If your product's design lives somewhere else, another app or its own token file, this page documents the dashboard only. Then give your product's design system a home of its own, such as a feature doc.
+   **Whose design it shows.** The page says so itself, from who uses what. Every token and component is labelled product, dashboard, both, or unused, and the header names the state. On day one the placeholder front door is the only product code, so it reads shared. Build your product in this app and that stays true, with the labels sorting the dashboard's own tokens from yours. If your product's design lives somewhere else, another app or its own token file, give it a feature doc with `area: design` and its `routes:` in the frontmatter, and the header points there. A product token file that `globals.css` imports (`@import "./tokens.css"`) becomes the base the page resolves through, never a section of its own. If your root page is the record's front door rather than a product, add `app/page.tsx` to `DASHBOARD` in `lib/styleguide.ts`.
 
    **What it shows.** Four sections, each derived:
 
-   - **Colors.** Token health (what is defined, what nothing uses, what is used but never defined), the semantic families, and *The ladder on every surface*: each text rung and the control boundary, measured on every surface in both themes.
+   - **Colors.** Token health (who reaches for each token, what nothing uses, what is used but never defined), the semantic families, and *The ladder on every surface*: each text rung and the control boundary, measured on every surface in both themes.
    - **Typography.** The families, the type scale, weights, line heights.
-   - **Layout.** Spacing, radius, shadows, border widths, breakpoints.
+   - **Layout.** Spacing, radius, shadows, breakpoints.
    - **Components.** Every shared component in one shape, read from its own file: what it is, when to reach for it, a live demo in both themes, its variants, its measured contrast, and who uses it.
 
    **What is yours.** All of it, by editing the source the page reads:
