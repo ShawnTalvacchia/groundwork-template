@@ -47,9 +47,7 @@ export default function LayoutScalePage() {
   const rootOf = (frag: string) => data.root.find((s) => s.title.includes(frag))?.tokens ?? [];
   const themeOf = (title: string) => data.theme.find((s) => s.title === title)?.tokens ?? [];
 
-  const spacingAll = rootOf("SPACING");
-  const spacing = spacingAll.filter((t) => !/^--space-\d+$/.test(t.name));
-  const spacingNumeric = spacingAll.filter((t) => /^--space-\d+$/.test(t.name));
+  const spacing = rootOf("SPACING");
   const radiusAll = rootOf("RADIUS");
   const radiusScale = radiusAll.filter((t) => !t.target);
   const radiusAliases = radiusAll.filter((t) => t.target);
@@ -79,14 +77,6 @@ export default function LayoutScalePage() {
             />
           ))}
         </div>
-        <details>
-          <summary className="text-xs text-fg-secondary cursor-pointer">
-            Numeric aliases ({spacingNumeric.length}) — legacy compat; use the named scale in new code
-          </summary>
-          <p className="mt-sm text-2xs font-mono text-fg-tertiary leading-relaxed">
-            {spacingNumeric.map((t) => `${t.name}: ${t.light}`).join(" · ")}
-          </p>
-        </details>
       </SgSection>
 
       <div className="grid gap-3xl lg:grid-cols-2">
@@ -183,13 +173,17 @@ export default function LayoutScalePage() {
         </SgSection>
       </div>
 
-      <SgSection title="Shell constants" note="The layout skeleton — nav, sidebar, content column. Mobile overrides shown where they exist.">
-        <div className="flex flex-col">
-          {layoutTokens.map((t) => (
-            <Row key={t.name} name={t.name} value={t.light} mobile={t.mobile} note={cleanNote(t.note)} />
-          ))}
-        </div>
-      </SgSection>
+      {/* Only when globals.css has a LAYOUT section: the starter ships none,
+          and a heading over nothing reads as tokens that went missing. */}
+      {layoutTokens.length > 0 && (
+        <SgSection title="Shell constants" note="The layout skeleton. Mobile overrides shown where they exist.">
+          <div className="flex flex-col">
+            {layoutTokens.map((t) => (
+              <Row key={t.name} name={t.name} value={t.light} mobile={t.mobile} note={cleanNote(t.note)} />
+            ))}
+          </div>
+        </SgSection>
+      )}
 
       <p className="text-xs leading-relaxed text-fg-tertiary">
         Source: <code className="sys-code">app/globals.css</code>, parsed at build time.

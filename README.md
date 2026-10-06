@@ -17,11 +17,12 @@ It gives a project three things: a work model (phases, modes, rituals), a small 
 
 ## How it works
 
-Work happens in phases. Every phase runs in one of three modes:
+Work happens in phases. Every phase runs in one of four modes:
 
 - **Product** builds the thing. The deepest ritual: thesis, build, walkthrough, close.
 - **System** tends the rules, the docs, and the dashboard itself.
 - **Side** sweeps small fixes and open questions from the trackers.
+- **Queue-shaping** shapes what's next. An idea becomes a queue row and a seed, ready for a later phase.
 
 A phase opens a board, does the work, and closes by distill and delete. Decisions go to the log. Behavior goes to feature docs. The board is removed. History lives in git and a compact archive, not in the working set.
 
@@ -39,7 +40,7 @@ Every session starts with you arriving with something. Three doors cover almost 
 
 | You're arriving with | What you say |
 |---|---|
-| A new idea nobody is doing yet | `Run a system phase, queue-shaping: I keep hitting X and there is no row for it.` |
+| A new idea nobody is doing yet | `Shape the queue: I keep hitting X and there is no row for it.` |
 | The next queued thing, ready to build | `Open [phase name] from the queue.` |
 | A pile of small fixes, by punch list ID | `Run a side phase, sweep: P04 · P07 · P09.` |
 
@@ -51,10 +52,10 @@ Every way a session begins, and the parts you can reshape, are in `docs/CONTRIBU
 
 ## First 30 minutes
 
-1. Copy the repo (or "Use this template" on GitHub).
+1. On GitHub, **Use this template** to make your own private repo, then clone it. Cloned, copied or downloaded this one instead? The kickoff's first move connects your copy to a repo of your own.
 2. `npm install && npm run dev`, then open [localhost:3000/system](http://localhost:3000/system).
 3. The **Kickoff board** is already open on the dashboard. It is the one-time bootstrap that turns the empty template into your project.
-4. Work it with **`KICKOFF.md`** (repo root) as the guide: answer the seeded questions, fill the strategy shelf, choose your stack, name the project, decide where your record lives, make the identity yours, set the roadmap.
+4. Work it with **`KICKOFF.md`** (repo root) as the guide: answer the seeded questions, fill the strategy shelf, choose your stack, name the project, decide where your record lives, make the identity yours, meet the styleguide, set the roadmap.
 
 The kickoff's close ritual replaces this README with your project's own and deletes `KICKOFF.md`. The template leaves no onboarding behind. What remains is your project.
 

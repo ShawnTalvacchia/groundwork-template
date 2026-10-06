@@ -43,10 +43,10 @@
 .sys-main {
   max-width: 880px;
   margin: 0 auto;
-  padding: var(--space-5) var(--space-4) var(--space-16);
+  padding: var(--space-xl) var(--space-lg) var(--space-jumbo-2);
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-xxxl);
 }
 
 /* A link to a glossary entry is a term defined elsewhere, and a page of canon
@@ -80,12 +80,12 @@
 .sys-nav-inner {
   max-width: 880px;
   margin: 0 auto;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-md) var(--space-lg);
   display: flex;
   flex-direction: column;
   /* Roomy: the theme control is itself a segmented pill bar, so it needs
      air to read as chrome rather than a third tab row. */
-  gap: var(--space-5);
+  gap: var(--space-xl);
 }
 
 /* App-style page header: title left, (future) action right */
@@ -93,7 +93,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-md);
 }
 
 .sys-header-brand {
@@ -106,7 +106,7 @@
 .sys-header-logo {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-sm);
   height: 28px;
   font-family: var(--font-heading), sans-serif;
   font-size: var(--text-lg);
@@ -135,9 +135,9 @@
 .sys-subtabs-inner {
   max-width: 880px;
   margin: 0 auto;
-  padding: 0 var(--space-4);
+  padding: 0 var(--space-lg);
   display: flex;
-  gap: var(--space-4);
+  gap: var(--space-lg);
   /* Fallback only — the tabs are sized to fit every viewport (see the
      narrow-screen block below). overflow-y is explicit because `overflow-x:
      auto` alone makes the other axis compute to `auto`, which turned the
@@ -152,7 +152,7 @@
 }
 
 .sys-subtab {
-  padding: var(--space-3) var(--space-3);
+  padding: var(--space-md) var(--space-md);
   color: var(--text-tertiary);
   text-decoration: none;
   border-bottom: 2px solid transparent;
@@ -207,7 +207,7 @@
 .sys-cluster-label {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-sm);
   text-decoration: none;
 }
 
@@ -218,14 +218,14 @@
 .sys-tile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-md);
 }
 
 .sys-tile {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-4);
+  gap: var(--space-sm);
+  padding: var(--space-lg);
   background: var(--surface-top);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-panel);
@@ -253,7 +253,7 @@
 .sys-starters > summary {
   cursor: pointer;
   list-style: none;
-  padding: var(--space-4);
+  padding: var(--space-lg);
   background: var(--surface-inset);
   border-radius: calc(var(--radius-panel) - 1px);
 }
@@ -280,7 +280,7 @@
 /* Rows: the divider runs edge to edge (border on the full-width element);
    the content insets to match the header's padding. */
 .sys-starters-body > .sys-details {
-  padding: 0 var(--space-4);
+  padding: 0 var(--space-lg);
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -291,14 +291,14 @@
 /* A folded shelf holding card content rather than rows: no edge-bleeding
    dividers to honor, so the body insets to the header's own padding. */
 .sys-starters-body--padded {
-  padding: var(--space-4);
+  padding: var(--space-lg);
 }
 
 .sys-shelf {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  gap: var(--space-md);
+  padding: var(--space-lg);
   background: var(--surface-inset);
   /* One step stronger than the shelf's own surface — enough to close the
      shape without competing with the cards inside it. The ramps handle the
@@ -313,7 +313,7 @@
   background: var(--surface-top);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-panel);
-  padding: var(--space-4);
+  padding: var(--space-lg);
 }
 
 /* The hover fill needs breathing room, but the text must stay aligned with the
@@ -325,8 +325,8 @@
   text-decoration: none;
   color: inherit;
   border-radius: var(--radius-sm);
-  padding-inline: var(--space-2);
-  margin-inline: calc(var(--space-2) * -1);
+  padding-inline: var(--space-sm);
+  margin-inline: calc(var(--space-sm) * -1);
 }
 
 .sys-row-link:hover {
@@ -362,7 +362,7 @@
 .sys-pill {
   display: inline-flex;
   align-items: center;
-  padding: 0 var(--space-2);
+  padding: 0 var(--space-sm);
   height: 20px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-stronger);
@@ -440,8 +440,8 @@
 .sys-button {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: 0 var(--space-3);
+  gap: var(--space-xxs);
+  padding: 0 var(--space-md);
   height: 24px;
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
@@ -489,7 +489,7 @@
   display: inline-block;
   width: 1em;
   height: 1em;
-  margin-right: var(--space-1);
+  margin-right: var(--space-xxs);
   vertical-align: -0.15em;
   background-color: currentColor;
   -webkit-mask: var(--sys-icon-check) center / contain no-repeat;
@@ -521,9 +521,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-lg);
   flex-wrap: wrap;
-  padding: var(--space-4);
+  padding: var(--space-lg);
   background: var(--surface-top);
   border: 1px solid var(--border-light);
   border-left: 3px solid var(--brand-main);
@@ -547,7 +547,7 @@
 .sys-wt-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-md);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -556,8 +556,8 @@
 .sys-wt-item {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
+  gap: var(--space-xxs);
+  padding: var(--space-md);
   background: var(--surface-top);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-panel);
@@ -624,7 +624,7 @@
 }
 
 .sys-wt-note {
-  padding-left: var(--space-3);
+  padding-left: var(--space-md);
   border-left: 1px solid var(--border-light);
 }
 
@@ -702,7 +702,7 @@
    16, which nothing measures against. */
 .sys-tile-active,
 .sys-tile-paused {
-  padding-left: calc(var(--space-4) - 2px);
+  padding-left: calc(var(--space-lg) - 2px);
 }
 
 /* A paused board's card is NOT set back. `waiting` is a claim of completion,
@@ -784,8 +784,8 @@
 .sys-run {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  gap: var(--space-md);
+  padding: var(--space-lg);
   background: var(--surface-inset);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-panel);
@@ -839,7 +839,7 @@
   font-size: 0.85em;
   background: var(--surface-inset);
   border-radius: var(--radius-xs);
-  padding: 0 var(--space-1);
+  padding: 0 var(--space-xxs);
 }
 
 /* Expandable topic/entry cards (native <details>) */
@@ -869,7 +869,7 @@
 .sys-details > summary {
   cursor: pointer;
   list-style: none;
-  padding: var(--space-3) 0;
+  padding: var(--space-md) 0;
 }
 
 .sys-details > summary::-webkit-details-marker {
@@ -894,7 +894,7 @@
 
 .sys-timeline-item {
   position: relative;
-  padding: 0 0 var(--space-5) var(--space-5);
+  padding: 0 0 var(--space-xl) var(--space-xl);
   border-left: 1px solid var(--border-regular);
 }
 
@@ -929,7 +929,7 @@
      repeated here — see .sys-layout. */
   font-family: var(--font-heading), sans-serif;
   font-weight: var(--weight-semibold);
-  margin: var(--space-6) 0 var(--space-2);
+  margin: var(--space-xxl) 0 var(--space-sm);
   line-height: var(--leading-snug);
 }
 
@@ -951,8 +951,8 @@
    this is fixing. */
 .sys-doc h2 {
   font-size: var(--text-xl);
-  padding: var(--space-2) var(--space-3);
-  margin-inline: calc(-1 * var(--space-3));
+  padding: var(--space-sm) var(--space-md);
+  margin-inline: calc(-1 * var(--space-md));
   background: var(--surface-chip);
   border-radius: var(--radius-sm);
 }
@@ -960,7 +960,7 @@
 /* The rule h2 gave up — right weight for a divider inside a section. */
 .sys-doc h3 {
   font-size: var(--text-lg);
-  padding-top: var(--space-2);
+  padding-top: var(--space-sm);
   border-top: 1px solid var(--border-light);
 }
 
@@ -976,7 +976,7 @@
 .sys-doc p,
 .sys-doc ul,
 .sys-doc ol {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-md);
 }
 
 /* ── The section index (ui.tsx → DocIndex) ── */
@@ -987,13 +987,13 @@
    `.sys-doc` because the index renders inside it, and `.sys-doc ul`/`li + li`
    would otherwise win on specificity and hand a nav list prose bullets. */
 .sys-doc .sys-doc-index {
-  margin: 0 0 var(--space-6);
-  padding-bottom: var(--space-3);
+  margin: 0 0 var(--space-xxl);
+  padding-bottom: var(--space-md);
   border-bottom: 1px solid var(--border-light);
 }
 
 .sys-doc .sys-doc-index-label {
-  margin: 0 0 var(--space-2);
+  margin: 0 0 var(--space-sm);
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
   text-transform: uppercase;
@@ -1010,7 +1010,7 @@
   padding-left: 0;
   list-style: none;
   columns: 2;
-  column-gap: var(--space-6);
+  column-gap: var(--space-xxl);
 }
 
 @media (max-width: 640px) {
@@ -1026,7 +1026,7 @@
 
 .sys-doc .sys-doc-index-list a {
   display: block;
-  padding: var(--space-1) 0;
+  padding: var(--space-xxs) 0;
   font-size: var(--text-xs);
   line-height: var(--leading-snug);
   color: var(--text-secondary);
@@ -1041,7 +1041,7 @@
 /* Folded, the list is the fold's body and the rule above it is the summary's
    own — a second one would draw a line under a closed control. */
 .sys-doc .sys-doc-index > .sys-details .sys-doc-index-list {
-  margin-top: var(--space-2);
+  margin-top: var(--space-sm);
 }
 
 /* Block layout, not flex. A flex container blockifies its children, which drops
@@ -1051,7 +1051,7 @@
    and lets padding-left do the indenting it is there for. */
 .sys-doc ul,
 .sys-doc ol {
-  padding-left: var(--space-5);
+  padding-left: var(--space-xl);
 }
 
 .sys-doc ul {
@@ -1063,12 +1063,12 @@
 }
 
 .sys-doc li + li {
-  margin-top: var(--space-3);
+  margin-top: var(--space-md);
 }
 
 .sys-doc li > ul,
 .sys-doc li > ol {
-  margin: var(--space-3) 0 0;
+  margin: var(--space-md) 0 0;
 }
 
 /* Checklists (board Items / Close items) — airier rows, and a hanging
@@ -1080,11 +1080,11 @@
   list-style: none;
 }
 .sys-doc li.task-list-item {
-  padding-left: var(--space-5);
-  text-indent: calc(-1 * var(--space-5));
+  padding-left: var(--space-xl);
+  text-indent: calc(-1 * var(--space-xl));
 }
 .sys-doc li.task-list-item input[type="checkbox"] {
-  margin-right: var(--space-2);
+  margin-right: var(--space-sm);
   vertical-align: middle;
 }
 /* `text-indent` inherits, so a plain list nested inside a checklist item would
@@ -1107,15 +1107,15 @@
   font-size: 0.85em;
   background: var(--surface-inset);
   border-radius: var(--radius-xs);
-  padding: 0 var(--space-1);
+  padding: 0 var(--space-xxs);
 }
 
 .sys-doc pre {
   background: var(--surface-inset);
   border-radius: var(--radius-sm);
-  padding: var(--space-3);
+  padding: var(--space-md);
   overflow-x: auto;
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-md);
 }
 
 .sys-doc pre code {
@@ -1127,8 +1127,8 @@
    block would, on the same inset; the SVG scales to the column and never
    scrolls the page sideways; the source folds under it. */
 .sys-diagram {
-  margin: 0 0 var(--space-3);
-  padding: var(--space-3);
+  margin: 0 0 var(--space-md);
+  padding: var(--space-md);
   background: var(--surface-inset);
   border-radius: var(--radius-sm);
   overflow-x: auto;
@@ -1138,13 +1138,13 @@
   height: auto;
 }
 .sys-diagram-source {
-  margin-top: var(--space-2);
+  margin-top: var(--space-sm);
 }
 .sys-diagram-source summary {
   cursor: pointer;
 }
 .sys-diagram-source pre {
-  margin: var(--space-2) 0 0;
+  margin: var(--space-sm) 0 0;
   padding: 0;
   background: none;
 }
@@ -1156,8 +1156,8 @@
    that drifts from this one is exactly what the styleguide exists to prevent. */
 .sys-inset,
 .sys-doc blockquote {
-  margin: 0 0 var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  margin: 0 0 var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   border-left: 3px solid var(--brand-main);
   background: var(--surface-inset);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
@@ -1179,7 +1179,7 @@
   display: inline-block;
   width: 1em;
   height: 1em;
-  margin-right: var(--space-2);
+  margin-right: var(--space-sm);
   vertical-align: -0.15em;
   background-color: var(--brand-main);
   -webkit-mask: var(--sys-icon-info) center / contain no-repeat;
@@ -1188,7 +1188,7 @@
 
 .sys-doc table {
   border-collapse: collapse;
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-md);
   display: block;
   overflow-x: auto;
   font-size: var(--text-xs);
@@ -1197,7 +1197,7 @@
 .sys-doc th,
 .sys-doc td {
   border: 1px solid var(--border-light);
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-xxs) var(--space-sm);
   text-align: left;
   vertical-align: top;
 }
@@ -1210,7 +1210,7 @@
 .sys-doc hr {
   border: none;
   border-top: 1px solid var(--border-light);
-  margin: var(--space-5) 0;
+  margin: var(--space-xl) 0;
 }
 
 /* ── Method: how we work ── */
@@ -1223,7 +1223,7 @@
    floor wraps them to two rows of three. */
 .sys-arc-kinds {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-md);
   grid-template-columns: 1fr;
 }
 
@@ -1236,8 +1236,8 @@
 .sys-arc-kind {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-4);
+  gap: var(--space-sm);
+  padding: var(--space-lg);
   background: var(--surface-top);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-panel);
@@ -1255,14 +1255,14 @@
 .sys-seqs {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-sm);
 }
 
 .sys-seq {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-2) var(--space-3);
+  gap: var(--space-sm) var(--space-md);
 }
 
 .sys-seq-label {
@@ -1280,7 +1280,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-2);
+  gap: var(--space-sm);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1290,7 +1290,7 @@
 
 .sys-seq-kinds li + li::before {
   content: "\2192";
-  margin-right: var(--space-2);
+  margin-right: var(--space-sm);
   color: var(--text-tertiary);
 }
 
@@ -1298,7 +1298,7 @@
    it so a reader can tell "this is the long shape" from "these are the
    kinds". Same inset rail the explainer cards use. */
 .sys-run-note {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-md) var(--space-lg);
   border-left: 3px solid var(--brand-faded);
   background: var(--surface-inset);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
@@ -1307,7 +1307,7 @@
 /* A shared rule with no bold lead renders as a plain row with the folded
    rows' own rhythm: same vertical padding, same divider. */
 .sys-rule-plain {
-  padding: var(--space-3) 0;
+  padding: var(--space-md) 0;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -1315,8 +1315,8 @@
 .sys-mode {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-5);
+  gap: var(--space-lg);
+  padding: var(--space-lg) var(--space-lg) var(--space-lg) var(--space-xl);
   background: var(--surface-top);
   border: 1px solid var(--border-light);
   border-left: 3px solid var(--border-strong);
@@ -1348,8 +1348,8 @@
 .sys-part {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  gap: var(--space-md);
+  padding: var(--space-lg);
   background: var(--surface-top);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-panel);
@@ -1362,8 +1362,8 @@
 .sys-scope {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
+  gap: var(--space-xxs);
+  padding: var(--space-md);
   background: var(--surface-inset);
   border-radius: var(--radius-sm);
 }
@@ -1371,7 +1371,7 @@
 .sys-scope-head {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-sm);
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.06em;
@@ -1381,14 +1381,14 @@
 
 /* The ritual — folded away until you're opening or closing a phase. */
 .sys-ritual {
-  padding-top: var(--space-3);
+  padding-top: var(--space-md);
   border-top: 1px solid var(--border-light);
 }
 
 .sys-ritual > summary {
   display: flex;
   align-items: baseline;
-  gap: var(--space-2);
+  gap: var(--space-sm);
   cursor: pointer;
   list-style: none;
 }
@@ -1427,8 +1427,8 @@
    the surface spends brand on "alive" and amber on "stale". */
 .sys-actor {
   display: inline-block;
-  margin-right: var(--space-2);
-  padding: 1px var(--space-2);
+  margin-right: var(--space-sm);
+  padding: 1px var(--space-sm);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   font-size: var(--text-2xs);
@@ -1443,7 +1443,7 @@
    inset so a trigger reads as the same weight of fact as a touch band. */
 .sys-trigger-grid {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-md);
   grid-template-columns: 1fr;
 }
 
@@ -1469,8 +1469,8 @@
 .sys-tier-rung {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
+  gap: var(--space-xxs);
+  padding: var(--space-md) var(--space-lg);
   background: var(--surface-top);
   border: 1px solid var(--border-light);
   border-left: 1px solid var(--border-light);
@@ -1500,9 +1500,9 @@
 .sys-tier-guard {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  margin-top: var(--space-1);
-  padding-top: var(--space-2);
+  gap: var(--space-xxs);
+  margin-top: var(--space-xxs);
+  padding-top: var(--space-sm);
   border-top: 1px dashed var(--border-regular);
   width: 100%;
 }
@@ -1511,7 +1511,7 @@
   .sys-tier-guard {
     flex-direction: row;
     align-items: baseline;
-    gap: var(--space-6);
+    gap: var(--space-xxl);
   }
   .sys-tier-guard > * {
     flex: 1 1 0;
@@ -1530,7 +1530,7 @@
   }
 
   .sys-tab-fill .tab-main {
-    padding: 0 var(--space-2);
+    padding: 0 var(--space-sm);
   }
 
   /* No horizontal padding here, so the gap is the ONLY separation between
@@ -1538,7 +1538,7 @@
      = 40px between words). Worst case (Structure) measures ~296px inside a
      343px box at 375w, so there's room for it. */
   .sys-subtabs-inner {
-    gap: var(--space-6);
+    gap: var(--space-xxl);
   }
 
   .sys-subtab {

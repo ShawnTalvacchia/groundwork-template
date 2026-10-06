@@ -199,7 +199,7 @@ export const DEMOS: Record<string, DemoEntry> = {
     paints: [
       { what: "inactive label", fg: "--text-gray", bg: "--surface-inset", floor: TEXT },
       { what: "active label", fg: "--text-primary", bg: "--surface-top", floor: TEXT },
-      { what: "badge count", fg: "--text-white", bg: "--brand-main", floor: TEXT },
+      { what: "badge count", fg: "--text-inverse", bg: "--brand-main", floor: TEXT },
     ],
   },
 

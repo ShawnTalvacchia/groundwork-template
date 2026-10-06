@@ -22,7 +22,7 @@ _What we are NOT building, and why. The most valuable section — it's what a ph
 
 ## Hard constraints
 
-_Fixed facts the project must live within — platform, timeline, budget, regulatory, technical. Distinct from choices: these aren't up for a structured challenge._
+_Fixed facts the project must live within — platform, timeline, budget, regulatory, technical. Distinct from choices: these aren't up for a structured challenge. An estimate you expect to move, a runway or a launch guess, is not one of these: write it under Assumptions, where revising it is ordinary work._
 
 ## Assumptions
 

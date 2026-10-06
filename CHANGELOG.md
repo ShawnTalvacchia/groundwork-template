@@ -16,6 +16,40 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 15 · The kickoff checks where your copy pushes and shows you the styleguide, which stops naming what your project never had
+
+**Class:** parser · convention
+**Depends on:** the styleguide pages, `derived-ui.tsx` and the Structure page (`feb807b`) · the kickoff board (`a520f13`)
+**Resolves:** none
+
+**Does this affect you?** Two readers. Every project should take the styleguide fix and the spacing change, steps 1 to 4: it is code you carry whether or not your kickoff has closed. Steps 5 and 6 are for a copy still in its kickoff, with `KICKOFF.md` and the template's README in place. Past it, skip them, but run `git remote -v` once: if `origin` is still this template's repo, repoint it.
+
+**What changed.**
+
+- **The styleguide's copy names only what your project has.** Token health no longer cites a "punch-list B5 prune feed" or "CLAUDE.md rule 6", neither of which exists in your project. The type scale's headings name the family `--font-heading` and `--font-body` lead with, where they said Poppins and Open Sans over `system-ui`. The primitive ramps note drops "Figma's collections" and "legacy callsites".
+- **Nothing on the pages repeats a value a token edit would leave behind.** A token comment's leading length is dropped where the row prints the value, as a leading hex already was, so a re-sized `--text-2xs` never shows the starter's 12px beside its own. The type scale note's hand list of sizes is gone; each row prints its own.
+- **One name per spacing step.** The ten numbered spacing tokens (`--space-1` to `--space-16`) are gone. The dashboard's stylesheet used them 111 times, and every one but `--space-1` repeated a named step at the same value, so `system.css` now reads the named scale and nothing on screen moves. `--space-1`'s 4px joins the scale as `--space-xxs`, with a Tailwind `xxs` step. `--text-md` (the same as `--text-base`), `--success` and `--error` are gone too; nothing used them. The Layout page loses its numbered-aliases fold.
+- **Shell constants renders only when `globals.css` has a LAYOUT section.** The starter has none, so the Layout page showed a heading and a note over nothing.
+- **The Structure page's Styleguide card** said "Hand-authored today; its derive-from-globals.css refresh is queued." It now says what the page is: derived on every build.
+- **Two comments now carry what the tour relies on.** The `globals.css` header: a new `SEMANTIC TOKENS — <Name>` banner in `:root` is a new family on Colors. `lib/styleguide.ts`: a component is shared when its file sits in one of the inventory's directories.
+- **The kickoff's first move is where your copy pushes.** Every session ends with a push, and a clone or a copied folder keeps this template as `origin`, so a kickoff that ended early would push toward the template. `KICKOFF.md` now opens with `git remote -v` and three cases: the template's repo (repoint `origin` at a private repo of your own), no git at all from a download (`git init`, then connect one, or stay local), or your own repo (nothing to do). `CLAUDE.md`'s fresh-template note carries the same check, since every session reads it first. The kickoff board gains it as its first item, and README's *First 30 minutes* starts from "Use this template".
+- **`KICKOFF.md` gains step 7, *Meet the styleguide*,** after *Make the identity yours*: whose design the page shows (the dashboard's on day one, and your product's only if it is built on the same tokens), what it derives, what is yours to change, and how to check a re-skin. It pre-fills nothing. The old steps 7 to 9 are now 8 to 10. The kickoff board gains the matching item, and README's *First 30 minutes* names it.
+- **The onboarding counts four modes.** README lists queue-shaping beside product, system and side, and its new-idea door reads "Shape the queue: …" where it said "Run a system phase, queue-shaping: …". `KICKOFF.md` does the same, and it and the kickoff board say "the mode loop". `KICKOFF.md`'s listing shows all four board molds, the run-picture mold and `component-patterns.md`, and its loop line says product and system phases both run a walkthrough.
+- **The Scope & Constraints stub's Hard constraints prompt** says where an estimate you expect to move goes: under Assumptions, where revising it is ordinary work.
+- **Two `globals.css` comments** state their rule without the dates and the removed token they carried: the chip's fill and `--transparent-light-24`.
+- **The components page no longer reports an `under` on the starter.** TabBar's demo entry declared `--text-white` for the badge count, where `.tab-badge` paints `--text-inverse`, so the page measured a pair nothing paints: 2.98:1 in dark. Entry 14's Check line holds once this is in.
+
+**How to adopt.**
+
+1. **The code, from this entry's commit.** `app/system/styleguide/page.tsx`, `typography/page.tsx`, `layout/page.tsx`, `derived-ui.tsx`, the Styleguide card in `app/system/structure/page.tsx`, and TabBar's badge-count line in `styleguide/components/demos.tsx`. If you never changed them, take them whole. If you did, the changes are the copy, the family labels (`leadFamily`, `familyOf`), the `layoutTokens.length` guard, the Layout page's single `spacing` list, and the regex in `cleanNote`.
+2. **`app/globals.css`, comments:** the header's new sentence, the Font Size note, the chip's and `--transparent-light-24`'s. Patch them in; your values stay yours.
+3. **The spacing tokens. Search your own code first** for `--space-` followed by a digit, `text-md`, `--success` and `--error`, and repoint what you find: `--space-1` → `--space-xxs`, `-2` → `-sm`, `-3` → `-md`, `-4` → `-lg`, `-5` → `-xl`, `-6` → `-xxl`, `-8` → `-xxxl`, `-10` → `-jumbo-1`, `-16` → `-jumbo-2`, and `--text-md` → `--text-base`. `--space-12` (48px) has no named twin: keep it if you use it. Then take `app/system/system.css` from this entry's commit, or apply the same map to yours. In `app/globals.css`, add `--space-xxs: 4px` after `--space-tiny` and `--spacing-xxs: var(--space-xxs)` in `@theme`, then delete the numbered aliases, `--text-md`, `--success` and `--error`.
+4. **`lib/styleguide.ts`:** the comment over `getComponentInventory` and the `orphans` field's. **`docs/implementation/system-surface.md`:** the Styleguide row's new sentence, and its pointer for the word `under`, which named `component-patterns.md` and now names the comment beside the marker.
+5. **Still in your kickoff:** run `git remote -v` first. Then take `KICKOFF.md`, `README.md` and `docs/phases/kickoff.md` from this entry's commit, keeping whatever you have already ticked or filled, and the new sentence in `CLAUDE.md`'s opening note.
+6. **Your Scope & Constraints stub,** if its prompts are still there: the new sentence under Hard constraints.
+
+**Check:** open `/system/styleguide/typography`. The type scale's two headings name the families your `--font-heading` and `--font-body` lead with. Then `/system/styleguide/layout`: Spacing lists `--space-xxs` and no numbered aliases, and the page ends at Breakpoints & containers unless your `globals.css` has a LAYOUT section.
+
 ## 14 · The quiet end of the starter palette clears its floors, and the Colors page measures every rung on every surface
 
 **Class:** parser · convention

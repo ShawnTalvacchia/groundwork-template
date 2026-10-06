@@ -6,6 +6,8 @@ import { SgSection, cleanNote } from "../derived-ui";
 // primitives it sits over are shown beneath it, clearly secondary.
 
 const px = (v: string) => parseInt(v, 10) || 0;
+/** The first family in a font stack. */
+const leadFamily = (stack: string) => stack.split(",")[0].replace(/"/g, "").trim();
 
 function ScaleRows({ tokens, heading }: { tokens: TokenDef[]; heading: boolean }) {
   return (
@@ -60,6 +62,10 @@ export default function TypographyPage() {
   const leadTrack = rootOf("Line heights");
   const rawSizes = [...rootOf("Heading sizes"), ...rootOf("Body sizes")];
   const fontSizeNote = data.theme.find((s) => s.title === "Font Size")?.note ?? null;
+  const familyOf = (name: string) => {
+    const t = families.find((f) => f.name === name);
+    return t ? leadFamily(t.light) : name;
+  };
 
   return (
     <main className="flex flex-col gap-3xl">
@@ -72,7 +78,7 @@ export default function TypographyPage() {
                 <code className="text-2xs font-mono text-fg-tertiary">{t.light}</code>
               </div>
               <span style={{ fontFamily: t.light, fontSize: 28, lineHeight: 1.2, fontWeight: t.name.includes("heading") ? 600 : 400 }}>
-                {t.light.split(",")[0].replace(/"/g, "")}
+                {leadFamily(t.light)}
               </span>
               <span className="text-xs text-fg-tertiary" style={{ fontFamily: t.light }}>
                 ABCDEFGHIJKLM abcdefghijklm 0123456789
@@ -85,11 +91,11 @@ export default function TypographyPage() {
       <SgSection title="The type scale" note={fontSizeNote}>
         <div className="flex flex-col gap-xl">
           <div className="flex flex-col gap-xs">
-            <h3 className="text-sm font-semibold text-fg-primary">Headings — Poppins SemiBold</h3>
+            <h3 className="text-sm font-semibold text-fg-primary">Headings — {familyOf("--font-heading")}</h3>
             <ScaleRows tokens={headings} heading />
           </div>
           <div className="flex flex-col gap-xs">
-            <h3 className="text-sm font-semibold text-fg-primary">Body — Open Sans</h3>
+            <h3 className="text-sm font-semibold text-fg-primary">Body — {familyOf("--font-body")}</h3>
             <ScaleRows tokens={body} heading={false} />
           </div>
         </div>

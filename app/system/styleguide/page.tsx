@@ -5,7 +5,7 @@ import { Ramp, SgSection, TokenRow, displayTitle, getBackings, tokenTable } from
 // Colors — the styleguide's index. Everything on this page is parsed from
 // globals.css at build time (lib/styleguide.ts): the semantic families first
 // (what product code should reach for), the primitive ramps under them, and
-// the health checks that make CLAUDE.md rule 5 machine-true.
+// the health checks on the token set itself.
 
 /* The ladder's contract, stated once: the rungs that carry information and
  * the floor each must clear on EVERY ground a callsite can put it on. The
@@ -114,9 +114,7 @@ export default function ColorsPage() {
 
   return (
     <main className="flex flex-col gap-3xl">
-      {/* Health — rule 5 ("every token appears in the styleguide") is now
-          machine-true by construction; these are the two drifts that remain
-          possible, checked per build. */}
+      {/* Health — the two drifts a token set can carry, checked per build. */}
       <section className="sys-card flex flex-col gap-sm">
         <div className="flex flex-wrap items-baseline gap-x-lg gap-y-xs">
           <h2 className="text-sm font-semibold text-fg-primary">Token health</h2>
@@ -127,8 +125,8 @@ export default function ColorsPage() {
         </div>
         <details>
           <summary className="text-xs text-fg-secondary cursor-pointer">
-            Unreferenced ({health.orphans.length}) — defined in globals.css, used by nothing; the
-            punch-list B5 prune feed
+            Unreferenced ({health.orphans.length}) — defined in globals.css, used by nothing;
+            candidates to prune
           </summary>
           <p className="mt-sm text-2xs font-mono text-fg-tertiary leading-relaxed max-w-[90ch]">
             {health.orphans.join(" · ")}
@@ -137,8 +135,8 @@ export default function ColorsPage() {
         <details>
           <summary className="text-xs text-fg-secondary cursor-pointer">
             Referenced but undefined ({health.undefinedRefs.length}) — silent ones render as{" "}
-            <code className="font-mono">unset</code>; the fix is repointing to an existing token,
-            never minting one (CLAUDE.md rule 6)
+            <code className="font-mono">unset</code>; the usual fix is repointing to a token that
+            exists
           </summary>
           <div className="mt-sm flex flex-col gap-xs">
             {[...silent, ...guarded].map((u) => (
@@ -194,7 +192,7 @@ export default function ColorsPage() {
 
       <SgSection
         title="Primitive ramps"
-        note="The raw palette (Figma's _-prefixed collections). Not for components — reach through a semantic token. Dark values exist as a safety net for legacy callsites that still touch primitives directly; new code never should."
+        note="The raw palette: the _-prefixed sections of globals.css. Not for components — reach through a semantic token. Dark values are a safety net for any callsite that reaches a primitive directly; components never should."
       >
         <div className="grid gap-xl sm:grid-cols-2">
           {ramps.map((s) => (

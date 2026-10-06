@@ -115,7 +115,7 @@ export default function StructurePage() {
           href="/system/styleguide"
           label="Styleguide"
           value="Design system"
-          detail="How it looks — colors, type, tokens, components. Hand-authored today; its derive-from-globals.css refresh is queued."
+          detail="How it looks — colors, type, layout, components. Derived from globals.css and the shared components on every build."
         />
       </div>
 

@@ -25,15 +25,18 @@ docs/
     punch-list.md             empty
     Future Considerations.md  empty
     queued/_seed-template.md   one seed per queued phase
+    _run-picture-template.md  the picture of a run: many phases inside one bound
   phases/
     kickoff.md                the bootstrap board — ships OPEN; work it first, then delete
-    _product-template.md      the four board molds
+    _product-template.md      the four board molds, one per mode
     _system-template.md
     _side-template.md
-    _walkthrough-template.md
+    _queue-shaping-template.md
+    _walkthrough-template.md  the review doc a product or system phase walks with you
   implementation/
     system-surface.md         the /system dashboard spec (its law + page→source map)
     shipping.md               identity (name + mark), where the record lives, the gate, renaming later
+    component-patterns.md     your rules for shared components (empty — they fill as you build)
 app/, components/, lib/        the live /system dashboard — Next.js + the doc parsers
 app/globals.css                the starter design system (edit these tokens to re-skin)
 components/ui/Mark.tsx         the starter mark — one home for the shape, set at kickoff
@@ -43,7 +46,17 @@ package.json, *.config.*       the web host (Next.js, Tailwind v4)
 
 ## First run — the kickoff phase (ships already open)
 
-The kickoff is the **bootstrap** — the one-time phase that runs *before* the three-mode loop (`docs/CONTRIBUTING.md → The Kickoff`). It ships **already open** as `docs/phases/kickoff.md`, so you don't open it — you work it, and it shows up as the active board on `/system`. It's a guided conversation: answer the prompts, and the system explains its options as you go. The board is the checklist; the steps below are the how and why. Then:
+The kickoff is the **bootstrap** — the one-time phase that runs *before* the mode loop (`docs/CONTRIBUTING.md → The Kickoff`). It ships **already open** as `docs/phases/kickoff.md`, so you don't open it — you work it, and it shows up as the active board on `/system`. It's a guided conversation: answer the prompts, and the system explains its options as you go. The board is the checklist; the steps below are the how and why.
+
+**Before the first commit, make sure this copy pushes to your own repo.** Every session ends by committing and pushing, so this comes before anything else. Run `git remote -v` and match what you see:
+
+- **`origin` is the template's repo,** the address on the `template:` line of `docs/upstream.md`. You cloned or copied it. Make an empty private repo on your git host, then `git remote set-url origin <your-repo-url>`. Private, because the repo holds your record.
+- **No git at all** (`fatal: not a git repository`). You downloaded it. Run `git init` and make a first commit, then add an empty private repo as `origin`. With the GitHub CLI, `gh repo create <name> --private --source=. --push` does that last part in one line.
+- **`origin` is your own repo.** You used "Use this template" on GitHub. Nothing to do.
+
+Not ready for a remote? Stay local: commits work, and pushes start once `origin` exists. The one state never to leave is `origin` pointing at the template.
+
+Then:
 
 1. **Answer the seeded Open Questions** (`planning/Open Questions & Assumptions Log.md`). They're the fresh-project prompts: who's the user, what's out of scope, the smallest thesis-proving thing, the riskiest assumption. Each answer becomes a decision, a strategy-doc edit, or a queued phase — then delete the question.
 2. **Fill `strategy/Vision.md`** (bedrock) and **`Scope & Constraints.md`**. Flip both `status: draft → active` and set their `summary:`. Delete the prompt blocks as you answer them.
@@ -82,11 +95,32 @@ The kickoff is the **bootstrap** — the one-time phase that runs *before* the t
    The starter reads `--brand-main`, so it already stops looking like the template the moment you re-skin, before you touch the shape at all.
 
    **No mark yet? Defer it deliberately, not silently.** A kickoff must never stall waiting on a designer, and "generic placeholder" is a legitimate answer on day one. Write a Future Consideration in your own words with your own trigger — "the first time someone outside the project sees a link preview," say — and move on. The one thing not to do is leave it unowned: the trigger you name is what brings it back.
-7. **Set the ROADMAP** — the Goal line, Where We Are, and queue your **first product phase** with a one-line thesis + a seed in `planning/queued/`.
-8. **Log the kickoff decisions** in `decisions.md` (the stack choice, the vision as first drafted).
-9. **Close the kickoff** with the verification handoff (present the filled shelf for a read), then work the board's close items — they replace the README with your project's own, **delete this file** and the template's `CHANGELOG.md` — and open your first product phase from the roadmap.
+7. **Meet the styleguide** (web projects). Open [localhost:3000/system/styleguide](http://localhost:3000/system/styleguide), or Structure → Styleguide on the dashboard. Nobody writes it: it is parsed from `app/globals.css` and the shared components in `components/ui/` on every build, so it cannot drift from the code.
 
-After that, work the normal loop: queue → open a phase from its mode's template → orient (align or challenge) → build → (product) walkthrough → close (distill + delete). The whole loop is in `docs/CONTRIBUTING.md`.
+   **Whose design it shows.** On day one, the dashboard's: the starter tokens and the components `/system` is built from. If your product is built in this app on the same tokens, the re-skin in step 6 makes this your product's design system too, documented from here on. If your product's design lives somewhere else, another app or its own token file, this page documents the dashboard only. Then give your product's design system a home of its own, such as a feature doc.
+
+   **What it shows.** Four sections, each derived:
+
+   - **Colors.** Token health (what is defined, what nothing uses, what is used but never defined), the semantic families, and *The ladder on every surface*: each text rung and the control boundary, measured on every surface in both themes.
+   - **Typography.** The families, the type scale, weights, line heights.
+   - **Layout.** Spacing, radius, shadows, border widths, breakpoints.
+   - **Components.** Every shared component in one shape, read from its own file: what it is, when to reach for it, a live demo in both themes, its variants, its measured contrast, and who uses it.
+
+   **What is yours.** All of it, by editing the source the page reads:
+
+   - **Values.** Any token in `app/globals.css`. The names stay, and the file's RE-SKINNING note says why.
+   - **New families.** A new `SEMANTIC TOKENS — Name` banner in `:root` is a new block on Colors. The file's header says how the banners group the page.
+   - **Fonts.** Set `--font-heading` and `--font-body`. The type scale names whichever family it reads.
+   - **Components.** A new component in `components/ui/` joins the Components page on the next build. Whatever it lacks shows as a named gap: no docblock, no `@when`, no demo. `docs/implementation/component-patterns.md` says what goes in the docblock and what goes in that doc.
+
+   **After a re-skin, look for one word.** Search Colors and Components for `under`. Each one is a pair your palette put below its contrast floor. The Text and Border comments in `globals.css` say how the ladder is built, so you can solve it again for your colours.
+
+   **Nothing here is a task.** The page shows what is there and never asks you to fill it in today. Something you want and will not do now, a real type pairing say, is a Future Consideration in your own words with your own trigger, the way a deferred mark is.
+8. **Set the ROADMAP** — the Goal line, Where We Are, and queue your **first product phase** with a one-line thesis + a seed in `planning/queued/`.
+9. **Log the kickoff decisions** in `decisions.md` (the stack choice, the vision as first drafted).
+10. **Close the kickoff** with the verification handoff (present the filled shelf for a read), then work the board's close items — they replace the README with your project's own, **delete this file** and the template's `CHANGELOG.md` — and open your first product phase from the roadmap.
+
+After that, work the normal loop: queue → open a phase from its mode's template → orient (align or challenge) → build → (product and system) walkthrough → close (distill + delete). The whole loop is in `docs/CONTRIBUTING.md`.
 
 ## Starting a session, after the kickoff
 
@@ -94,9 +128,9 @@ The kickoff is the one session that ships with its board already open. Every ses
 
 **A new idea nobody is doing yet.**
 
-> Run a system phase, queue-shaping: exports keep failing and nothing planned covers it.
+> Shape the queue: exports keep failing and nothing planned covers it.
 
-The lightest door, and the one most work should come through. It writes a queue row and a seed, the file where context collects, for a phase of any mode: a build, a research pass, a fix to the rules themselves. A later session opens it with fresh eyes, which is the whole reason shaping and building are separate sittings.
+The lightest door, and the one most work should come through. Queue-shaping is a mode of its own, the fourth beside product, system and side. It writes a queue row and a seed, the file where context collects, for a phase of any mode: a build, a research pass, a fix to the rules themselves. A later session opens it with fresh eyes, which is the whole reason shaping and building are separate sittings.
 
 **The next queued thing, ready to build.**
 

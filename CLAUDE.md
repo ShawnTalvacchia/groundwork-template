@@ -8,7 +8,7 @@ read-when: "at the start of every session, before any other doc"
 
 # Project Instructions
 
-These rules override defaults. **This is a fresh template** — fill the `_(fill at kickoff)_` blocks in your first session (see `KICKOFF.md`).
+These rules override defaults. **This is a fresh template** — fill the `_(fill at kickoff)_` blocks in your first session (see `KICKOFF.md`). **Before the first commit, run `git remote -v`:** if `origin` is the template's repo (the `template:` line of `docs/upstream.md`), stop and repoint it, because every session ends with a push (`KICKOFF.md` → First run).
 
 ## The Work Model — phases, modes, rituals
 

@@ -49,7 +49,7 @@ export interface StyleguideData {
 
 export interface TokenHealth {
   defined: number;
-  /** :root tokens nothing references — the punch-list B5 feed. */
+  /** :root tokens nothing references — candidates to prune. */
   orphans: string[];
   /** var(--x) references with no definition anywhere. `guarded` = every
    *  occurrence carries a fallback (degrades quietly); unguarded ones
@@ -364,6 +364,10 @@ export function utilityByRootToken(): Map<string, string> {
 }
 
 /* ── Component inventory (derived from the shared component dirs) ───── */
+
+// A component is shared when its file sits in one of these directories, and
+// only then: the components page and the inspector list nothing else, so a
+// piece anywhere else joins by moving here.
 
 export function getComponentInventory(): ComponentGroup[] {
   const groups: ComponentGroup[] = [];

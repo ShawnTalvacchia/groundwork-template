@@ -24,7 +24,9 @@
 
    The BANNER COMMENTS (==== / ---- / ── styles) are the styleguide's section
    grouping. Reformatting them or moving tokens across blocks reshuffles the
-   styleguide — the /system drift banner flags structural breaks.
+   styleguide — the /system drift banner flags structural breaks. A new
+   `SEMANTIC TOKENS — <Name>` banner in :root is a new family on the Colors
+   page; give its tokens @theme entries to get utilities.
    ───────────────────────────────────────────────────────────────────────── */
 
 @theme {
@@ -76,6 +78,7 @@
 
   /* ── Spacing ── */
   --spacing-tiny: var(--space-tiny);
+  --spacing-xxs: var(--space-xxs);
   --spacing-xs: var(--space-xs);
   --spacing-sm: var(--space-sm);
   --spacing-md: var(--space-md);
@@ -116,13 +119,11 @@
 
   /* ── Font Size ──
      The single source of truth for the `--text-*` scale. Values come from the
-     raw `--font-size-*` primitives in :root. Runtime scale: 2xs 12 · xs 13 ·
-     sm 15 · base 17 · lg 18 · xl 20 · 2xl 24 · 3xl 28 · 4xl 32 · 5xl 48. */
+     raw `--font-size-*` primitives in :root. */
   --text-2xs: var(--font-size-caption); /* 12px — micro UI labels: nav/tab labels, badge counts, eyebrows (short, non-reading) */
   --text-xs: var(--font-size-body-sm); /* 13px — metadata, captions, timestamps, pills (reading floor) */
   --text-sm: var(--font-size-body-reg); /* 15px — body workhorse (primary content) */
   --text-base: var(--font-size-body-md); /* 17px — large body / emphasis / lead-in */
-  --text-md: var(--font-size-body-md); /* 17px — legacy alias == text-base */
   --text-lg: var(--font-size-body-lg); /* 18px — small headings */
   --text-xl: var(--font-size-h4); /* 20px */
   --text-2xl: var(--font-size-h3); /* 24px */
@@ -268,7 +269,7 @@
   --transparent-light-4: rgba(255, 255, 255, 0.039);
   --transparent-light-8: rgba(255, 255, 255, 0.078);
   --transparent-light-16: rgba(255, 255, 255, 0.161);
-  --transparent-light-24: rgba(255, 255, 255, 0.239); /* the dark side of --transparent-dark-24 — added 2026-09-10 for --surface-chip-strong, which is gone; kept because the two ramps are ladders and a missing rung is the defect it was added to fix */
+  --transparent-light-24: rgba(255, 255, 255, 0.239); /* the dark side of --transparent-dark-24; the two overlay ramps keep matching rungs */
   --transparent-light-32: rgba(255, 255, 255, 0.322);
   --transparent-light-40: rgba(255, 255, 255, 0.4);
   --transparent-light-64: rgba(255, 255, 255, 0.639);
@@ -286,11 +287,10 @@
   --surface-disabled: var(--neutral-300); /* #a7b0bb — disabled backgrounds */
   --surface-base-inverse: var(--neutral-800); /* #2c313a — dark inverse surfaces */
   --surface-neutral-dark: var(--neutral-900); /* #171b21 — deepest dark surfaces */
-  /* NEW 2026-09-10: a chip's fill, as a translucent step off whatever it sits
-     on rather than a fixed value. A solid token can only separate from ONE
-     surface — `--border-regular` and `--surface-inset` are the same value,
-     which is why the pill's outline vanished on inset cards. An overlay keeps
-     the same step on every surface it lands on. */
+  /* A chip's fill, as a translucent step off whatever it sits on rather than
+     a fixed value. A solid token can only separate from ONE surface
+     (`--border-regular` and `--surface-inset` are the same value); an overlay
+     keeps the same step on every surface it lands on. */
   --surface-chip: var(--transparent-dark-16); /* 16% dark over the host surface */
 
   /* ================================================
@@ -420,10 +420,6 @@
   --status-info-strong: var(--info-600);
   --status-info-600: var(--info-600);
 
-  /* Legacy shorthands */
-  --success: var(--status-success-main);
-  --error: var(--status-error-main);
-
   /* ================================================
      RADIUS
      ================================================ */
@@ -448,6 +444,7 @@
      ================================================ */
 
   --space-tiny: 2px;
+  --space-xxs: 4px;
   --space-xs: 6px;
   --space-sm: 8px;
   --space-md: 12px;
@@ -458,18 +455,6 @@
   --space-jumbo-1: 40px;
   --space-jumbo-2: 64px;
   --space-jumbo-3: 80px;
-
-  /* Numeric aliases — legacy compat */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
 
   /* ================================================
      TYPOGRAPHY — Font families & weights

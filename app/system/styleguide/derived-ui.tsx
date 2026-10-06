@@ -15,11 +15,11 @@ export function displayTitle(raw: string): string {
     .trim();
 }
 
-/** Inline token comments often lead with a (sometimes stale) hex — the
- *  swatch shows the real value, so drop the duplicate and keep the usage. */
+/** Inline token comments often lead with a (sometimes stale) hex or length —
+ *  the row shows the real value, so drop the duplicate and keep the usage. */
 export function cleanNote(note: string | null): string | null {
   if (!note) return null;
-  const cleaned = note.replace(/^#[0-9a-fA-F]{3,8}\s*—?\s*/, "").trim();
+  const cleaned = note.replace(/^(#[0-9a-fA-F]{3,8}|\d+(\.\d+)?(px|rem|em))\s*—?\s*/, "").trim();
   return cleaned || null;
 }
 
