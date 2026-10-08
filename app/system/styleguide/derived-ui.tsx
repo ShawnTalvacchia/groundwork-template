@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/Badge";
+import { REACH_LABEL } from "@/lib/reach";
 import { getStyleguide, type Reach, type TokenDef, type TokenSection } from "@/lib/styleguide";
 
 // Shared display pieces for the derived styleguide pages. Server-only —
@@ -106,13 +107,6 @@ export function SgSection({
 /** Who reaches for a token or component, from the census. The shared Badge
  *  in its quiet tone, so it reads as a mark rather than as more of the name
  *  beside it; the word carries the meaning on every row. */
-const REACH_LABEL: Record<Reach, string> = {
-  product: "product",
-  dashboard: "dashboard",
-  both: "both",
-  none: "unused",
-};
-
 export function ReachTag({ reach }: { reach: Reach | undefined }) {
   if (!reach) return null;
   return <Badge>{REACH_LABEL[reach]}</Badge>;

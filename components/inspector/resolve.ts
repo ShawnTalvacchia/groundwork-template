@@ -1,3 +1,6 @@
+import { REACH_LABEL } from "@/lib/reach";
+import type { ComponentDetail, Reach, SiblingGroup } from "@/lib/styleguide";
+
 /**
  * Client-side resolution for the element inspector: turn a pinned element's
  * computed styles back into design-system token NAMES. Token names are the
@@ -14,7 +17,8 @@
  *
  * No "use client" directive on purpose: these are plain functions imported
  * only by the overlay (see component-patterns.md on style constants for the
- * general rule).
+ * general rule). What it takes from lib/styleguide.ts is types only, which
+ * compile away; a value from there would pull `node:fs` into the browser.
  */
 
 export interface InspectorToken {
@@ -23,16 +27,14 @@ export interface InspectorToken {
   utility: string | null; // "text-fg-primary" — the Tailwind name, if mapped
 }
 
-export interface InspectorComponent {
-  name: string;
-  file: string;
-  docblock: string | null;
-  signature: string[] | null;
-  /** Root tags this component renders — disambiguates shared skins
-   *  (Button and LinkButton wear the same base classes on different tags). */
-  rootTags: string[];
-  variants: { map: string; name: string; classes: string }[];
-  usage: { count: number; files: string[] };
+/** A shared component as the feed serves it: everything the build derives
+ *  from its file, so this type cannot fall behind the parser, plus whose it
+ *  is and where its styleguide entry sits. */
+export interface InspectorComponent extends ComponentDetail {
+  /** Who reaches for it: the census the styleguide labels with. */
+  reach: Reach;
+  /** Its entry on the styleguide's components page. */
+  url: string;
 }
 
 export interface InspectorPattern {
@@ -115,7 +117,8 @@ function push(map: Map<string, InspectorToken[]>, key: string, t: InspectorToken
 }
 
 /** Build the value → token-name index for the CURRENT theme. `probe` must be
- *  a rendered element the caller owns (the overlay passes a hidden div). */
+ *  an element the caller owns that draws no box (`display: none`), so a
+ *  length reads back from style, exact at any page zoom, never from layout. */
 export function buildIndex(tokens: InspectorToken[], probe: HTMLElement): TokenIndex {
   const index: TokenIndex = {
     colors: new Map(),
@@ -169,8 +172,25 @@ export function buildIndex(tokens: InspectorToken[], probe: HTMLElement): TokenI
 const TRANSPARENT = new Set(["rgba(0, 0, 0, 0)", "transparent"]);
 
 /** Several tokens can resolve to one value (white is a surface AND a text
- *  color). The property being reported disambiguates: put the token family
- *  that property draws from first, keep the rank order within each half. */
+ *  color; --radius-sm and --space-sm are both 8px). The property being
+ *  reported disambiguates: put the token family that property draws from
+ *  first, keep the rank order within each half.
+ *
+ *  Every reported property must go through this. It is not a nicety on top of
+ *  rank() — rank() cannot separate the radius/space collision at all, and on
+ *  the full feed it only appears to, because the @theme layer retargets
+ *  --space-sm (via --spacing-sm) and gives it a utility while --radius-sm
+ *  retargets nothing and gets none. On a gated deploy tokensFromStylesheets()
+ *  drops every utility, both tokens rank equal, and the stable sort falls
+ *  through to declaration order, where --radius-* is written first. Padding
+ *  used to skip this call and reported --radius-sm for an 8px pad.
+ *
+ *  A length takes its own family or nothing. A font-size is never a spacing
+ *  token, however equal the pixels: a container inheriting the browser's
+ *  16px reported --space-lg. So for these properties the other families are
+ *  dropped, and a value only they match reads as "not a token". Colors keep
+ *  the other families behind their own, since brand text and a status fill
+ *  are real tokens from outside the property's usual family. */
 const PREFER: Record<string, RegExp> = {
   color: /^--text-/,
   background: /^--(surface|brand|status)-/,
@@ -181,10 +201,13 @@ const PREFER: Record<string, RegExp> = {
   gap: /^--space-/,
 };
 
+const OWN_FAMILY_ONLY = new Set(["font-size", "border-radius", "padding", "gap"]);
+
 function byProperty(property: string, tokens: InspectorToken[]): InspectorToken[] {
   const re = PREFER[property];
   if (!re) return tokens;
-  return [...tokens.filter((t) => re.test(t.name)), ...tokens.filter((t) => !re.test(t.name))];
+  const own = tokens.filter((t) => re.test(t.name));
+  return OWN_FAMILY_ONLY.has(property) ? own : [...own, ...tokens.filter((t) => !re.test(t.name))];
 }
 
 /** Resolve one element's computed styles against the index. Only properties
@@ -222,9 +245,7 @@ export function resolveElement(el: Element, index: TokenIndex): TokenMatch[] {
   }
 
   const sides = [cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft];
-  for (const v of [...new Set(sides)]) {
-    if (v !== "0px") out.push({ property: "padding", value: v, tokens: index.lengths.get(v) ?? [] });
-  }
+  for (const v of [...new Set(sides)]) length("padding", v);
   if ((cs.display.includes("flex") || cs.display.includes("grid")) && cs.gap !== "normal") {
     for (const v of [...new Set(cs.gap.split(" "))]) length("gap", v);
   }
@@ -309,9 +330,31 @@ export function identifyComponent(
 
 /** Fallback token list when the data route is unreachable (a gated deploy):
  *  read :root custom properties straight from the same-origin stylesheets.
- *  Names and current values only — no authored chains, no utilities. */
+ *  Names and current values only — no authored chains, no utilities.
+ *
+ *  Every rule is walked, not just the top level, because compiled CSS does
+ *  not keep :root flat, and how it nests depends on the build. Tailwind
+ *  writes its theme variables inside `@layer theme`, a mobile override sits
+ *  inside `@media`, and the fallback the compiler adds for `color-mix()` is
+ *  an `@supports` block: unminified, it sits inside :root, and every later
+ *  declaration moves into a nested rule; minified, :root is split around it.
+ *  A reader of top-level :root rules alone missed the theme layer in every
+ *  build, and in dev reported every token after the first `color-mix()` as
+ *  off the design system. */
 export function tokensFromStylesheets(): InspectorToken[] {
   const names = new Set<string>();
+  const walk = (rules: CSSRuleList, underRoot: boolean) => {
+    for (const rule of Array.from(rules)) {
+      const root = underRoot || (rule instanceof CSSStyleRule && rule.selectorText.includes(":root"));
+      const { style, cssRules } = rule as CSSRule & { style?: CSSStyleDeclaration; cssRules?: CSSRuleList };
+      if (root && style) {
+        for (const prop of Array.from(style)) {
+          if (prop.startsWith("--")) names.add(prop);
+        }
+      }
+      if (cssRules) walk(cssRules, root);
+    }
+  };
   for (const sheet of Array.from(document.styleSheets)) {
     let rules: CSSRuleList;
     try {
@@ -319,17 +362,17 @@ export function tokensFromStylesheets(): InspectorToken[] {
     } catch {
       continue;
     }
-    for (const rule of Array.from(rules)) {
-      if (!(rule instanceof CSSStyleRule) || !rule.selectorText.includes(":root")) continue;
-      for (const prop of Array.from(rule.style)) {
-        if (prop.startsWith("--")) names.add(prop);
-      }
-    }
+    walk(rules, false);
   }
   return [...names].map((name) => ({ name, raw: "", utility: null }));
 }
 
-/* ── The carry-back block ─────────────────────────────────────────────── */
+/* ── The report: one reading of a pin ─────────────────────────────────────
+   A pin is read once, against the feed, into plain data: no DOM node, no
+   lookup left for a renderer to make. The panel and the copied block both
+   render from this alone, so they cannot disagree about what was pinned, and
+   anything else that needs the selection (an edit surface, say) can take it
+   without the panel. */
 
 export interface PinnedContext {
   element: Element;
@@ -337,59 +380,233 @@ export interface PinnedContext {
   matches: TokenMatch[];
 }
 
-function describeElement(el: Element): string {
-  const tag = el.tagName.toLowerCase();
-  const id = el.id ? ` id="${el.id}"` : "";
-  const cls = typeof el.className === "string" && el.className ? ` class="${el.className}"` : "";
-  return `<${tag}${id}${cls}>`;
+export interface SiblingReport {
+  reason: SiblingGroup["reason"];
+  /** What the group shares: a module's name, or a word of the name. */
+  shared: string;
+  /** The module's path for a `module` group; null for a `name` group. */
+  file: string | null;
+  /** How many share it, the pinned component included. */
+  total: number;
+  /** The others, each with its file and its styleguide entry. */
+  others: { name: string; file: string; url: string }[];
 }
 
-/** One markdown block, shaped to paste into an LLM session. Voice rules
- *  apply (short chunks, no em dashes). */
-export function buildContextBlock(data: InspectorData | null, pinned: PinnedContext): string {
+/** An element as the report names it: enough to recognize it, nothing live. */
+export interface NodeReport {
+  tag: string;
+  id: string | null;
+  classes: string[];
+}
+
+/** How many ancestors the report names, nearest first. Enough to place an
+ *  element in its section; ↑ in the panel goes as far as `body`. */
+const TRAIL = 4;
+
+export interface PinReport {
+  project: string | null;
+  page: string;
+  /** The feed was refused: tokens come from the page's stylesheets, and
+   *  nothing about components, rules or docs is known. */
+  gated: boolean;
+  element: NodeReport & {
+    text: string | null;
+    /** The nearest ancestors, parent first, `html` never among them. */
+    ancestors: NodeReport[];
+    /** How many more ancestors sit above the ones named, `html` excluded. */
+    moreAbove: number;
+  };
+  component: {
+    name: string;
+    file: string;
+    reach: Reach;
+    /** Its entry on the styleguide's components page. */
+    url: string;
+    docblock: string | null;
+    whenToUse: string | null;
+    whenNot: string | null;
+    /** One per variant map: its options, and the ones this element wears. */
+    variants: { map: string; options: string[]; active: string[] }[];
+    usage: { count: number; files: string[] };
+    siblings: SiblingReport[];
+  } | null;
+  tokens: TokenMatch[];
+  /** Shared UI rules naming the pinned component. A rule that names it
+   *  constrains any edit, so these travel whole. */
+  rules: InspectorPattern[];
+  /** The rest, which travel as titles: discoverable without spending a
+   *  session's context on rules that do not apply here. */
+  otherRules: InspectorPattern[];
+  /** Where a missing rule would be written; null when that doc is absent. */
+  rulesDocUrl: string | null;
+  docs: { label: string; path: string | null; url: string }[];
+}
+
+function nodeOf(el: Element): NodeReport {
+  return {
+    tag: el.tagName.toLowerCase(),
+    id: el.id || null,
+    classes: typeof el.className === "string" ? el.className.trim().split(/\s+/).filter(Boolean) : [],
+  };
+}
+
+export function describePin(
+  data: InspectorData | null,
+  pinned: PinnedContext,
+  where: { gated: boolean; page: string }
+): PinReport {
   const el = pinned.element;
-  const lines: string[] = [];
   const text = (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
+  const known = new Map((data?.components ?? []).map((c) => [c.name, c]));
+  const id = pinned.component;
+  const c = id?.component;
+  const rules = c ? rulesFor(data, c.name) : [];
+  const ruleTitles = new Set(rules.map((p) => p.title));
+
+  const ancestors: NodeReport[] = [];
+  let moreAbove = 0;
+  for (let up = el.parentElement; up && up !== document.documentElement; up = up.parentElement) {
+    if (ancestors.length < TRAIL) ancestors.push(nodeOf(up));
+    else moreAbove++;
+  }
+
+  return {
+    project: data?.project || null,
+    page: where.page,
+    gated: where.gated,
+    element: {
+      ...nodeOf(el),
+      text: text || null,
+      ancestors,
+      moreAbove,
+    },
+    component:
+      id && c
+        ? {
+            name: c.name,
+            file: c.file,
+            reach: c.reach,
+            url: c.url,
+            docblock: c.docblock,
+            whenToUse: c.whenToUse,
+            whenNot: c.whenNot,
+            variants: [...new Set(c.variants.map((v) => v.map))].map((map) => {
+              const options = c.variants.filter((v) => v.map === map).map((v) => v.name);
+              return { map, options, active: id.activeVariants.filter((a) => options.includes(a)) };
+            }),
+            usage: c.usage,
+            siblings: c.siblings.map((g) => ({
+              reason: g.reason,
+              shared: g.shared,
+              file: g.file,
+              total: g.members.length,
+              others: g.members
+                .filter((m) => m !== c.name)
+                .flatMap((m) => {
+                  const s = known.get(m);
+                  return s ? [{ name: s.name, file: s.file, url: s.url }] : [];
+                }),
+            })),
+          }
+        : null,
+    tokens: pinned.matches,
+    rules,
+    otherRules: (data?.patterns ?? []).filter((p) => !ruleTitles.has(p.title)),
+    rulesDocUrl: data?.patternsDocUrl || null,
+    docs: data?.docs ?? [],
+  };
+}
+
+/* ── The words both renderers share ─────────────────────────────────────
+   One home for each phrase the panel and the block both print, so the two
+   cannot drift into different sentences about the same fact. */
+
+/** "section#how", "div.grid", "main": the tag, then its id or else its first
+ *  class. Short enough for a trail, specific enough to find in a page. */
+export function nodeLabel(n: NodeReport): string {
+  return `${n.tag}${n.id ? `#${n.id}` : n.classes[0] ? `.${n.classes[0]}` : ""}`;
+}
+
+/** "2 more levels above": the ancestors the report does not name, counted
+ *  in words, since an ellipsis reads as skipping the nearest ones. */
+export function levelsAbove(n: number): string {
+  return `${n} more level${n === 1 ? "" : "s"} above`;
+}
+
+/** "1 of 2 sharing buttonStyles" · "1 of 3 named Toggle". */
+export const SIBLING_VERB: Record<SiblingGroup["reason"], string> = {
+  module: "sharing",
+  name: "named",
+};
+
+/** What goes before item `i` of `n` in a list read as prose: "A", "A and B",
+ *  "A, B and C". */
+export function listSeparator(i: number, n: number): string {
+  return i === 0 ? "" : i === n - 1 ? " and " : ", ";
+}
+
+/** What the callsite count counts, said every time it is printed. */
+export function usageLine(usage: { count: number; files: string[] }): string {
+  const scope = "outside its own file and the styleguide's demo registry";
+  return usage.count > 0
+    ? `${usage.count} callsite${usage.count === 1 ? "" : "s"} ${scope}: ${usage.files.join(", ")}`
+    : `No callsites ${scope}`;
+}
+
+/** "primary of primary/secondary/ghost", or "one of sm/md" when the element
+ *  wears none of a map's options. */
+export function variantPhrase(v: { options: string[]; active: string[] }): string {
+  return `${v.active.length ? `${v.active.join("/")} of` : "one of"} ${v.options.join("/")}`;
+}
+
+/** One markdown block, shaped to paste into an LLM session, rendered from the
+ *  report alone. Voice rules apply (short chunks, no em dashes). */
+export function buildContextBlock(r: PinReport): string {
+  const lines: string[] = [];
+  const section = (heading: string) => lines.push("", `### ${heading}`);
 
   lines.push(`## UI context from the element inspector (read-only)`);
   lines.push("");
-  if (data?.project) lines.push(`Project: ${data.project}`);
-  lines.push(`Page: ${window.location.pathname}`);
-  lines.push(`Element: ${describeElement(el)}`);
+  if (r.project) lines.push(`Project: ${r.project}`);
+  lines.push(`Page: ${r.page}`);
+  const { tag, id, classes, text, ancestors, moreAbove } = r.element;
+  lines.push(`Element: <${tag}${id ? ` id="${id}"` : ""}${classes.length ? ` class="${classes.join(" ")}"` : ""}>`);
+  if (ancestors.length) {
+    const above = moreAbove ? ` (${levelsAbove(moreAbove)})` : "";
+    lines.push(`Inside: ${[...ancestors].reverse().map(nodeLabel).join(" > ")}${above}`);
+  }
   if (text) lines.push(`Text: "${text}"`);
-  if (pinned.component) {
-    const { component: c, activeVariants } = pinned.component;
-    lines.push("");
-    lines.push(`### Component: ${c.name} (${c.file})`);
-    if (c.docblock) lines.push(`About: ${c.docblock}`);
-    if (c.variants.length) {
-      // One clause per variant map: "primary (of primary, secondary, ghost)".
-      const parts = [...new Set(c.variants.map((v) => v.map))].map((mapName) => {
-        const options = c.variants.filter((v) => v.map === mapName).map((v) => v.name);
-        const active = activeVariants.filter((a) => options.includes(a));
-        return active.length
-          ? `${active.join("/")} (of ${options.join(", ")})`
-          : `one of ${options.join(", ")}`;
-      });
-      lines.push(`Variant here: ${parts.join(" · ")}`);
-    }
-    lines.push(
-      c.usage.count > 0
-        ? `Used ${c.usage.count} time${c.usage.count === 1 ? "" : "s"} outside the styleguide: ${c.usage.files.join(", ")}`
-        : `No callsites outside the styleguide yet`
-    );
+  // Without this line a gated block reads like page-local markup: no
+  // component section either way, for two different reasons.
+  if (r.gated) lines.push(`Record: gated on this deploy, so this block carries token names only.`);
+
+  const c = r.component;
+  if (c) {
+    section(`Component: ${c.name} (${c.file})`);
+    lines.push(`Census: ${REACH_LABEL[c.reach]}, by who imports it`);
+    lines.push(`About: ${c.docblock ?? `no docblock in ${c.file}`}`);
+    lines.push(`When: ${c.whenToUse ?? "no @when tag in its docblock"}`);
+    lines.push(`Not for: ${c.whenNot ?? "no @whenNot tag in its docblock"}`);
+    if (c.variants.length) lines.push(`Variant here: ${c.variants.map(variantPhrase).join(" · ")}`);
+    lines.push(usageLine(c.usage));
     // Only the gap is stated here; rules that DO name it get their own
     // section below, in full, rather than being listed twice.
-    if (rulesFor(data, c.name).length === 0) {
-      lines.push(`Rules for this component: none recorded in component-patterns.md`);
+    if (r.rules.length === 0) lines.push(`Rules for this component: none recorded in component-patterns.md`);
+
+    section(`Siblings`);
+    if (c.siblings.length === 0) {
+      lines.push(`- none: no other component in the inventory shares a style module or a word of its name`);
+    }
+    for (const g of c.siblings) {
+      const via = g.file ? `${g.shared} (${g.file})` : g.shared;
+      const others = g.others.map((o, i) => `${listSeparator(i, g.others.length)}${o.name} (${o.file})`).join("");
+      lines.push(`- 1 of ${g.total} ${SIBLING_VERB[g.reason]} ${via}, with ${others}`);
     }
   }
-  lines.push("");
-  lines.push(`### Tokens in play`);
-  if (pinned.matches.length === 0) {
-    lines.push(`- none resolved on this element`);
-  }
-  for (const m of pinned.matches) {
+
+  section(`Tokens in play`);
+  if (r.tokens.length === 0) lines.push(`- none resolved on this element`);
+  for (const m of r.tokens) {
     const best = m.tokens[0];
     if (best) {
       const util = best.utility ? ` · ${best.utility}` : "";
@@ -399,32 +616,23 @@ export function buildContextBlock(data: InspectorData | null, pinned: PinnedCont
       lines.push(`- ${m.property}: ${m.value} (no token matches: off the design system)`);
     }
   }
-  if (data?.patterns.length) {
-    // Rules naming the pinned component are constraints on any edit, so they
-    // travel in full. The rest travel as titles: still discoverable, without
-    // spending the session's context on rules that do not apply here.
-    const named = pinned.component ? rulesFor(data, pinned.component.component.name) : [];
-    const namedTitles = new Set(named.map((p) => p.title));
-    const others = data.patterns.filter((p) => !namedTitles.has(p.title));
-    if (named.length) {
-      lines.push("");
-      lines.push(`### Rules naming this component`);
-      for (const p of named) lines.push(`- ${p.title}: ${p.body}`);
-    }
-    if (others.length) {
-      lines.push("");
-      lines.push(`### Other shared UI rules (titles only)`);
-      for (const p of others) lines.push(`- ${p.title}`);
-    }
+
+  if (r.rules.length) {
+    section(`Rules naming this component`);
+    for (const p of r.rules) lines.push(`- ${p.title}: ${p.body}`);
   }
-  if (data?.docs.length) {
-    lines.push("");
-    lines.push(`### Project docs`);
-    // Repo-relative paths, not URLs: a session opens files, it does not browse.
-    // Pages with no file behind them fall back to their route.
-    for (const d of data.docs) {
-      lines.push(`- ${d.label}: ${d.path ?? d.url}`);
-    }
+  if (r.otherRules.length) {
+    section(`Other shared UI rules (titles only)`);
+    for (const p of r.otherRules) lines.push(`- ${p.title}`);
+  }
+
+  if (c || r.docs.length) {
+    section(`Project docs`);
+    // Repo-relative paths, not URLs: a session opens files, it does not
+    // browse. A page with no file behind it, the styleguide entry included,
+    // falls back to its route.
+    if (c) lines.push(`- ${c.name} in the styleguide: ${c.url}`);
+    for (const d of r.docs) lines.push(`- ${d.label}: ${d.path ?? d.url}`);
   }
   return lines.join("\n");
 }

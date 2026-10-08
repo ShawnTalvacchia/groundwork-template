@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import { getComponentDetails, getStyleguide, utilityByRootToken } from "@/lib/styleguide";
+import { getCensus, getComponentDetails, getStyleguide, utilityByRootToken } from "@/lib/styleguide";
 import { PROJECT_NAME } from "@/lib/project";
 import { headingSlug } from "@/lib/system";
 
@@ -37,6 +37,11 @@ interface Pattern {
 
 /** Repo-relative path (for a session to open) and its rendered page. */
 const PATTERNS_DOC = "implementation/component-patterns.md";
+
+/** The styleguide's components page, which anchors every shared component's
+ *  entry at its name (`id={detail.name}`), so `#<Name>` lands on it. A route,
+ *  not a doc: it always exists, and there is no file behind it to open. */
+const COMPONENTS_PAGE = "/system/styleguide/components";
 
 /** True when a doc exists under this project's `docs/`. Load-bearing for the
  *  export: `/system/docs/<path>` is statically generated with dynamicParams
@@ -86,9 +91,16 @@ export async function GET() {
   );
 
   // Full details, not just the inventory: docblock (the component's one-home
-  // "why"), the static class signature that identifies server components,
-  // variant maps, and the usage census. All derived from component source.
-  const components = getComponentDetails();
+  // "why") and its @when / @whenNot, the static class signature that
+  // identifies server components, variant maps, callsites and siblings. All
+  // derived from component source. Beside them, whose each one is, from the
+  // census the styleguide labels with, and where its entry is.
+  const census = getCensus().components;
+  const components = getComponentDetails().map((c) => ({
+    ...c,
+    reach: census.get(c.name) ?? "none",
+    url: `${COMPONENTS_PAGE}#${c.name}`,
+  }));
 
   return NextResponse.json({
     project: PROJECT_NAME,
@@ -119,7 +131,7 @@ export async function GET() {
             },
           ]
         : []),
-      { label: "The live styleguide", path: null, url: "/system/styleguide/components" },
+      { label: "The live styleguide", path: null, url: COMPONENTS_PAGE },
     ],
   });
 }

@@ -480,6 +480,33 @@ export interface ComponentDetail extends ComponentEntry {
   /** Callsites outside the component's own file and the styleguide's demo
    *  registry. */
   usage: { count: number; files: string[] };
+  /** The other shared components it belongs with, each group labelled by a
+   *  reason a reader can check from the inventory (`SiblingGroup`). Empty
+   *  when nothing qualifies. */
+  siblings: SiblingGroup[];
+}
+
+/** Shared components grouped by something they verifiably share. Two reasons
+ *  only, because a grouping that cannot name its reason is a false one:
+ *
+ *  - `module` — they wear the same same-dir style module: each imports it,
+ *    and it carries a variant map or a class string the component names
+ *    (Button and LinkButton both wear `buttonStyles`). A shared helper with
+ *    no styling in it is not a skin.
+ *  - `name` — their names share a PascalCase word (Toggle, PillToggle and
+ *    ThemeToggle share `Toggle`).
+ *
+ *  A group is reported only when it adds a component no stronger group has
+ *  already named, so a pair that shares a skin AND a word appears once, by
+ *  its skin. */
+export interface SiblingGroup {
+  reason: "module" | "name";
+  /** What they share: the module's name ("buttonStyles") or the word. */
+  shared: string;
+  /** The module's path, for a `module` group; null for a `name` group. */
+  file: string | null;
+  /** Every component in the group, this one included, in inventory order. */
+  members: string[];
 }
 
 /** The component's own doc comment, split into prose and the two guide tags.
@@ -542,6 +569,18 @@ function parseStyleSource(raw: string): { consts: Map<string, string>; maps: Com
   return { consts, maps };
 }
 
+/** A run of tokens reads as classes when most carry a hyphen or a colon, so
+ *  a prose string can never pass for styling. */
+function classy(tokens: string[]): boolean {
+  return tokens.filter((t) => t.includes("-") || t.includes(":")).length >= tokens.length * 0.6;
+}
+
+/** "ThemeToggle" → ["Theme", "Toggle"]; an acronym stays whole ("URLInput"
+ *  → ["URL", "Input"]). */
+function nameWords(name: string): string[] {
+  return [...new Set(name.match(/[A-Z]+(?![a-z])|[A-Z][a-z0-9]*/g) ?? [name])];
+}
+
 let detailCache: ComponentDetail[] | null = null;
 
 export function getComponentDetails(): ComponentDetail[] {
@@ -551,6 +590,8 @@ export function getComponentDetails(): ComponentDetail[] {
   // real callsite, its demo registry is not.
   const scanned = scanFiles(CENSUS_EXCLUDE);
   const moduleCache = new Map<string, { consts: Map<string, string>; maps: ComponentVariant[] }>();
+  /** Component name → the same-dir style modules it wears, by path. */
+  const skins = new Map<string, string[]>();
 
   detailCache = inventory.map((c) => {
     const raw = fs.readFileSync(path.join(process.cwd(), c.file), "utf-8");
@@ -562,6 +603,7 @@ export function getComponentDetails(): ComponentDetail[] {
     const own = parseStyleSource(raw);
     const consts = new Map(own.consts);
     const maps = [...own.maps];
+    const worn: string[] = [];
     for (const im of raw.matchAll(/from\s+["']\.\/(\w+)["']/g)) {
       const modPath = path.join(path.dirname(c.file), `${im[1]}.ts`);
       if (!moduleCache.has(modPath)) {
@@ -576,7 +618,14 @@ export function getComponentDetails(): ComponentDetail[] {
       const mod = moduleCache.get(modPath)!;
       for (const [k, v] of mod.consts) consts.set(k, v);
       maps.push(...mod.maps);
+      // Worn, not merely imported: the module carries styling this file
+      // names. A module that does not resolve parses empty and never counts.
+      const styled =
+        mod.maps.some((v) => raw.includes(v.map)) ||
+        [...mod.consts].some(([k, v]) => raw.includes(k) && classy(v.trim().split(/\s+/)));
+      if (styled) worn.push(`${path.posix.dirname(c.file)}/${im[1]}.ts`);
     }
+    skins.set(c.name, [...new Set(worn)]); // a type import and a value import are one module
 
     // Signature: every class-ish string in the file — className attributes
     // AND template literals assigned to variables (LinkButton builds its
@@ -598,8 +647,6 @@ export function getComponentDetails(): ComponentDetail[] {
         // SERVER components by this string. An unterminated expression breaks
         // the segment the way a resolvable one does, keeping the valid prefix.
         .replace(/\$\{[\s\S]*$/, BREAK);
-    const classy = (tokens: string[]) =>
-      tokens.filter((t) => t.includes("-") || t.includes(":")).length >= tokens.length * 0.6;
     let signature: string[] | null = null;
     const candidates = [
       ...[...raw.matchAll(/className="([^"]+)"/g)].map((m) => m[1]),
@@ -646,8 +693,36 @@ export function getComponentDetails(): ComponentDetail[] {
       rootTags,
       variants,
       usage: { count, files: files.sort() },
+      siblings: [],
     };
   });
+
+  // Siblings need the whole inventory, so they are a second pass.
+  const byModule = new Map<string, string[]>();
+  const byWord = new Map<string, string[]>();
+  const join = (map: Map<string, string[]>, key: string, name: string) =>
+    map.set(key, [...(map.get(key) ?? []), name]);
+  for (const d of detailCache) {
+    for (const m of skins.get(d.name) ?? []) join(byModule, m, d.name);
+    for (const w of nameWords(d.name)) join(byWord, w, d.name);
+  }
+  for (const d of detailCache) {
+    const named = new Set([d.name]);
+    const offer = (group: SiblingGroup) => {
+      if (group.members.every((m) => named.has(m))) return;
+      d.siblings.push(group);
+      for (const m of group.members) named.add(m);
+    };
+    for (const file of skins.get(d.name) ?? []) {
+      offer({ reason: "module", shared: path.posix.basename(file, ".ts"), file, members: byModule.get(file)! });
+    }
+    // A name's last word is what the thing is (a ThemeToggle is a toggle);
+    // the words before it say what it is for. So the last word's group,
+    // the likelier one to do the same job, comes first.
+    for (const w of nameWords(d.name).reverse()) {
+      offer({ reason: "name", shared: w, file: null, members: byWord.get(w)! });
+    }
+  }
   return detailCache;
 }
 
