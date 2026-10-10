@@ -99,10 +99,10 @@ read-when: When any task is completed or blocked
 
 > **Member boards in a run — delete on a standalone board**
 >
-> What makes this surface good, written by the survey kind, plus the V items the basic layer wrote and did not walk. The deepen kind works from here and walks every item, device-tested. A new idea that arrives during the basic layer is filed here, never into the current build.
+> What makes this surface good, written by the survey kind, plus the V items the basic layer wrote and did not walk — written here at its close and deleted from the walkthrough. The deepen kind works from here and walks every item, device-tested. A new idea that arrives during the basic layer is filed here, never into the current build.
 
 - *(what the surface still needs, from the survey)*
-- *(deferred V item — moved here unwalked at the basic layer's close)*
+- *(deferred V item — written here unwalked at the basic layer's close, and deleted from the walkthrough)*
 
 ---
 

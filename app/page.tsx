@@ -26,9 +26,12 @@ export default function Home() {
         <p className="max-w-prose text-base text-fg-secondary">{PROJECT_DESCRIPTION}</p>
       </div>
       <div className="flex flex-wrap items-center gap-md">
+        {/* fg-inverse, not fg-white, for the primary button's reason
+            (components/ui/Button.tsx): white on the lifted dark brand fails
+            the small-text floor. Re-measure if you re-skin. */}
         <Link
           href="/system"
-          className="inline-flex items-center rounded-panel bg-brand-main px-lg py-md text-sm font-semibold text-fg-white transition-colors hover:bg-brand-strong"
+          className="inline-flex items-center rounded-panel bg-brand-main px-lg py-md text-sm font-semibold text-fg-inverse transition-colors hover:bg-brand-strong"
         >
           Open the /system dashboard →
         </Link>

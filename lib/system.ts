@@ -2086,9 +2086,9 @@ export interface WalkthroughCounts {
   checks: number;
   walked: number;
   glances: number;
-  /** Bullets carrying no identifier — which is what the Decisions log is, and
-   *  in practice the only place they occur (the page already renders them
-   *  unornamented on exactly that reading). It is the count that makes a
+  /** Bullets carrying no identifier, and every line of the Decisions log
+   *  whatever it carries — in practice the log is the only place they occur
+   *  (the page already renders them unornamented on exactly that reading). It is the count that makes a
    *  walkthrough asking nothing worth a card: a basic layer that passed leaves
    *  calls, checks and walked at zero and its decisions on the file, and
    *  without this count the board said nothing over all of them. The limit is
@@ -2099,6 +2099,13 @@ export interface WalkthroughCounts {
 
 const ITEM_RE = /^\s*-\s+(?:\[([ xX])\]\s+)?\*\*(.+?)\*\*\s*(.*)$/;
 const ID_RE = /^(O\d+|V\d+(?:\.\d+)?|G\d+)[.:]?\s*/;
+/** The Decisions log's heading. A line there is a note whatever it starts
+ *  with: the never-reuse rule is what lets `**O2 ruled (PO) …**` name the call
+ *  it settled, and reading that id as a call put a settled item back in the
+ *  close gate, so an empty O list showed open calls. Keyed on the heading's
+ *  lead, since the mold's "during walkthrough" tail is the part a board
+ *  rewords. The id stays in the line's text. */
+const DECISIONS_LOG_RE = /^decisions\b/i;
 
 function itemKind(id: string | null): WalkthroughItem["kind"] {
   if (!id) return "note";
@@ -2215,7 +2222,7 @@ function parseWalkthrough(slug: string, raw: string): Walkthrough {
     if (m) {
       const box = m[1];
       const bold = m[2].trim();
-      const idm = bold.match(ID_RE);
+      const idm = DECISIONS_LOG_RE.test(section.heading) ? null : bold.match(ID_RE);
       const id = idm ? idm[1] : null;
       if (!group) {
         group = { heading: null, items: [] };

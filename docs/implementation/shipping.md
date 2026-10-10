@@ -110,6 +110,20 @@ Do not deploy the dashboard at all. Run it with `npm run dev` while you work.
 
 **Deferring is a decision.** Choosing C at kickoff is fine, as long as it is recorded in `decisions.md` with what would change your mind. What is not fine is deploying without having chosen, which is why the gate fails closed in production.
 
+### Skipping builds on doc-only pushes
+
+Most pushes are the record: boards, trackers, the ROADMAP. Each one builds a deployment, and on a host that stores every deployment against a cap, that adds up fast.
+
+**Skip them only on a deployment that does not serve the record.** That is B's public deployment, or C's product. Under A, and on B's private deployment, `/system` renders from `docs/`, so a doc-only push is exactly the change that has to deploy.
+
+Set the skip on that deployment alone, in the host's settings, not in a file in the repo. A `vercel.json` applies to every deployment built from the repo, which under B is the private one too. On Vercel it is Project Settings → Git → Ignored Build Step, with this command:
+
+```
+git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- . ':(exclude)docs' ':(exclude)*.md'
+```
+
+It exits 0, which skips the build, when nothing outside `docs/` and Markdown files changed.
+
 ## Configuring the gate
 
 Set on the deployment, not in code:

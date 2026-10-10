@@ -1,6 +1,6 @@
 # Changelog
 
-Every change the template ships that a project built on it may want. Numbered, newest first, never renumbered.
+Every change the template ships that a project built on it may want, from entry 1 on. Numbered, newest first, never renumbered. Work older than entry 1 is not listed here: diff for it, as entry 1's last step says.
 
 **Your project's side is `docs/upstream.md`.** Its `template-entry:` is the last entry you reviewed. The entries above it are waiting. Taking them is the upgrade kind, in `docs/CONTRIBUTING.md` under The upgrade kind.
 
@@ -15,6 +15,41 @@ Every change the template ships that a project built on it may want. Numbered, n
 **Every entry names what it builds on.** Its **Depends on** line lists the rules and code it assumes that are older than this changelog, each with the commit that shipped it. If your project was copied before one of those commits, port that first, or the entry will not apply cleanly. Earlier entries are never listed, because you take entries in order.
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
+
+## 20 · The close stops pointing at a section no board has, the O list states its three gates, and five smaller fixes
+
+**Class:** parser · convention
+**Depends on:** the run and the Deepening section (`a79bb71`) · `## Raised` (`805e295`) · the walkthrough page and its parse (`8542a40`) · one page per board (`1750461`) · the primary button's `fg-inverse` label (`3a9e01b`) · chats name themselves (`681cc73`)
+**Resolves:** none
+
+**Does this affect you?** Every project: the rule and mold patches in steps 1 to 3. Steps 4 to 7 are code, each one file. Step 8 is for a project copied before 2026-09-09.
+
+**What changed.**
+
+- **Closing a Phase step 2 no longer points at a section no board has.** It said to check each propagated decision off "in the phase board's Closing Checklist". The product mold has no such section, on purpose: its Close notes card says not to copy the steps. The line above the steps claimed the opposite, that the mold embeds both checklists. Both now say the board does not copy them, and the closing Enforcement line says each step must be done rather than checked off.
+- **The walkthrough mold states the O list's three gates together.** Your own call, on this board's surface, and in a basic layer only the flow- and feature-level ones. The third gate used to sit in the paragraph about V items, where nobody writing an O item would read it. A find about another open board's surface goes to that board's `## Raised`. A detail call in a basic layer goes in the feature doc.
+- **A deferred V item has one home.** At the basic layer's close it is written into the board's Deepening section and deleted from the walkthrough. Four places said "moved" and none said delete, so a check could stand in both lists and be walked in neither. The four now say delete: the walkthrough mold, the product mold's Deepening card, the Basic layer kind in `CONTRIBUTING.md`, and Walkthrough in `product-lifecycle.md`. The product phase's During line says it too.
+- **A Decisions-log line that names its call is no longer counted as an open call.** The walkthrough parse read `O##` wherever it sat. A line like `**O2 ruled (PO) …**` in the Decisions log counted toward the close gate, so a walkthrough with an empty O list showed open calls. Lines under a heading starting "Decisions" are notes now, whatever they start with. The id stays in the text.
+- **The components page ships no duplicate ids.** Every demo renders twice, once per theme pane, and the `Input` demos carried literal ids, so the dark pane's label focused the light pane's field. The demos drop the ids. `Input`'s label wraps its field, which associates the two without one.
+- **Three comments describe the one-board page.** `.sys-callout` in `system.css`, and `DocIndex`, `DocProse` and `RunHeader` in `ui.tsx`, still argued from `/system/phase` stacking every board. Comments only.
+- **The home page's button is readable in dark.** It painted `text-fg-white` on `bg-brand-main`: **2.98:1** in dark against the 4.5:1 floor. It now uses `text-fg-inverse`, as the primary button and the tab badge already do: **7.43:1** light, **5.54:1** dark. Measured on the shipped ramps. Re-measure if you re-skinned.
+- **Skipping builds on doc-only pushes is documented, not shipped.** Most pushes are the record, and each one builds a deployment. A shipped skip would freeze `/system` on every deployment that renders it, the template's default among them. `docs/implementation/shipping.md` → Where the record lives gains a subsection: skip only on a deployment that does not serve the record, set in the host's settings for that deployment, with the command.
+- **The changelog says where it starts.** Its first line promised every change the template ships. Entry 1 already said older work is not tracked, but the header did not. It now does.
+- **One older rule is named here because it was missed.** `681cc73` (2026-09-09) shipped before this changelog. It corrects a false premise: a session can set its own chat title, so it sets it from the convention and asks only when it cannot. If your copy is older, your opening rituals still ask you to rename every chat.
+
+**How to adopt.**
+
+1. **`docs/product-lifecycle.md`:** three sentences. The **Template:** line above the opening steps, Closing a Phase step 2's first sentence (drop "then check it off in the phase board's Closing Checklist"), and the closing **Enforcement:** line. Then the Walkthrough section's deferred-V-item bullet.
+2. **`docs/phases/_walkthrough-template.md`:** the author card's O-list paragraph and its "In a run" paragraph. **`docs/phases/_product-template.md`:** the Deepening card and its second placeholder.
+3. **`docs/CONTRIBUTING.md`:** the Basic layer kind's bullet in The phase pipeline, and the product phase's During line.
+4. **`lib/system.ts`:** `DECISIONS_LOG_RE` beside `ID_RE`, and the one line in `parseWalkthrough` that tests it. The `notes` count's comment changes with it.
+5. **`app/system/styleguide/components/demos.tsx`:** the `Input` entry's four mounts lose their `id`. If your `Input` no longer wraps its field in its label, give each mount an id the pane can make unique instead.
+6. **`app/system/system.css` and `app/system/ui.tsx`:** comments only. Take them if you kept these files; skip them if you rewrote the comments.
+7. **`app/page.tsx`:** `text-fg-white` becomes `text-fg-inverse` on the dashboard link, with the comment above it. If you replaced the home page, check any brand-filled control of your own the same way.
+8. **Only if your copy predates 2026-09-09:** take `681cc73` as a patch to `docs/CONTRIBUTING.md` and the four board molds' session title line. Diff first, since later entries touch the same sections.
+9. **Only if you deploy a build that does not serve `/system`:** read the new subsection in `docs/implementation/shipping.md`.
+
+**Check:** run `npm run dev`. On `/system/styleguide/components`, click the dark pane's "Name" label under `Input`: the dark pane's field takes focus. On `/` in dark, the dashboard link's label is dark on the lifted brand.
 
 ## 19 · A session asks the inspector for any element, with no click and no reload
 

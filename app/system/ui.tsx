@@ -352,9 +352,10 @@ export function BoardCards({ groups }: { groups: BoardGroup[] }) {
 
 /** A run's header row — the run board as the spine of its members.
  *
- *  Shared by the shelf on Overview and Work and by the run's section on
- *  /system/phase, because the shape of a board is the same class of claim as
- *  the order of one, and a second surface may not restate it differently.
+ *  Shared by the shelf on Overview and Work and by a member board's own page,
+ *  above its badge row, because the shape of a board is the same class of
+ *  claim as the order of one, and a second surface may not restate it
+ *  differently.
  *  /system/phase rendered the run board as a full peer section until this was
  *  extracted, so the same run read as a shelf on two surfaces and as a stack
  *  on the third.
@@ -924,11 +925,9 @@ const INDEX_FOLD_ABOVE = 20;
 /** The section index: the doc's own `##` headings as in-page links.
  *
  *  Inline and per-document, under whatever chrome the consumer puts above it —
- *  the badge row on /system/phase, the frontmatter card on the docs route. Not
- *  a sticky rail: `.sys-main` is a centred 880px column, so a rail means
- *  breaking the column or overlaying it, and /system/phase stacks several
- *  documents, so one rail would have to swap contents as the reader scrolls
- *  between them.
+ *  the badge row on a board's page, the frontmatter card on the docs route.
+ *  Not a sticky rail: `.sys-main` is a centred 880px column, so a rail means
+ *  breaking the column or overlaying it.
  *
  *  A block list, never a flex one — a flex parent blockifies its children and
  *  drops every marker. Markers are off here anyway, but the rule is about the
@@ -977,8 +976,8 @@ function DocIndex({
 
 /** Doc prose rendered from markdown, with relative `.md` links resolved to
  *  doc pages under /system. Two routes render doc bodies — the docs route and
- *  the active board on /system/phase — and only the first used to resolve
- *  links, so every board shipped a dead `../CONTRIBUTING.md`. It is in all
+ *  a board's own page, /system/phase/<slug> — and only the first used to
+ *  resolve links, so every board shipped a dead `../CONTRIBUTING.md`. It is in all
  *  three board molds, so every project carried it. One home for both.
  *
  *  `docDir` is the doc's own directory relative to the docs root, so a link

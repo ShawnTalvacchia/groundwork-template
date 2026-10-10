@@ -129,14 +129,17 @@ export const DEMOS: Record<string, DemoEntry> = {
 
   Input: {
     container: "top",
+    // No ids: every mount renders twice, once per theme pane, so a literal id
+    // is a duplicate and its label focuses the other pane's field. The label
+    // wraps its input, which associates the two without one.
     states: [
-      { label: "label + value", mount: <Input id="sg-in-1" label="Name" defaultValue="Ada Lovelace" /> },
-      { label: "placeholder", mount: <Input id="sg-in-2" label="Name" placeholder="Ada Lovelace" /> },
+      { label: "label + value", mount: <Input label="Name" defaultValue="Ada Lovelace" /> },
+      { label: "placeholder", mount: <Input label="Name" placeholder="Ada Lovelace" /> },
       {
         label: "with hint",
-        mount: <Input id="sg-in-3" label="Email" placeholder="you@example.com" hint="We never share it." />,
+        mount: <Input label="Email" placeholder="you@example.com" hint="We never share it." />,
       },
-      { label: "disabled", mount: <Input id="sg-in-4" label="Locked" defaultValue="Read only" disabled /> },
+      { label: "disabled", mount: <Input label="Locked" defaultValue="Read only" disabled /> },
     ],
     paints: [
       { what: "field text", fg: "--text-primary", bg: "--surface-top", floor: TEXT },
