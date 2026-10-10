@@ -16,6 +16,28 @@ Every change the template ships that a project built on it may want, from entry 
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 21 · Next.js 16.3.8 closes three critical advisories: take this entry first
+
+**Class:** parser
+**Depends on:** none
+**Resolves:** none
+
+**Does this affect you?** Every project. Take it before any other entry still waiting: it touches only `package.json` and the lockfile, so it applies on any copy, whatever your marker.
+
+**What changed.**
+
+- **`next` moves from 16.2.12 to 16.3.8,** and the floor in `package.json` from `^16.2.12` to `^16.3.8`. Nothing else in the app changes.
+- **Three advisories are critical, each a remote code execution.** One is in `next/og`'s `ImageResponse`, which `app/opengraph-image.tsx` calls (fixed in 16.3.6). One is in the image optimization API when AVIF files are served, and one is on Windows-hosted servers (both fixed in 16.3.3).
+- **Five more are fixed in 16.3.8.** A server-side request forgery in image optimization (high). Two cache poisonings of SSG and ISR pages on self-hosted deployments, and an information disclosure in metadata image routes (moderate). An information disclosure in the dev server's MCP endpoint (low).
+- **`npm audit` still reports advisories after this.** They sit in the lint and dev chain, not in `next`. That is issue #3, which stays open until upstream allows a fix.
+
+**How to adopt.**
+
+1. Run `npm install next@16.3.8`. It raises the floor in `package.json` and rewrites the lockfile.
+2. Run `npm run check` and `npm run verify`.
+
+**Check:** `npm ls next` prints `next@16.3.8`. `npm audit` lists no advisory under `next`.
+
 ## 20 · The close stops pointing at a section no board has, the O list states its three gates, and five smaller fixes
 
 **Class:** parser · convention
@@ -31,7 +53,7 @@ Every change the template ships that a project built on it may want, from entry 
 - **A deferred V item has one home.** At the basic layer's close it is written into the board's Deepening section and deleted from the walkthrough. Four places said "moved" and none said delete, so a check could stand in both lists and be walked in neither. The four now say delete: the walkthrough mold, the product mold's Deepening card, the Basic layer kind in `CONTRIBUTING.md`, and Walkthrough in `product-lifecycle.md`. The product phase's During line says it too.
 - **A Decisions-log line that names its call is no longer counted as an open call.** The walkthrough parse read `O##` wherever it sat. A line like `**O2 ruled (PO) …**` in the Decisions log counted toward the close gate, so a walkthrough with an empty O list showed open calls. Lines under a heading starting "Decisions" are notes now, whatever they start with. The id stays in the text.
 - **The components page ships no duplicate ids.** Every demo renders twice, once per theme pane, and the `Input` demos carried literal ids, so the dark pane's label focused the light pane's field. The demos drop the ids. `Input`'s label wraps its field, which associates the two without one.
-- **Three comments describe the one-board page.** `.sys-callout` in `system.css`, and `DocIndex`, `DocProse` and `RunHeader` in `ui.tsx`, still argued from `/system/phase` stacking every board. Comments only.
+- **Four comments describe the one-board page.** `.sys-callout` in `system.css`, and `DocIndex`, `DocProse` and `RunHeader` in `ui.tsx`, still argued from `/system/phase` stacking every board. Comments only.
 - **The home page's button is readable in dark.** It painted `text-fg-white` on `bg-brand-main`: **2.98:1** in dark against the 4.5:1 floor. It now uses `text-fg-inverse`, as the primary button and the tab badge already do: **7.43:1** light, **5.54:1** dark. Measured on the shipped ramps. Re-measure if you re-skinned.
 - **Skipping builds on doc-only pushes is documented, not shipped.** Most pushes are the record, and each one builds a deployment. A shipped skip would freeze `/system` on every deployment that renders it, the template's default among them. `docs/implementation/shipping.md` → Where the record lives gains a subsection: skip only on a deployment that does not serve the record, set in the host's settings for that deployment, with the command.
 - **The changelog says where it starts.** Its first line promised every change the template ships. Entry 1 already said older work is not tracked, but the header did not. It now does.
