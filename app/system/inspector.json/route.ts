@@ -1,14 +1,23 @@
 import fs from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import { getCensus, getComponentDetails, getStyleguide, utilityByRootToken } from "@/lib/styleguide";
+import { getCensus, getComponentDetails, getStyleInventory, getStyleguide, utilityByRootToken } from "@/lib/styleguide";
 import { PROJECT_NAME } from "@/lib/project";
 import { headingSlug } from "@/lib/system";
 
 /**
  * The element inspector's data feed: token names with their authored chains
  * and Tailwind utilities (from the same parser the styleguide renders from),
- * the shared component inventory, and the shared UI rules.
+ * the shared component inventory, the pattern inventory, and the shared UI
+ * rules.
+ *
+ * Two inventories, two edges, each checkable from a path. A component is
+ * shared when its file sits in one of the three component directories
+ * (`getComponentInventory`). A pattern is a class some rule styles in a
+ * stylesheet the census scans: every `.css` file under app/, components/ and
+ * the other scanned directories (`getStyleInventory`). Neither widens the
+ * other, so a pin can name both: the O card is a pattern inside a page no
+ * component covers.
  *
  * It lives under /system ON PURPOSE. Everything here beyond the token names
  * derives from the record (component-patterns.md), and /system is where the
@@ -28,7 +37,7 @@ import { headingSlug } from "@/lib/system";
 
 export const dynamic = "force-static";
 
-interface Pattern {
+interface UiRule {
   title: string;
   body: string;
   /** Deep link to this exact rule on the rendered doc page. */
@@ -54,7 +63,7 @@ function docExists(relPath: string): boolean {
 }
 
 /** The H2 rules of component-patterns.md, title + prose (fences dropped). */
-function getPatterns(): Pattern[] {
+function getUiRules(): UiRule[] {
   const p = path.join(process.cwd(), "docs", PATTERNS_DOC);
   if (!fs.existsSync(p)) return [];
   const text = fs
@@ -89,6 +98,12 @@ export async function GET() {
       utility: utilities.get(t.name) ?? null,
     }))
   );
+  // The @theme layer, each name with the :root token it reads: how a
+  // utility class an element wears (`bg-brand-main`) names its token, and
+  // how a rule that writes a theme name (`var(--text-2xs)`) is read.
+  const theme = styleguide.theme.flatMap((section) =>
+    section.tokens.map((t) => ({ name: t.name, raw: t.raw, target: t.target === t.name ? null : t.target }))
+  );
 
   // Full details, not just the inventory: docblock (the component's one-home
   // "why") and its @when / @whenNot, the static class signature that
@@ -105,13 +120,19 @@ export async function GET() {
   return NextResponse.json({
     project: PROJECT_NAME,
     tokens,
+    theme,
     components,
-    patterns: getPatterns(),
+    // Every rule in the project's stylesheets, with the classes they style
+    // grouped into patterns: the selectors pre-read for `Element.matches`,
+    // the comments directly above, the declarations as written, each with
+    // its file and line.
+    styles: getStyleInventory(),
+    uiRules: getUiRules(),
     // Where a missing rule would be written. The panel's "none recorded"
     // nudge links here, so the gap is one click from being filled. Empty
     // when the doc is absent, and the panel drops the link rather than
     // offering a 404.
-    patternsDocUrl: docExists(PATTERNS_DOC) ? `/system/docs/${PATTERNS_DOC}` : "",
+    uiRulesDocUrl: docExists(PATTERNS_DOC) ? `/system/docs/${PATTERNS_DOC}` : "",
     // Pointers to where you'd go to understand what you PINNED. `path` is
     // repo-relative, for a session that wants to open the file; `url` is the
     // rendered page, for the human reading the panel. A route that is not a

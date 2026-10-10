@@ -5,22 +5,33 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { REACH_LABEL } from "@/lib/reach";
 import {
+  baseName,
   buildContextBlock,
   buildIndex,
+  componentElements,
   describePin,
+  gatedData,
   identifyComponent,
+  instancesLine,
+  levelsUp,
   listSeparator,
+  locationPhrase,
   nodeLabel,
-  resolveElement,
   SIBLING_VERB,
+  sourcePhrase,
+  stateWords,
   summaryOf,
   tokensFromStylesheets,
   usageLine,
+  variantName,
   variantPhrase,
   type InspectorData,
   type PinnedContext,
   type PinReport,
+  type TokenLine,
 } from "./resolve";
+import { readLocation } from "./source";
+import { patternElements, readPatterns, readState, readStyles } from "./styles";
 
 /**
  * The inspect mode. Lazy-loaded by InspectorGate only when the URL carries
@@ -38,16 +49,22 @@ import {
  * page's own stylesheets: still useful, never a leak.
  *
  * A pin is read once into a report (`describePin`), and the panel and the
- * copied block both render from it, so they say the same things.
+ * copied block both render from it, so they say the same things. Where the
+ * element is written arrives a moment later: the dev server's source map is
+ * read for it, and the report's `location` is replaced when it lands.
  *
  * ↑ moves the pin to the pinned element's parent and ↓ back the way it came,
  * because a click usually lands on the innermost node, and a container its
  * children cover cannot be clicked at all.
  *
+ * "Show all" outlines every element on the page wearing the pinned pattern,
+ * or every instance of the pinned component, until the next pin or Esc.
+ *
  * A session driving this browser reads the current pin from
  * `window.__inspectorPin`: the report and the block the Copy button copies.
  * It is null while inspecting with nothing pinned, and absent when inspect
- * mode is off, so the three states read apart.
+ * mode is off, so the three states read apart. While the location's
+ * `lines` is `pending`, the block says so; it is rewritten when they land.
  */
 
 declare global {
@@ -90,6 +107,15 @@ function Missing({ children }: { children: ReactNode }) {
   return <span className="italic text-fg-gray">{children}</span>;
 }
 
+/** The short word for where a token line came from. */
+const SOURCE_TAG: Record<TokenLine["from"]["kind"], string> = {
+  rule: "rule",
+  class: "class",
+  inline: "style",
+  inherited: "inherited",
+  value: "by value",
+};
+
 interface Rect {
   top: number;
   left: number;
@@ -106,24 +132,25 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
   const [data, setData] = useState<InspectorData | null>(null);
   const [gated, setGated] = useState(false);
   const [hoverRect, setHoverRect] = useState<Rect | null>(null);
-  const [pinned, setPinned] = useState<PinnedContext | null>(null);
   const [report, setReport] = useState<PinReport | null>(null);
   const [pinnedRect, setPinnedRect] = useState<Rect | null>(null);
+  const [shown, setShown] = useState<{ key: string; rects: Rect[] } | null>(null);
   const [copied, setCopied] = useState(false);
-  const [docExpanded, setDocExpanded] = useState(false);
+  /** Which "more" toggles are open, by key; a new pin starts them shut. */
+  const [open, setOpen] = useState<Record<string, boolean>>({});
   const probeRef = useRef<HTMLDivElement>(null);
   const dataRef = useRef<InspectorData | null>(null);
   const gatedRef = useRef(false);
   const pinnedRef = useRef<PinnedContext | null>(null);
+  /** Bumped per pin, so a source map landing after the next pin is dropped. */
+  const pinSeq = useRef(0);
+  const shownRef = useRef<{ key: string; elements: Element[] } | null>(null);
   /** The elements ↑ climbed out of, the current pin's own child first, so ↓
    *  retraces them. */
   const climbedRef = useRef<Element[]>([]);
   useEffect(() => {
     dataRef.current = data;
   }, [data]);
-  useEffect(() => {
-    pinnedRef.current = pinned;
-  }, [pinned]);
 
   useEffect(() => {
     let alive = true;
@@ -136,39 +163,53 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
         if (!alive) return;
         gatedRef.current = true;
         setGated(true);
-        setData({
-          project: "",
-          tokens: tokensFromStylesheets(),
-          components: [],
-          patterns: [],
-          patternsDocUrl: "",
-          docs: [],
-        });
+        setData(gatedData(tokensFromStylesheets()));
       });
     return () => {
       alive = false;
     };
   }, []);
 
-  const pin = useCallback((el: Element) => {
-    const d = dataRef.current;
-    const probe = probeRef.current;
-    if (!d || !probe) return;
-    const index = buildIndex(d.tokens, probe);
-    const next: PinnedContext = {
-      element: el,
-      component: identifyComponent(el, d.components),
-      matches: resolveElement(el, index),
-    };
-    // Set here as well as by the effect below, so a key pressed before the
-    // re-render moves from this pin rather than the last one.
-    pinnedRef.current = next;
-    setPinned(next);
-    setReport(describePin(d, next, { gated: gatedRef.current, page: window.location.pathname }));
-    setPinnedRect(rectOf(el));
-    setCopied(false);
-    setDocExpanded(false); // a new pin starts collapsed
+  const clearShown = useCallback(() => {
+    shownRef.current = null;
+    setShown(null);
   }, []);
+
+  const pin = useCallback(
+    (el: Element) => {
+      const d = dataRef.current;
+      const probe = probeRef.current;
+      if (!d || !probe) return;
+      // State first: nothing below may move the pointer or the focus, but
+      // reading it before anything else keeps it the state the click saw.
+      const state = readState(el);
+      const index = buildIndex(d.tokens, probe);
+      const component = identifyComponent(el, d.components);
+      const location = readLocation(el, new Set(d.components.map((c) => c.file)));
+      const next: PinnedContext = {
+        element: el,
+        component,
+        patterns: readPatterns(el, d, IGNORE),
+        ...readStyles(el, d, index),
+        state,
+        location: location.now,
+        componentInstances: component ? componentElements(component.component, IGNORE).length : 0,
+      };
+      // Set here as well as in state, so a key pressed before the re-render
+      // moves from this pin rather than the last one.
+      pinnedRef.current = next;
+      const seq = ++pinSeq.current;
+      setReport(describePin(d, next, { gated: gatedRef.current, page: window.location.pathname }));
+      setPinnedRect(rectOf(el));
+      clearShown();
+      setCopied(false);
+      setOpen({}); // a new pin starts collapsed
+      location.mapped.then((loc) => {
+        if (pinSeq.current === seq) setReport((r) => (r ? { ...r, location: loc } : r));
+      });
+    },
+    [clearShown]
+  );
 
   /** Pin an ancestor `levels` up, remembering the way back down. */
   const climb = useCallback(
@@ -234,8 +275,9 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
       if (e.key !== "Escape") return;
       if (pinnedRef.current) {
         pinnedRef.current = null;
+        pinSeq.current++;
         climbedRef.current = [];
-        setPinned(null);
+        clearShown();
         setReport(null);
         setPinnedRect(null);
       } else {
@@ -245,6 +287,8 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
     const onScroll = () => {
       setHoverRect(null);
       if (pinnedRef.current) setPinnedRect(rectOf(pinnedRef.current.element));
+      const s = shownRef.current;
+      if (s) setShown({ key: s.key, rects: s.elements.map(rectOf) });
     };
     document.addEventListener("mousemove", onMove, true);
     document.addEventListener("click", onClick, true);
@@ -256,7 +300,7 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
       document.removeEventListener("keydown", onKey, true);
       window.removeEventListener("scroll", onScroll, true);
     };
-  }, [pin, climb, descend, onExit]);
+  }, [pin, climb, descend, onExit, clearShown]);
 
   // One rendering of the block, so the global and the Copy button can never
   // hand over two different texts.
@@ -278,7 +322,48 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
     setCopied(true);
   };
 
+  /** Outline every element on the page in `elements`, or clear the outlines
+   *  when this set is the one shown. Read-only: boxes over the page. */
+  const toggleShown = (key: string, elements: () => Element[]) => {
+    if (shownRef.current?.key === key) {
+      clearShown();
+      return;
+    }
+    const list = elements();
+    shownRef.current = { key, elements: list };
+    setShown({ key, rects: list.map(rectOf) });
+  };
+
+  /** A source location as a path: the file's name and line, the full path
+   *  in its tooltip; the block carries it whole. Not a link: no rendered
+   *  page exists for a source file, and the dev server's editor launcher
+   *  opens whatever editor it guesses, which for a terminal user is `vi` in
+   *  a new window, not the line asked for. */
+  const spot = (file: string, line: number | null) => (
+    <span className="font-mono text-fg-secondary" title={`${file}${line ? `:${line}` : ""}`}>
+      {baseName(file)}
+      {line ? `:${line}` : ""}
+    </span>
+  );
+
+  /** A sentence that may run long: its first sentence, the rest a click away. */
+  const more = (id: string, text: string, className: string) => {
+    const { head, rest } = summaryOf(text);
+    return (
+      <p key={id} className={className}>
+        {open[id] ? `${head} ${rest}` : head}
+        {rest && (
+          <button type="button" onClick={() => setOpen((o) => ({ ...o, [id]: !o[id] }))} className={`ml-1 ${LINK}`}>
+            {open[id] ? "less" : "more"}
+          </button>
+        )}
+      </p>
+    );
+  };
+
   const c = report?.component ?? null;
+  const loc = report?.location ?? null;
+  const where = loc ? locationPhrase(loc) : null;
 
   const box = (r: Rect, cls: string, key: string) => (
     <div
@@ -298,6 +383,7 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
           11.9965px for a 12px token, and every length then missed. */}
       <div ref={probeRef} aria-hidden className="hidden" />
 
+      {shown?.rects.map((r, i) => box(r, "border-2 border-dotted border-brand-strong", `shown-${i}`))}
       {hoverRect && box(hoverRect, "border border-dashed border-brand-main", "hover")}
       {pinnedRect && box(pinnedRect, "border-2 border-brand-main bg-brand-subtle/20", "pinned")}
 
@@ -325,9 +411,9 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
           {report && (
             <>
               {/* What it sits in: the parent, which pins on click, and the
-                  pinned element a step in, the way a layers panel nests
-                  them. One level orients; ↑ and ↓ explore the rest, so the
-                  panel stays short. The copied block names four. */}
+                  pinned element a step in under it, the way a layers panel
+                  nests them. One level orients; ↑ and ↓ explore the rest, so
+                  the panel stays short. The copied block names four. */}
               <nav aria-label="The pinned element and its parent" className="font-mono text-2xs">
                 <ol>
                   {report.element.ancestors[0] && (
@@ -350,6 +436,112 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
                   </li>
                 </ol>
               </nav>
+              {report.state.length > 0 && (
+                <p className="mt-1 text-2xs text-fg-tertiary">
+                  Pinned while {stateWords(report.state)}, so a value read from it may sit mid-transition.
+                </p>
+              )}
+
+              {/* Where it lives: the line that writes it, and for a shared
+                  component's node the line that uses the component. Lines
+                  come from the dev server's source map, a moment after the
+                  pin; a production build says it has none. */}
+              {where && loc && (
+                <section aria-label="Where it lives" className="mt-2 flex flex-col gap-0.5 border-t border-edge-light pt-2 text-2xs">
+                  <p className="flex flex-wrap items-baseline gap-x-1.5">
+                    <span className="font-semibold text-fg-tertiary">{where.lead}</span>
+                    {loc.status === "found" ? spot(loc.rendered.file, loc.rendered.line) : null}
+                    {where.note && <span className="text-fg-tertiary">{where.note}</span>}
+                  </p>
+                  {loc.status === "found" && loc.rendered.text && (
+                    <code className="block truncate font-mono text-fg-secondary" title={loc.rendered.text}>
+                      {loc.rendered.text}
+                    </code>
+                  )}
+                  {loc.status === "found" && loc.calledFrom && (
+                    <p className="flex flex-wrap items-baseline gap-x-1.5">
+                      <span className="font-semibold text-fg-tertiary">Called from</span>
+                      {spot(loc.calledFrom.file, loc.calledFrom.line)}
+                      {loc.calledFrom.fn && <span className="text-fg-tertiary">in {loc.calledFrom.fn}</span>}
+                    </p>
+                  )}
+                  {report.styledBy.length > 0 && (
+                    <div className="flex gap-1.5">
+                      <span className="shrink-0 font-semibold text-fg-tertiary">Styled by</span>
+                      <ul className="flex min-w-0 flex-col">
+                        {report.styledBy.map((r) => (
+                          <li key={`${r.file}:${r.line}:${r.selector}`} className="flex min-w-0 items-baseline gap-1.5">
+                            <span className="truncate font-mono text-fg-secondary" title={r.selector}>
+                              {r.selector}
+                            </span>
+                            {spot(r.file, r.line)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {/* Neither detector found anything: said in words, as a missing
+                  docblock is, never left as a bare class list. A refused
+                  feed knows no patterns or components, and the gated note
+                  above already says so. */}
+              {!gated && !report.patterns && !c && (
+                <p className="mt-2 border-t border-edge-light pt-2 leading-relaxed">
+                  <Missing>No pattern and no shared component covers it. Its styling is its own classes.</Missing>
+                </p>
+              )}
+
+              {/* The patterns it wears, from the stylesheet that styles them:
+                  the class, the comment above its rule, its variants, and
+                  how many on the page wear it. */}
+              {report.patterns?.list.map((p) => (
+                <section key={p.name} className="mt-2 flex flex-col gap-1 border-t border-edge-light pt-2">
+                  <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                    <span className="font-mono font-semibold">.{p.name}</span>
+                    <span className="text-2xs text-fg-tertiary">pattern</span>
+                    {report.patterns?.node && (
+                      <span className="text-2xs text-fg-tertiary">
+                        on {nodeLabel(report.patterns.node)}, {levelsUp(report.patterns.levelsUp)}
+                      </span>
+                    )}
+                  </p>
+                  {p.comment ? (
+                    more(`pattern:${p.name}`, p.comment, "leading-relaxed text-fg-secondary")
+                  ) : (
+                    <p className="leading-relaxed">
+                      <Missing>Named by its class: no comment sits above its rule.</Missing>
+                    </p>
+                  )}
+                  {p.variants.length > 0 && (
+                    <p className="flex flex-wrap gap-x-2 gap-y-0.5 text-2xs">
+                      <span className="font-semibold text-fg-tertiary">Variants</span>
+                      {p.variants.map((v) => (
+                        <span key={v.modifier} className={`font-mono ${v.on ? "font-semibold text-fg-primary" : "text-fg-tertiary"}`}>
+                          {variantName(v.modifier)} {v.on ? "on" : "off"} · {v.instances}
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                  {p.variants
+                    .filter((v) => v.on && v.comment)
+                    .map((v) =>
+                      more(`variant:${p.name}${v.modifier}`, `${variantName(v.modifier)}: ${v.comment}`, "leading-relaxed text-fg-secondary")
+                    )}
+                  <p className="flex items-baseline gap-2 text-2xs text-fg-tertiary">
+                    <span>{instancesLine(p.instances)}</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleShown(`pattern:${p.name}`, () => patternElements(p.name, IGNORE))}
+                      className={LINK}
+                    >
+                      {shown?.key === `pattern:${p.name}` ? "Hide them" : "Show all"}
+                    </button>
+                  </p>
+                </section>
+              ))}
+
               {c && (
                 <section className="mt-2 flex flex-col gap-1.5 border-t border-edge-light pt-2">
                   {/* The reach pill sits on the panel's own surface: the
@@ -361,22 +553,10 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
                     <Badge>{REACH_LABEL[c.reach]}</Badge>
                   </p>
                   {c.docblock ? (
-                    (() => {
-                      // Summary by default. The depth is one click away here
-                      // and always whole in the copied block, so trimming the
-                      // panel costs the reader nothing.
-                      const { head, rest } = summaryOf(c.docblock);
-                      return (
-                        <p className="leading-relaxed text-fg-secondary">
-                          {docExpanded ? `${head} ${rest}` : head}
-                          {rest && (
-                            <button type="button" onClick={() => setDocExpanded((v) => !v)} className={`ml-1 ${LINK}`}>
-                              {docExpanded ? "less" : "more"}
-                            </button>
-                          )}
-                        </p>
-                      );
-                    })()
+                    // Summary by default. The depth is one click away here
+                    // and always whole in the copied block, so trimming the
+                    // panel costs the reader nothing.
+                    more("docblock", c.docblock, "leading-relaxed text-fg-secondary")
                   ) : (
                     <p className="leading-relaxed">
                       <Missing>No docblock. Its file is the one home for what it is.</Missing>
@@ -417,22 +597,53 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
                       </div>
                     )}
                   </div>
+                  <p className="flex items-baseline gap-2 text-2xs text-fg-tertiary">
+                    <span>{instancesLine(c.instances)}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const component = data?.components.find((x) => x.name === c.name);
+                        if (component) toggleShown(`component:${c.name}`, () => componentElements(component, IGNORE));
+                      }}
+                      className={LINK}
+                    >
+                      {shown?.key === `component:${c.name}` ? "Hide them" : "Show all"}
+                    </button>
+                  </p>
                 </section>
               )}
-              <ul className={`space-y-1 ${c ? "mt-3 border-t border-edge-light pt-2" : "mt-2"}`}>
+
+              {/* Tokens in play, each with where its name came from: a rule
+                  or a class as written, inherited, or matched by value. The
+                  full source, file and line, is in the tooltip and the block. */}
+              <ul className="mt-3 space-y-1 border-t border-edge-light pt-2">
                 {report.tokens.map((m, i) => (
-                  <li key={i} className="flex items-baseline gap-2">
-                    <span className="w-24 shrink-0 text-fg-tertiary">{m.property}</span>
-                    {m.tokens[0] ? (
-                      <span className="font-mono text-fg-primary">
-                        {m.tokens[0].name}
-                        {m.tokens[0].utility && (
-                          <span className="text-fg-tertiary"> · {m.tokens[0].utility}</span>
-                        )}
-                      </span>
-                    ) : (
-                      <span className="font-mono text-warning-strong">{m.value} · no token</span>
-                    )}
+                  <li key={i} className="flex items-baseline gap-2" title={sourcePhrase(m.from, true)}>
+                    <span className="w-24 shrink-0 truncate text-fg-tertiary" title={m.property}>
+                      {m.property}
+                    </span>
+                    <span className="min-w-0 flex-1 break-words font-mono text-fg-primary">
+                      {m.tokens.length ? (
+                        <>
+                          {m.from.kind === "value" ? m.tokens[0].name : m.tokens.map((t) => t.name).join(" ")}
+                          {/* The class beside the token where the class is
+                              the answer: the one it wears, or the one a value
+                              match names. A rule's line is the rule's. */}
+                          {(m.from.kind === "class" || m.from.kind === "value") && m.tokens[0].utility && (
+                            <span className="text-fg-tertiary"> · {m.tokens[0].utility}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className={m.from.kind === "inherited" ? "text-fg-secondary" : "text-warning-strong"}>
+                          {m.value} · no token
+                        </span>
+                      )}
+                    </span>
+                    {/* A state or pseudo-element line says so beside its
+                        source, where the column has room: "rule on hover". */}
+                    <span className="shrink-0 text-2xs text-fg-tertiary">
+                      {[SOURCE_TAG[m.from.kind], m.state && `on ${m.state}`, m.pseudo].filter(Boolean).join(" ")}
+                    </span>
                   </li>
                 ))}
                 {report.tokens.length === 0 && <li className="text-fg-tertiary">No tokens resolved here.</li>}

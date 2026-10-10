@@ -16,6 +16,34 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 18 · A pin names its CSS pattern, reads its tokens as written, and says which line renders it
+
+**Class:** parser
+**Depends on:** the element inspector (`3a9e01b`) · `lib/styleguide.ts` and the styleguide's components page (`feb807b`)
+**Resolves:** none
+
+**Does this affect you?** Every project that kept the element inspector (`?inspect`). If you removed it, step 1 is still safe to take: the census in `lib/styleguide.ts` reads `globals.css` through the new rule reader and gives the same answers.
+
+**What changed.**
+
+- **A pin names the CSS pattern it wears.** `getStyleInventory` in `lib/styleguide.ts` reads every rule in every `.css` file under the directories the census scans: its selectors, its line, the `@media` it sits in, the comment directly above it, and its declarations as written. A class some rule styles is a pattern, named by the class with any BEM `--x` suffix cut off, so `.sys-wt-item` and `.sys-wt-item--call` are one pattern and the second is its variant. Pin a walkthrough's O card and the panel says `.sys-wt-item`, each variant on or off with how many on the page wear it (`--call on`, `[data-walked] off`), the comment above the `--call` rule, and where it is styled. A pattern is named by the first sentence of the comment directly above its base rule, the first rule written for the class alone, or by its class when no comment touches it. A pattern on an ancestor up to three levels above counts too, and says how many levels up: enough to reach a card from its title, not so far that the page's own column names everything in it. A pattern and a shared component can both apply, and the report carries both. A pin neither covers says so in words.
+- **Each token line says where its name came from.** In order: a rule in your stylesheets, as written (`border-left: 3px solid var(--brand-main)`, with its file and line), a utility class the element wears (`bg-brand-main`), its style attribute, inherited from the nearest ancestor that sets it, and last, its computed value matched against every token. A `:hover` rule or a `hover:` class is a line of its own, so a pin taken mid-transition still reads the resting token and the hover one. A property nothing sets, such as the browser's 16px font size, reads as inherited, not as off the design system. Two tokens sharing a value no longer tie: the class the element wears decides, and a text colour prints as `text-*`, never `bg-*`.
+- **The rules that style the element are listed,** each with its line, and a declaration a stronger rule overrides says which one.
+- **The copied block is a pointer, not a briefing.** About nine lines: the page with its theme, width and state; the element and its text; where it is rendered, and for a shared component where it is called from, with the line that writes its text marked; its patterns with every variant, on or off, each with how many on the page wear it, and its component with how many share it; the rules that style it and any shared UI rule naming it, each by file and line; and the tokens in play, each with the class or the line it comes from. A declaration that is more than its tokens prints as written (`border-left 3px solid var(--brand-main)`). The docblock, When and Not for, the siblings, the rules' text, the ancestor trail and the doc list left it: a session reads them by opening the file the block points to, and the panel still shows them. The whole reading stays on `window.__inspectorPin.report`, which now also records the theme and the width. A picker that already sends the element's HTML and a screenshot pairs with the block rather than repeating it.
+- **The pin records the element's state:** hovered, focused or active when it was pinned. The panel and the block say so.
+- **Where it lives, in dev.** React's dev build records the JSX call behind every element, a server component's included, and the dev server's source map turns that into a source line. The panel and the block say `Rendered at: components/ui/ThemeToggle.tsx:61, in ThemeToggle` with the line's text, and for a node a shared component renders, where that component is used: `Called from: app/page.tsx:21`. A production build says the location is not available. Locations print as paths, since a source file has no page to link to. This reads webpack's dev server, which `npm run dev` runs.
+- **Show all** outlines every element on the page wearing the pinned pattern, or every instance of the pinned component, until the next pin or Esc.
+- **`window.__inspectorPin` arrives in two steps.** It is published at once with `location.lines` set to `pending`, then replaced once the dev server's source map has been read. A session reading it right after a click waits for `lines` to leave `pending`.
+- **The feed changed shape.** `/system/inspector.json` adds `theme`, the `@theme` layer with the token each name reads, and `styles`, the rules and the patterns. It renames `patterns` to `uiRules` and `patternsDocUrl` to `uiRulesDocUrl`, so "pattern" means one thing. Code of yours that reads the feed follows the rename.
+
+**How to adopt.**
+
+1. **`lib/styleguide.ts`, from this entry's commit.** If you never changed it, take it whole. If you did, the changes are `readCssRules` beside `blockOf`, the census's `globals.css` pass reading through it, the `keepComments` flag on `scanFiles`, and the pattern inventory after `getComponentDetails`.
+2. **`components/inspector/`.** Take `resolve.ts` and `InspectorOverlay.tsx` whole unless you changed them. `styles.ts` and `source.ts` are new. If you changed `resolve.ts`: `buildContextBlock` is rewritten to the pointer and reads `TokenLine` rows, each with its `from`, where it read `TokenMatch` rows; `describePin` takes the patterns, the rules, the state and the location in `PinnedContext`, and adds `view` to the report.
+3. **`app/system/inspector.json/route.ts`:** the `getStyleInventory` import, `theme`, `styles`, and the renamed `uiRules` and `uiRulesDocUrl`. Your gate paragraph stays as it is.
+
+**Check:** run `npm run dev`, open `/?inspect` and pin the theme toggle's active option. The panel says `Rendered at ThemeToggle.tsx:61` and `Called from page.tsx:21` under the trail, then the `.theme-toggle-option` pattern with `[data-active] on`, then ThemeToggle. Its tokens read `--radius-xxs`, `--surface-top`, `--text-primary` and `--shadow-xs`, each tagged `rule`, and its font size reads `16px · no token`, tagged `inherited`.
+
 ## 17 · A pinned component says whose it is, when to reach for it, what sits beside it and where its styleguide entry is
 
 **Class:** parser

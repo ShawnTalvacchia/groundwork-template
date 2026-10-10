@@ -102,6 +102,176 @@ function blockOf(css: string, selector: RegExp, containing?: string): string {
   return "";
 }
 
+/* ── Style rules: the one reader of a stylesheet's rules ────────────────
+   Every style rule in a stylesheet, in file order: its selector list, its
+   line, the conditions it sits under (`@media`, `@supports`, `@layer`), the
+   comment directly above it, and its declarations as written. The census
+   reads globals.css through it and the pattern inventory reads every
+   stylesheet through it, so the two cannot disagree about what a rule is.
+
+   Two kinds of block are not rules and are skipped whole: the token
+   definitions (`@theme`, and any rule whose selector names `:root`), which
+   are the token parse's, and the at-rules that hold no styling of an element
+   (`@keyframes`, `@font-face`, `@property`). A block nested inside a rule's
+   body (CSS nesting) is skipped too: nothing here writes one.
+
+   "Directly above" is a rule a reader can check from the file: the comment
+   ends on the selector's line or the line before it, with nothing between.
+   A blank line detaches it, and of two comments stacked, the nearer one is
+   the rule's. */
+
+export interface CssDeclaration {
+  property: string;
+  /** As written, whitespace collapsed: `3px solid var(--brand-main)`. */
+  value: string;
+  line: number;
+}
+
+export interface CssRule {
+  /** The selector list as written, whitespace collapsed. */
+  selector: string;
+  /** Repo-relative path of the stylesheet. */
+  file: string;
+  /** The line the selector starts on. */
+  line: number;
+  /** The at-rules it sits inside, outermost first: `@media (min-width: 900px)`. */
+  conditions: string[];
+  /** The comment directly above, flattened to one line; null when none touches it. */
+  comment: string | null;
+  declarations: CssDeclaration[];
+}
+
+/** At-rules whose blocks hold rules that style elements. */
+const NESTING_AT = /^@(media|supports|layer|container|scope)\b/;
+
+/** A comment's text as one line: the leading `*` gutter and the line breaks go. */
+function flattenComment(text: string): string {
+  return text
+    .split("\n")
+    .map((l) => l.replace(/^\s*\*?\s?/, "").trim())
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const newlines = (s: string) => s.split("\n").length - 1;
+
+function readDeclarations(body: string, startLine: number): CssDeclaration[] {
+  // Comments become spaces with their line breaks kept, so lines still count.
+  const text = body.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "));
+  const out: CssDeclaration[] = [];
+  let depth = 0;
+  let quote: string | null = null;
+  let start = 0;
+  let line = startLine;
+  let declLine: number | null = null;
+  for (let i = 0; i <= text.length; i++) {
+    const ch = text[i];
+    if (i === text.length || (ch === ";" && depth === 0 && !quote)) {
+      const m = text.slice(start, i).match(/^\s*(-{0,2}[a-zA-Z][\w-]*)\s*:([\s\S]*)$/);
+      if (m) out.push({ property: m[1].toLowerCase(), value: m[2].replace(/\s+/g, " ").trim(), line: declLine ?? line });
+      start = i + 1;
+      declLine = null;
+      continue;
+    }
+    if (ch === "\n") line++;
+    else if (declLine === null && !/\s/.test(ch)) declLine = line;
+    if (quote) {
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === "(") depth++;
+    else if (ch === ")") depth--;
+  }
+  return out;
+}
+
+export function readCssRules(css: string, file: string): CssRule[] {
+  type Frame =
+    | { kind: "at"; prelude: string }
+    | { kind: "skip" }
+    | { kind: "rule"; rule: CssRule; start: number; bodyLine: number };
+  const rules: CssRule[] = [];
+  const stack: Frame[] = [];
+  let prelude = "";
+  let preludeLine = 0;
+  let comment: { text: string; end: number } | null = null;
+  let line = 1;
+  const n = css.length;
+  for (let i = 0; i < n; ) {
+    const ch = css[i];
+    const top = stack[stack.length - 1];
+    const inBody = top?.kind === "rule" || top?.kind === "skip";
+
+    if (ch === "/" && css[i + 1] === "*") {
+      const end = css.indexOf("*/", i + 2);
+      const stop = end === -1 ? n : end + 2;
+      line += newlines(css.slice(i, stop));
+      if (!inBody && !prelude.trim()) comment = { text: css.slice(i + 2, end === -1 ? n : end), end: line };
+      i = stop;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      let j = i + 1;
+      while (j < n && css[j] !== ch) j += css[j] === "\\" ? 2 : 1;
+      const s = css.slice(i, j + 1);
+      line += newlines(s);
+      if (!inBody) prelude += s;
+      i = j + 1;
+      continue;
+    }
+    if (ch === "\n") line++;
+
+    if (inBody) {
+      if (ch === "{") stack.push({ kind: "skip" });
+      else if (ch === "}") {
+        const f = stack.pop()!;
+        if (f.kind === "rule") {
+          f.rule.declarations = readDeclarations(css.slice(f.start, i), f.bodyLine);
+          rules.push(f.rule);
+        }
+      }
+      i++;
+      continue;
+    }
+
+    if (ch === "{") {
+      const sel = prelude.replace(/\s+/g, " ").trim();
+      if (sel.startsWith("@")) {
+        stack.push(NESTING_AT.test(sel) ? { kind: "at", prelude: sel } : { kind: "skip" });
+      } else if (/:root\b/.test(sel)) {
+        stack.push({ kind: "skip" });
+      } else {
+        const touching = comment && preludeLine - comment.end <= 1 ? flattenComment(comment.text) : null;
+        stack.push({
+          kind: "rule",
+          rule: {
+            selector: sel,
+            file,
+            line: preludeLine,
+            conditions: stack.flatMap((f) => (f.kind === "at" ? [f.prelude] : [])),
+            comment: touching || null,
+            declarations: [],
+          },
+          start: i + 1,
+          bodyLine: line,
+        });
+      }
+      prelude = "";
+      comment = null;
+    } else if (ch === "}" || ch === ";") {
+      // The end of an at-rule block, or a statement (`@import "x";`).
+      if (ch === "}") stack.pop();
+      prelude = "";
+      comment = null;
+    } else {
+      if (!/\s/.test(ch) && !prelude.trim()) preludeLine = line;
+      prelude += ch;
+    }
+    i++;
+  }
+  return rules;
+}
+
 const BANNER_LINE = /^[=─═\-\s]*$/; // decorative banner edges
 
 /** Tokens + their section banners, walked in order. */
@@ -305,7 +475,7 @@ function stripComments(text: string, isCss: boolean): string {
   return out;
 }
 
-function scanFiles(exclude = EXCLUDE): { file: string; text: string }[] {
+function scanFiles(exclude = EXCLUDE, keepComments = false): { file: string; text: string }[] {
   const out: { file: string; text: string }[] = [];
   const walk = (dir: string) => {
     if (!fs.existsSync(dir)) return;
@@ -315,8 +485,10 @@ function scanFiles(exclude = EXCLUDE): { file: string; text: string }[] {
       const rel = path.relative(process.cwd(), full);
       if (exclude.some((e) => rel.startsWith(e))) continue;
       if (entry.isDirectory()) walk(full);
-      else if (/\.(tsx|ts|css)$/.test(entry.name))
-        out.push({ file: rel, text: stripComments(fs.readFileSync(full, "utf-8"), rel.endsWith(".css")) });
+      else if (/\.(tsx|ts|css)$/.test(entry.name)) {
+        const text = fs.readFileSync(full, "utf-8");
+        out.push({ file: rel, text: keepComments ? text : stripComments(text, rel.endsWith(".css")) });
+      }
     }
   };
   for (const d of SCAN_DIRS) walk(path.join(process.cwd(), d));
@@ -726,6 +898,241 @@ export function getComponentDetails(): ComponentDetail[] {
   return detailCache;
 }
 
+/* ── The pattern inventory (derived from the project's stylesheets) ─────
+   A pattern is a class the stylesheets style: every class rule in every
+   `.css` file the census scans, named by its class with any BEM `--x`
+   suffix cut off, so `.sys-wt-item` and `.sys-wt-item--call` are one pattern
+   and the second is its variant. It is a second inventory beside the
+   components, not a widening of them: "shared" stays the three component
+   directories, and a pattern is a different noun with an edge of its own,
+   checkable from a path and a selector.
+
+   A selector belongs to the rightmost class in it: the subject's when the
+   subject carries one, else the nearest ancestor's (`.sys-doc h2` is the
+   doc's). What it adds to that bare class is written with `&` standing for
+   it (`&--call`, `.sys-run &`, `& h2`), and decides its kind:
+   - `base` — the class alone: `.sys-wt-item`.
+   - `variant` — more on the same element: a BEM suffix, another class
+     (`.pill.active`), an attribute (`[data-walked]`), a structural
+     pseudo-class (`:last-child`).
+   - `state` — a user-action pseudo-class anywhere in it (`:hover`, `:focus`,
+     `:active`), which the inspector reads as a line of its own.
+   - `part` — it styles something inside the element, or a pseudo-element of
+     it (`.sys-doc h2`, `.sys-wt-box[data-on]::after`).
+   - `context` — the element inside some ancestor (`.sys-run .sys-tile-waiting`).
+
+   Everything the browser needs to test a selector against a pinned element
+   is computed here, so the inspector only ever calls `Element.matches`: the
+   selector with its states and pseudo-element removed, the states it asks
+   for, and its specificity. */
+
+export type SelectorKind = "base" | "variant" | "state" | "part" | "context";
+
+export interface RuleSelector {
+  /** One selector of the rule's list, as written. */
+  text: string;
+  /** The same with its states and pseudo-element removed: what
+   *  `Element.matches` is asked. */
+  test: string;
+  /** The user-action states it asks for: `hover`, `focus`, `active`… */
+  states: string[];
+  /** The pseudo-element it styles, as written: `::after`. */
+  pseudo: string | null;
+  /** [ids, classes + attributes + pseudo-classes, types + pseudo-elements]. */
+  specificity: [number, number, number];
+  /** The pattern it belongs to; null for a rule naming no class (`body`). */
+  pattern: string | null;
+  kind: SelectorKind | null;
+  /** The selector with `&` for the pattern's bare class: `&--call`. */
+  modifier: string;
+  /** The pattern's own compound with its states removed
+   *  (`.sys-wt-item--call`): a node wearing the pattern matches it when this
+   *  selector's variant is on. */
+  compound: string | null;
+}
+
+export interface StyleRule extends CssRule {
+  selectors: RuleSelector[];
+}
+
+export interface StylePattern {
+  /** The class with its BEM suffix cut off: `sys-wt-item`. */
+  name: string;
+  /** Where its base rule sits, or else its first rule. The base rule is the
+   *  first written for the class alone (`.sys-tile-paused { … }`), and only
+   *  when there is none, the first list it sits in among others
+   *  (`.sys-tile-active, .sys-tile-paused { … }`): a comment over a shared
+   *  list is about what they share. */
+  file: string;
+  line: number;
+  /** The comment directly above its base rule. Null when there is none, or
+   *  when the class has no base rule. */
+  comment: string | null;
+  /** Its selectors: `rule` indexes the inventory's rules, `selector` that
+   *  rule's list. */
+  rules: { rule: number; selector: number }[];
+}
+
+export interface StyleInventory {
+  /** The stylesheets read, in the order the cascade sees them. */
+  files: string[];
+  rules: StyleRule[];
+  patterns: StylePattern[];
+}
+
+const STATE_PSEUDO = /:(hover|focus-visible|focus-within|focus|active)(?![\w-])/g;
+const PSEUDO_ELEMENT = /::[\w-]+(?:\((?:[^()]|\([^()]*\))*\))?|:(?:before|after|first-line|first-letter)(?![\w-])/;
+
+/** Split on `sep` where it sits outside brackets, parentheses and quotes. */
+function splitTopLevel(text: string, sep: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let quote: string | null = null;
+  let cur = "";
+  for (const ch of text) {
+    if (quote) {
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === "[" || ch === "(") depth++;
+    else if (ch === "]" || ch === ")") depth--;
+    else if (ch === sep && depth === 0) {
+      out.push(cur.trim());
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+
+/** A complex selector's compounds, each with the combinator before it
+ *  (`""` for descendant or the first). */
+function compoundsOf(sel: string): { text: string; comb: string }[] {
+  const out: { text: string; comb: string }[] = [];
+  let depth = 0;
+  let quote: string | null = null;
+  let cur = "";
+  let comb = "";
+  for (const ch of sel) {
+    if (quote) {
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === "[" || ch === "(") depth++;
+    else if (ch === "]" || ch === ")") depth--;
+    else if (depth === 0 && (ch === " " || ch === ">" || ch === "+" || ch === "~")) {
+      if (cur) out.push({ text: cur, comb });
+      if (cur) comb = "";
+      if (ch !== " ") comb = ch;
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur) out.push({ text: cur, comb });
+  return out;
+}
+
+function joinCompounds(comps: { text: string; comb: string }[]): string {
+  return comps.map((c, i) => (i === 0 ? "" : c.comb ? ` ${c.comb} ` : " ") + c.text).join("");
+}
+
+/** Selectors-4 specificity, close enough for hand-written CSS: `:where()`
+ *  counts nothing, and `:not()`/`:is()`/`:has()` count their argument. */
+function specificityOf(sel: string): [number, number, number] {
+  let s = sel.replace(/:where\((?:[^()]|\([^()]*\))*\)/g, " ");
+  s = s.replace(/:(?:not|is|has|matches)\(((?:[^()]|\([^()]*\))*)\)/g, " $1 ");
+  let b = 0;
+  let c = 0;
+  s = s.replace(/\[[^\]]*\]/g, () => (b++, " "));
+  s = s.replace(new RegExp(PSEUDO_ELEMENT.source, "g"), () => (c++, " "));
+  s = s.replace(/:[\w-]+(?:\([^)]*\))?/g, () => (b++, " "));
+  const a = (s.match(/#[\w-]+/g) ?? []).length;
+  s = s.replace(/#[\w-]+/g, " ");
+  s = s.replace(/\.[\w-]+/g, () => (b++, " "));
+  c += (s.match(/(?:^|[\s>+~])[a-zA-Z][\w-]*/g) ?? []).length;
+  return [a, b, c];
+}
+
+function readSelector(text: string): RuleSelector {
+  const states = [...new Set([...text.matchAll(STATE_PSEUDO)].map((m) => m[1]))];
+  const pseudo = text.match(PSEUDO_ELEMENT)?.[0] ?? null;
+  const test = text.replace(STATE_PSEUDO, "").replace(PSEUDO_ELEMENT, "").replace(/\s+/g, " ").trim();
+  const comps = compoundsOf(text);
+  let idx = -1;
+  for (let i = comps.length - 1; i >= 0; i--) {
+    if (/\.[\w-]/.test(comps[i].text)) {
+      idx = i;
+      break;
+    }
+  }
+  const base: RuleSelector = { text, test, states, pseudo, specificity: specificityOf(text), pattern: null, kind: null, modifier: "", compound: null };
+  if (idx === -1) return base;
+
+  const own = comps[idx].text;
+  const raw = own.match(/\.([\w-]+)/)![1];
+  const name = raw.replace(/--.*$/, "");
+  const withAmp = comps.map((c, i) => (i === idx ? { ...c, text: c.text.replace(`.${name}`, "&") } : c));
+  const kind: SelectorKind = states.length
+    ? "state"
+    : idx < comps.length - 1 || pseudo
+      ? "part"
+      : idx > 0
+        ? "context"
+        : own !== `.${name}`
+          ? "variant"
+          : "base";
+  return {
+    ...base,
+    pattern: name,
+    kind,
+    modifier: joinCompounds(withAmp),
+    compound: own.replace(STATE_PSEUDO, "").replace(PSEUDO_ELEMENT, "") || null,
+  };
+}
+
+let inventoryCache: StyleInventory | null = null;
+
+export function getStyleInventory(): StyleInventory {
+  // Cached on a production build only: in dev a stylesheet edit has to move
+  // the lines the inspector reports, and three files read in a millisecond.
+  if (inventoryCache && process.env.NODE_ENV === "production") return inventoryCache;
+  // A stylesheet a deeper layout imports loads after its parents', so depth
+  // is the cascade's order between files: globals.css, then the dashboard's.
+  const sheets = scanFiles([], true)
+    .filter((f) => f.file.endsWith(".css"))
+    .sort((a, b) => a.file.split(path.sep).length - b.file.split(path.sep).length || a.file.localeCompare(b.file));
+
+  const rules: StyleRule[] = [];
+  const byName = new Map<string, StylePattern>();
+  /** How the base rule chosen so far was written: 2 alone, 1 in a list. */
+  const baseRank = new Map<string, number>();
+  for (const sheet of sheets) {
+    const file = sheet.file.split(path.sep).join("/");
+    for (const r of readCssRules(sheet.text, file)) {
+      const ri = rules.length;
+      const selectors = splitTopLevel(r.selector, ",").map(readSelector);
+      rules.push({ ...r, selectors });
+      selectors.forEach((s, si) => {
+        if (!s.pattern) return;
+        let p = byName.get(s.pattern);
+        if (!p) {
+          p = { name: s.pattern, file: r.file, line: r.line, comment: null, rules: [] };
+          byName.set(s.pattern, p);
+        }
+        p.rules.push({ rule: ri, selector: si });
+        const rank = s.kind !== "base" ? 0 : selectors.length === 1 ? 2 : 1;
+        if (rank > (baseRank.get(s.pattern) ?? 0)) {
+          baseRank.set(s.pattern, rank);
+          Object.assign(p, { file: r.file, line: r.line, comment: r.comment });
+        }
+      });
+    }
+  }
+  inventoryCache = { files: sheets.map((s) => s.file.split(path.sep).join("/")), rules, patterns: [...byName.values()] };
+  return inventoryCache;
+}
+
 /* ── The census: who reaches for each token and component ──────────────
    Every label the page carries about whose a token is comes from here, and
    from nothing authored but DASHBOARD above. A route file is the dashboard's
@@ -874,11 +1281,12 @@ export function getCensus(withProduct = true): Census {
       if (hits.size) pieces.push({ sides: sides.get(file) ?? new Set(), hits });
       continue;
     }
-    // Innermost blocks only, so a rule inside @media is read on its own.
-    for (const m of body.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-      const hits = reached(m[2], true);
+    // Rule by rule, through the one rule reader, so a rule inside @media is
+    // read on its own. The token blocks are not rules to it.
+    for (const rule of readCssRules(body, file)) {
+      const hits = reached(rule.declarations.map((d) => d.value).join(";"), true);
       if (!hits.size) continue;
-      const cls = m[1].match(/\.([\w-]+)/)?.[1];
+      const cls = rule.selector.match(/\.([\w-]+)/)?.[1];
       pieces.push({ sides: cls ? writers(cls) : new Set<Side>(["base"]), hits });
     }
   }
