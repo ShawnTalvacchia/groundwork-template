@@ -1,4 +1,5 @@
 import type { ComponentDetail, Reach, SiblingGroup, StyleInventory } from "@/lib/styleguide";
+import { AA_SMALL_TEXT, measure, over, parseColor, type Rgba } from "@/lib/contrast";
 
 /**
  * Client-side resolution for the element inspector: the feed's types, the
@@ -33,6 +34,14 @@ export interface InspectorToken {
   /** The Tailwind class for it: on a token line, the one for that line's
    *  property (`text-fg-primary` for a color), or the class as worn. */
   utility: string | null;
+  /** What it resolves to in each theme, from the parse; `dark` is null when
+   *  it does not flip. Both null on a refused feed, which knows only the
+   *  value in play. The report fills them on every token it names. */
+  light?: string | null;
+  dark?: string | null;
+  /** Its value in the theme in play, read off the page when pinned. On the
+   *  report only. */
+  current?: string | null;
 }
 
 /** A shared component as the feed serves it: everything the build derives
@@ -59,6 +68,20 @@ export interface ThemeToken {
   name: string;
   raw: string;
   target: string | null;
+  light?: string | null;
+  dark?: string | null;
+}
+
+/** A feature doc that declares the routes it describes (`routes:` in its
+ *  frontmatter), each one a path. */
+export interface InspectorPageDoc {
+  title: string;
+  /** Repo-relative, for a session to open. */
+  path: string;
+  /** Its rendered page, for the human. */
+  url: string;
+  /** Paths as Next writes them: `/`, `/plants/[id]`. */
+  routes: string[];
 }
 
 export interface InspectorData {
@@ -75,10 +98,15 @@ export interface InspectorData {
   /** `path` is repo-relative for a session to open; `url` is the rendered
    *  page for the human. A page that is not a doc carries no path. */
   docs: { label: string; path: string | null; url: string }[];
+  /** The feature docs that declare their routes, matched against the page. */
+  pageDocs: InspectorPageDoc[];
+  /** The styleguide page whose ladder measures every text rung on every
+   *  ground, both themes: where a token pair's contrast is fixed. */
+  ladderUrl: string;
 }
 
 /** What a refused feed leaves: token names read from the page's own
- *  stylesheets, and nothing about components, patterns or rules. */
+ *  stylesheets, and nothing about components, patterns, rules or docs. */
 export function gatedData(tokens: InspectorToken[]): InspectorData {
   return {
     project: "",
@@ -89,6 +117,8 @@ export function gatedData(tokens: InspectorToken[]): InspectorData {
     uiRules: [],
     uiRulesDocUrl: "",
     docs: [],
+    pageDocs: [],
+    ladderUrl: "",
   };
 }
 
@@ -562,7 +592,279 @@ export function tokensFromStylesheets(): InspectorToken[] {
     }
     walk(rules, false);
   }
-  return [...names].map((name) => ({ name, raw: "", utility: null }));
+  return [...names].map((name) => ({ name, raw: "", utility: null, light: null, dark: null }));
+}
+
+/** The tokens of `property`'s own family whose value in the theme in play
+ *  is `computed`, best first: what a value written without a token equals
+ *  (`gap-[2px]` and `--space-tiny`). Colours and lengths only, keyed by the
+ *  property a CSS longhand reports under. */
+export function tokensEqualTo(property: string, computed: string, index: TokenIndex): InspectorToken[] {
+  const standard =
+    property === "color"
+      ? "color"
+      : /^background/.test(property)
+        ? "background"
+        : /^border.*color$/.test(property)
+          ? "border-color"
+          : property === "font-size"
+            ? "font-size"
+            : /radius/.test(property)
+              ? "border-radius"
+              : /^(padding|margin)/.test(property)
+                ? "padding"
+                : /gap$/.test(property)
+                  ? "gap"
+                  : null;
+  if (!standard || !computed) return [];
+  const map = /color$|^background|^fill$|^stroke$/.test(property) ? index.colors : index.lengths;
+  return byProperty(standard, map.get(computed) ?? []);
+}
+
+/* ── Contrast where the text sits ────────────────────────────────────────
+   The ratio of a pinned element's own text against the ground it sits on,
+   as painted: its ancestors walked to the first opaque fill, each
+   translucent fill on the way composited over the one beneath, and the
+   text's own alpha laid over the result (`measure` in lib/contrast.ts). The
+   styleguide's ladder measures what the tokens promise on four surfaces;
+   this measures the one pair at this callsite, which the ladder cannot
+   know. What it cannot see, it says: an image or a gradient under the text,
+   a parent drawn at reduced opacity, a value no reader here can read. A
+   sibling positioned behind the text is not an ancestor and is not seen.
+
+   Every value is read as it rests, never mid-transition. A running CSS
+   transition holds a computed colour in between, and a pane that draws no
+   frames (Claude's preview while hidden) advances none, so right after a
+   theme switch a brand button still reads its old fill. Such a value is
+   read from the transition's own end keyframe, without touching the
+   animation. A keyframe animation has no resting value, and is said by
+   name. */
+
+export type ContrastReport =
+  | {
+      status: "measured";
+      ratio: number;
+      floor: number;
+      passes: boolean;
+      /** WCAG's large text: 24px, or 18.66px at a weight of 700 or more. */
+      large: boolean;
+      /** The text and its ground as painted, composited, in hex. */
+      text: string;
+      ground: string;
+      textToken: InspectorToken | null;
+      /** The opaque fill's token, when nothing translucent sits over it. */
+      groundToken: InspectorToken | null;
+      /** The node whose fill is opaque; null when none is, and the ground is
+       *  the browser's white canvas. */
+      groundNode: NodeReport | null;
+      /** How many translucent fills were composited over it. */
+      layers: number;
+      /** The styleguide's ladder, when both sides resolve to tokens. */
+      ladderUrl: string | null;
+    }
+  | { status: "not measured"; why: string }
+  | { status: "unreadable"; why: string };
+
+/** WCAG 2.x's floor for large text. Its own name, though `AA_NON_TEXT` holds
+ *  the same 3: the two are separate rules that happen to agree. */
+const AA_LARGE_TEXT = 3;
+
+let canvas: CanvasRenderingContext2D | null = null;
+
+/** One colour as the browser paints it. A form `parseColor` reads is read
+ *  there; any other the browser reports (`oklab()`, `oklch()`,
+ *  `color(srgb …)`, any `color-mix`) is painted on a 1×1 canvas and read
+ *  back. The channels come from the colour made opaque (`rgb(from x r g b
+ *  / 1)`), so a faint fill keeps its hue rather than the few levels a
+ *  premultiplied pixel holds; the alpha comes from the colour as given.
+ *  Null when the browser does not read it as a colour. */
+function paintedColor(value: string): Rgba | null {
+  const parsed = parseColor(value);
+  if (parsed) return parsed;
+  if (typeof CSS === "undefined" || !CSS.supports("color", value)) return null;
+  if (!canvas) {
+    const el = document.createElement("canvas");
+    el.width = el.height = 1;
+    canvas = el.getContext("2d", { willReadFrequently: true });
+    if (!canvas) return null;
+  }
+  const ctx = canvas;
+  const read = (v: string) => {
+    ctx.clearRect(0, 0, 1, 1);
+    ctx.fillStyle = v;
+    ctx.fillRect(0, 0, 1, 1);
+    return ctx.getImageData(0, 0, 1, 1).data;
+  };
+  const a = read(value)[3] / 255;
+  const opaque = `rgb(from ${value} r g b / 1)`;
+  const px = CSS.supports("color", opaque) ? read(opaque) : read(value);
+  return { r: px[0], g: px[1], b: px[2], a };
+}
+
+const rgbaString = ({ r, g, b, a }: Rgba) => `rgba(${r}, ${g}, ${b}, ${a})`;
+
+/** A property's value as it rests: the end keyframe of a running CSS
+ *  transition on it, or else its computed value. `animated` names a
+ *  keyframe animation on it instead, which has no resting value. Read-only:
+ *  nothing here finishes, pauses or seeks an animation. */
+function settled(el: Element, property: string): { value: string; moving?: boolean } | { animated: string } {
+  const camel = property.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+  for (const a of el.getAnimations?.() ?? []) {
+    if (a.playState === "finished" || a.playState === "idle") continue;
+    if (!(a.effect instanceof KeyframeEffect)) continue;
+    const frames = a.effect.getKeyframes();
+    if (!frames.some((f) => camel in f)) continue;
+    if (typeof CSSTransition !== "undefined" && a instanceof CSSTransition) {
+      const end = [...frames].reverse().find((f) => camel in f)?.[camel];
+      if (typeof end === "string" && end) return { value: end, moving: true };
+      continue;
+    }
+    const name = typeof CSSAnimation !== "undefined" && a instanceof CSSAnimation ? a.animationName : a.id || "an animation";
+    return { animated: `${nodeLabel(nodeOf(el))}'s ${property} is animated (${name})` };
+  }
+  return { value: getComputedStyle(el).getPropertyValue(property).trim() };
+}
+
+/** The text colour as it rests. Colour is inherited, so a label in a
+ *  `<span>` takes its link's colour mid-transition: the read climbs from the
+ *  node through each one that follows its parent's colour to the first that
+ *  is transitioned or animated, or sets its own. A node sets its own when
+ *  the stylesheets or its classes say so (`setsColor`), or when its colour
+ *  differs from its parent's, since an inherited value is the parent's
+ *  exactly; a child that sets its own is never followed, even where the two
+ *  match at rest. */
+function settledText(
+  el: Element,
+  setsColor: (node: Element) => boolean
+): { value: string; moving?: boolean } | { animated: string } {
+  for (let node: Element = el; ; ) {
+    const read = settled(node, "color");
+    if ("animated" in read || read.moving) return read;
+    const parent = node.parentElement;
+    if (!parent || setsColor(node) || getComputedStyle(parent).color !== getComputedStyle(node).color) return read;
+    node = parent;
+  }
+}
+
+/** Whether a node holds text of its own, not only its children's. */
+function ownsText(el: Element): boolean {
+  return Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && (n.nodeValue ?? "").trim());
+}
+
+/** The contrast of the pinned element's own text against its ground; null
+ *  when it holds no text of its own. `tokens` are its token lines, which
+ *  name the text's token; `setsColor` says whether a node's stylesheets or
+ *  classes set its colour (`setsColor` in styles.ts). */
+export function readContrast(
+  el: Element,
+  tokens: TokenLine[],
+  index: TokenIndex,
+  theme: ThemeToken[],
+  ladderUrl: string,
+  setsColor: (node: Element) => boolean
+): ContrastReport | null {
+  if (!ownsText(el)) return null;
+  const cs = getComputedStyle(el);
+  const color = settledText(el, setsColor);
+  if ("animated" in color) return { status: "not measured", why: color.animated };
+  const text = paintedColor(color.value);
+  if (!text) return { status: "unreadable", why: `its text colour reads as ${color.value}` };
+
+  const layers: Rgba[] = [];
+  let groundNode: Element | null = null;
+  let groundValue = "";
+  for (let node: Element | null = el; node; node = node.parentElement) {
+    const image = settled(node, "background-image");
+    if ("animated" in image) return { status: "not measured", why: image.animated };
+    if (image.value !== "none") {
+      const what = /gradient\(/.test(image.value) ? "a gradient" : "an image";
+      return { status: "not measured", why: `it sits on ${what}, on ${nodeLabel(nodeOf(node))}` };
+    }
+    const opacity = settled(node, "opacity");
+    if ("animated" in opacity) return { status: "not measured", why: opacity.animated };
+    if (parseFloat(opacity.value) < 1) {
+      return { status: "not measured", why: `${nodeLabel(nodeOf(node))} is drawn at ${opacity.value} opacity` };
+    }
+    const bg = settled(node, "background-color");
+    if ("animated" in bg) return { status: "not measured", why: bg.animated };
+    const fill = paintedColor(bg.value);
+    if (!fill) return { status: "unreadable", why: `the fill of ${nodeLabel(nodeOf(node))} reads as ${bg.value}` };
+    if (fill.a <= 0) continue;
+    layers.push(fill);
+    if (fill.a >= 1) {
+      groundNode = node;
+      groundValue = bg.value;
+      break;
+    }
+  }
+  // Nothing on the page paints an opaque fill: the browser's canvas is white.
+  let ground: Rgba = groundNode ? layers.pop()! : { r: 255, g: 255, b: 255, a: 1 };
+  const translucent = layers.length;
+  for (const layer of layers.reverse()) ground = over(layer, ground);
+
+  const size = parseFloat(cs.fontSize);
+  const large = size >= 24 || (size >= 18.66 && parseInt(cs.fontWeight, 10) >= 700);
+  const floor = large ? AA_LARGE_TEXT : AA_SMALL_TEXT;
+  const m = measure(rgbaString(text), rgbaString(ground), floor);
+  if (!m) return { status: "unreadable", why: "a composited value could not be read" };
+
+  const colorLine = tokens.find((l) => l.property === "color" && !l.state && !l.pseudo);
+  const textToken = colorLine?.tokens[0] ?? null;
+  // Named from the value the figure used, never an in-between one. A tie
+  // between two tokens goes to the one whose class the fill wears
+  // (`bg-brand-main`, not an equal brand step), as the value match does.
+  let groundToken: InspectorToken | null = null;
+  if (groundNode && !translucent) {
+    const candidates = byProperty("background", index.colors.get(groundValue) ?? []);
+    const node = groundNode;
+    groundToken =
+      candidates.find((t) => {
+        const cls = utilityFor("background", t.name, theme);
+        return cls && node.classList.contains(cls);
+      }) ??
+      candidates[0] ??
+      null;
+  }
+  return {
+    status: "measured",
+    ratio: m.ratio,
+    floor,
+    passes: m.passes,
+    large,
+    text: m.fg,
+    ground: m.bg,
+    textToken,
+    groundToken,
+    groundNode: groundNode ? nodeOf(groundNode) : null,
+    layers: translucent,
+    ladderUrl: textToken && groundToken && ladderUrl ? ladderUrl : null,
+  };
+}
+
+/* ── The doc that describes the page ─────────────────────────────────────
+   A feature doc names the routes it describes in its frontmatter
+   (`routes:`), the paths Next's router answers. A bracket segment matches as
+   the router would: `[id]` one segment, `[...slug]` one or more,
+   `[[...slug]]` none or more. */
+
+function routeMatches(route: string, page: string): boolean {
+  const norm = (p: string) => (p.length > 1 ? p.replace(/\/+$/, "") : p);
+  const want = norm(route).split("/").filter(Boolean);
+  const have = norm(page).split("/").filter(Boolean);
+  for (let i = 0; i < want.length; i++) {
+    const seg = want[i];
+    if (/^\[\[\.\.\.[^\]]+\]\]$/.test(seg)) return true;
+    if (/^\[\.\.\.[^\]]+\]$/.test(seg)) return have.length > i;
+    if (i >= have.length) return false;
+    if (/^\[[^\]]+\]$/.test(seg)) continue;
+    if (seg !== have[i]) return false;
+  }
+  return want.length === have.length;
+}
+
+/** The feature docs whose routes cover `page`. */
+export function docsForPage(page: string, docs: InspectorPageDoc[]): InspectorPageDoc[] {
+  return docs.filter((d) => d.routes.some((r) => routeMatches(r, page)));
 }
 
 /* ── The report: one reading of a pin ─────────────────────────────────────
@@ -615,6 +917,9 @@ export interface TokenLine {
   state: string | null;
   /** The pseudo-element it styles (`::after`); null for the element. */
   pseudo: string | null;
+  /** A value written without a token that equals one of its property's
+   *  family in the theme in play: `gap-[2px]` and `--space-tiny`. */
+  equals?: string | null;
 }
 
 /** A rule that styles the pinned element, as its stylesheet writes it. */
@@ -695,6 +1000,7 @@ export interface PinnedContext {
   location: LocationReport;
   /** Instances on the page of the identified component. */
   componentInstances: number;
+  contrast: ContrastReport | null;
 }
 
 export interface SiblingReport {
@@ -748,6 +1054,9 @@ export interface PinReport {
     variants: { map: string; options: string[]; active: string[] }[];
     usage: { count: number; files: string[] };
     siblings: SiblingReport[];
+    /** The components its `@whenNot` names, matched whole-word against the
+     *  inventory, each with its styleguide entry. */
+    alternatives: { name: string; url: string }[];
     /** How many instances are on this page. */
     instances: number;
   } | null;
@@ -756,7 +1065,15 @@ export interface PinReport {
   patterns: { node: NodeReport | null; levelsUp: number; list: PatternReport[] } | null;
   /** Every rule in the project's stylesheets that styles the element. */
   styledBy: RuleReport[];
+  /** Each token carries its light and dark values (`light`, `dark`), and the
+   *  one in play (`current`). */
   tokens: TokenLine[];
+  /** How its own text reads against the ground it sits on; null when it
+   *  holds no text of its own. */
+  contrast: ContrastReport | null;
+  /** The feature docs whose `routes:` cover the page; empty when none does,
+   *  null when the feed was refused. */
+  pageDocs: { title: string; path: string; url: string }[] | null;
   /** Shared UI rules naming the pinned component. A rule that names it
    *  constrains any edit, so these travel whole. */
   rules: InspectorUiRule[];
@@ -806,6 +1123,33 @@ export function describePin(
     else moreAbove++;
   }
 
+  // Each token named, with what it resolves to in both themes from the parse,
+  // and in the one in play from the page. A refused feed has the page alone.
+  const root = getComputedStyle(document.documentElement);
+  const parsed = new Map<string, { light?: string | null; dark?: string | null }>();
+  for (const t of [...(data?.theme ?? []), ...(data?.tokens ?? [])]) parsed.set(t.name, t);
+  const valued = (t: InspectorToken): InspectorToken => {
+    const p = parsed.get(t.name);
+    return { ...t, light: p?.light ?? null, dark: p?.dark ?? null, current: root.getPropertyValue(t.name).trim() || null };
+  };
+  const tokens = pinned.tokens.map((l) => ({ ...l, tokens: l.tokens.map(valued) }));
+  const contrast: ContrastReport | null =
+    pinned.contrast?.status === "measured"
+      ? {
+          ...pinned.contrast,
+          textToken: pinned.contrast.textToken && valued(pinned.contrast.textToken),
+          groundToken: pinned.contrast.groundToken && valued(pinned.contrast.groundToken),
+        }
+      : pinned.contrast;
+
+  // A `@whenNot` names another component by its bare name ("use LinkButton").
+  const alternatives = (whenNot: string | null, self: string) =>
+    whenNot
+      ? [...known.values()]
+          .filter((k) => k.name !== self && new RegExp(`\\b${k.name}\\b`).test(whenNot))
+          .map((k) => ({ name: k.name, url: k.url }))
+      : [];
+
   return {
     project: data?.project || null,
     page: where.page,
@@ -846,6 +1190,7 @@ export function describePin(
                   return s ? [{ name: s.name, file: s.file, url: s.url }] : [];
                 }),
             })),
+            alternatives: alternatives(c.whenNot, c.name),
             instances: pinned.componentInstances,
           }
         : null,
@@ -857,7 +1202,11 @@ export function describePin(
         }
       : null,
     styledBy: pinned.styledBy,
-    tokens: pinned.tokens,
+    tokens,
+    contrast,
+    pageDocs: where.gated
+      ? null
+      : docsForPage(where.page, data?.pageDocs ?? []).map(({ title, path, url }) => ({ title, path, url })),
     rules,
     otherRules: (data?.uiRules ?? []).filter((p) => !ruleTitles.has(p.title)),
     rulesDocUrl: data?.uiRulesDocUrl || null,
@@ -997,7 +1346,9 @@ function tokenPhrase(m: TokenLine): string {
     m.from.kind === "rule"
       ? ` (${baseName(m.from.file)}:${m.from.line})`
       : m.from.kind === "class"
-        ? ` (${m.from.className})`
+        ? names.length
+          ? ` (${m.from.className})`
+          : "" // a one-off's value is its class, already printed
         : m.from.kind === "inline"
           ? " (style attribute)"
           : m.from.kind === "inherited"
@@ -1007,7 +1358,8 @@ function tokenPhrase(m: TokenLine): string {
             : names.length
               ? ", by value"
               : "";
-  return `${lead ? `${lead}, ` : ""}${m.property} ${names.length ? names.join(" ") : shortValue(m.value)}${from}${names.length ? "" : ", no token"}`;
+  const none = names.length ? "" : `, no token${m.equals ? `, equals ${m.equals}` : ""}`;
+  return `${lead ? `${lead}, ` : ""}${m.property} ${names.length ? names.join(" ") : shortValue(m.value)}${from}${none}`;
 }
 
 /** Which location line writes the element's visible text, when the text
@@ -1023,11 +1375,13 @@ function textWrittenAt(r: PinReport): "rendered" | "calledFrom" | null {
 }
 
 /** One block, shaped to paste into a session beside the ask: a pointer, not
- *  a briefing. It carries what maps the page to the code (where the element
- *  is written, what it is, what styles it, how many on the page share it)
+ *  a briefing. It carries what maps the page to the code (the feature doc a
+ *  change to the page owes, where the element is written, what it is, what
+ *  styles it, how many on the page share it)
  *  and what only the page knows (the tokens in play, the theme, the width,
  *  the state), and nothing a session gets by opening the file it points at:
- *  no docblock, no siblings, no rule text, no declarations, no doc list. A
+ *  no docblock, no siblings, no rule text, no declarations, no doc list,
+ *  no contrast figure or other theme's values, which change no edit's place. A
  *  picker that already sends the element's HTML and a screenshot (Claude's
  *  preview does) is matched by this, not repeated. The whole reading stays
  *  on `window.__inspectorPin.report`. Rendered from the report alone; voice
@@ -1040,6 +1394,9 @@ export function buildContextBlock(r: PinReport): string {
     r.state.length ? `${stateWords(r.state)} when pinned` : null,
   ];
   lines.push(`Page: ${[r.page, ...view].filter(Boolean).join(" · ")}`);
+  // A change to the page owes its feature doc an update, so the doc is where
+  // a session edits too.
+  if (r.pageDocs?.length) lines.push(`Page doc: ${r.pageDocs.map((d) => d.path).join(" · ")}`);
   const { tag, id, classes, text } = r.element;
   lines.push(
     `Element: <${tag}${id ? ` id="${id}"` : ""}${classes.length ? ` class="${classes.join(" ")}"` : ""}>${text ? `, "${text}"` : ""}`

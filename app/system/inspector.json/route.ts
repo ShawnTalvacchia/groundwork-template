@@ -3,7 +3,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { getCensus, getComponentDetails, getStyleInventory, getStyleguide, utilityByRootToken } from "@/lib/styleguide";
 import { PROJECT_NAME } from "@/lib/project";
-import { headingSlug } from "@/lib/system";
+import { getAllDocs, headingSlug } from "@/lib/system";
 
 /**
  * The element inspector's data feed: token names with their authored chains
@@ -52,6 +52,25 @@ const PATTERNS_DOC = "implementation/component-patterns.md";
  *  not a doc: it always exists, and there is no file behind it to open. */
 const COMPONENTS_PAGE = "/system/styleguide/components";
 
+/** This route's own path. The doc that declares it is the inspector's own,
+ *  which describes the instrument, never the page it is pinned on. */
+const FEED = "/system/inspector.json";
+
+/** The feature docs that declare the routes they describe, each route a
+ *  path (`/`, `/plants/[id]`); prose in the field (`any page + ?inspect`) is
+ *  not one. The overlay matches them against the page it is pinned on. */
+function getPageDocs() {
+  return getAllDocs()
+    .filter((d) => d.dir === "features" && !d.routes.includes(FEED))
+    .map((d) => ({
+      title: d.title,
+      path: d.sourcePath,
+      url: `/system/docs/${d.relPath}`,
+      routes: d.routes.filter((r) => /^\/\S*$/.test(r)),
+    }))
+    .filter((d) => d.routes.length);
+}
+
 /** True when a doc exists under this project's `docs/`. Load-bearing for the
  *  export: `/system/docs/<path>` is statically generated with dynamicParams
  *  off, so a pointer at an absent file is a hard 404 rather than a graceful
@@ -96,13 +115,23 @@ export async function GET() {
       name: t.name,
       raw: t.raw,
       utility: utilities.get(t.name) ?? null,
+      // Resolved per theme by the same parse; `dark` is null when it does
+      // not flip.
+      light: t.light,
+      dark: t.dark,
     }))
   );
   // The @theme layer, each name with the :root token it reads: how a
   // utility class an element wears (`bg-brand-main`) names its token, and
   // how a rule that writes a theme name (`var(--text-2xs)`) is read.
   const theme = styleguide.theme.flatMap((section) =>
-    section.tokens.map((t) => ({ name: t.name, raw: t.raw, target: t.target === t.name ? null : t.target }))
+    section.tokens.map((t) => ({
+      name: t.name,
+      raw: t.raw,
+      target: t.target === t.name ? null : t.target,
+      light: t.light,
+      dark: t.dark,
+    }))
   );
 
   // Full details, not just the inventory: docblock (the component's one-home
@@ -154,5 +183,9 @@ export async function GET() {
         : []),
       { label: "The live styleguide", path: null, url: COMPONENTS_PAGE },
     ],
+    pageDocs: getPageDocs(),
+    // Where a pair's contrast is fixed: the Colors page measures every text
+    // rung on every ground, both themes.
+    ladderUrl: "/system/styleguide",
   });
 }

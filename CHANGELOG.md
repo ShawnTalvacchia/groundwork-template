@@ -16,6 +16,39 @@ Every change the template ships that a project built on it may want, from entry 
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 22 · A pin measures its text where it sits, gives each token in both themes, reads one-off values as written, and names the doc for its page
+
+**Class:** parser
+**Depends on:** the element inspector (`3a9e01b`) · the token parse in `lib/styleguide.ts` and the feature registry's `routes:` (`feb807b`)
+**Resolves:** none
+
+**Does this affect you?** Every project that kept the element inspector (`?inspect`). If you removed it, nothing here applies.
+
+**What changed.**
+
+- **A pin measures its text where it sits.** For an element with text of its own, the panel gives the contrast of that text against the ground under it. The read walks up the element's ancestors to the first opaque fill, composites each translucent fill on the way, and lays the text's own alpha over the result. With nothing opaque, the ground is the browser's white canvas. The verdict is a figure, a floor and a word. The floor is WCAG's: 4.5:1, or 3:1 for large text (24px, or 18.66px at 700), and the panel says which. A fail reads `under`. Over an image or a gradient, or under an ancestor drawn at reduced opacity, it says `not measured` and why. When both sides are tokens, the panel names the pair and links the Colors page, since a pair's defect is fixed at the token. The figure is on the report and the panel, never in the copied block.
+- **Every colour the browser paints is read.** Chrome reports any `color-mix()` as `oklab()`, Tailwind's `/50` opacity utilities included, and some values as `oklch()` or `color(srgb …)`. `parseColor` in `lib/contrast.ts` reads none of those. The inspector paints such a colour on a 1×1 canvas and reads it back. `parseColor` and the Colors page's ladder are unchanged.
+- **A colour is read as it rests, never mid-transition.** A running CSS transition holds a computed colour in between. A tab that draws no frames, such as an agent's preview pane while it is hidden, never advances it. So just after a theme switch, a button with `transition-colors` still computes its old fill. The inspector reads such a colour from the transition's end keyframe, without touching the animation. Text colour is inherited, so for a label in a `<span>` the read climbs to the link or button whose transition sets the colour. It stops at any node that sets its own, read from the stylesheets, the style attribute and the classes. A keyframe animation has no resting value and reads `not measured`, by name.
+- **Each token carries its value in both themes.** The feed serves each token's resolved light and dark values, from the parse the styleguide reads. The panel prints the theme in play first and the other beside it. A token that does not flip says so: `12px in both themes`. A refused feed knows only the value in play, and says so.
+- **A bracketed class is read as written.** `sm:pt-[2px]` used to read as `--space-tiny, by value`, a guess from the computed value. Now a bracketed value is a line of its own, `no token`, wherever its property has a token family. Where the value equals a token of that family, the line says so (`equals --space-tiny`), since the fix is that token's class. A token inside the brackets (`bg-[var(--x)]`, or v4's `bg-(--x)`) reads as that token. A property with no family says nothing: `h-[24px]` adds no line.
+- **Whether a property has a family has one answer.** It has one when the declaration test's list in `styles.ts` names it, or when a prefix in `UTILITIES` sets it and your `@theme` fills its namespace. So margin counts through `--spacing-*`, and max-width only where you define `--container-*`. A value made only of keywords and percentages (`0 auto`, `100%`) says nothing a token would.
+- **The panel names the feature doc for the page.** The feed serves the feature docs whose `routes:` frontmatter lists a path. The panel's Docs section leads with the doc whose route covers the page, matched as Next's router reads a path: `[id]` is one segment, `[...slug]` one or more, `[[...slug]]` none or more. A page no doc covers says so, and a route entry that is not a path is skipped. The copied block gains one line, `Page doc:`, because a change to the page owes that doc an update. Where no doc covers the page, the block adds nothing. A fresh copy ships no feature docs, so this starts naming one when yours list their routes.
+- **Not for links the components it names.** Each component name in a `@whenNot` sentence, matched as a whole word, links to that component's styleguide entry. PillToggle's links TabBar and Toggle.
+
+**How to adopt.**
+
+1. **`components/inspector/resolve.ts`, `styles.ts` and `InspectorOverlay.tsx`.** Take them whole unless you changed them. If you did, the changes in `resolve.ts` are:
+   - `readContrast`, with `settled`, `settledText` and `paintedColor`, and `ContrastReport`.
+   - `tokensEqualTo`, and `docsForPage` with `routeMatches`.
+   - `light`, `dark` and `current` on `InspectorToken`, and `pageDocs` and `ladderUrl` on `InspectorData`.
+   - On the report, `contrast`, `pageDocs` and the component's `alternatives`. On `TokenLine`, `equals`.
+   - The `Page doc:` line in `buildContextBlock`.
+
+   In `styles.ts`: `readArbitrary`, `hasFamily` with `keywordsOnly` and `themedFamily`, `setsColor`, and the `equals` pass in `readStyles`. In the overlay: the Contrast section, `themeValues` on each token line, `linkNames` in Not for, and "This page" in Docs.
+2. **`app/system/inspector.json/route.ts`:** the `getAllDocs` import, `FEED` and `getPageDocs`, `light` and `dark` on each token and `@theme` name, and `pageDocs` and `ladderUrl` in the response. Your gate paragraph stays as it is.
+
+**Check:** run `npm run dev`, choose the light theme and open `/?inspect`. Pin "Your Project". The panel reads `13.67:1`, `floor 3:1, large text`, and `--text-primary on --surface-base, the fill of body`. Its color line reads `light #21262e · dark #edeff2`, and Docs leads with `This page: no feature doc declares its route.` These figures are the shipped ramps', so re-measure if you re-skinned. Then open `/system/styleguide/components?inspect` and pin a row label such as "What". Its padding line reads `sm:pt-[2px] · no token · equals --space-tiny`. Pin a PillToggle demo, and TabBar and Toggle are links in its Not for.
+
 ## 21 · Next.js 16.3.8 closes three critical advisories: take this entry first
 
 **Class:** parser

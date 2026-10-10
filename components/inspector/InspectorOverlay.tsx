@@ -17,6 +17,7 @@ import {
   listSeparator,
   locationPhrase,
   nodeLabel,
+  readContrast,
   SIBLING_VERB,
   sourcePhrase,
   stateWords,
@@ -25,14 +26,16 @@ import {
   usageLine,
   variantName,
   variantPhrase,
+  type ContrastReport,
   type InspectorData,
+  type InspectorToken,
   type PinnedContext,
   type PinReport,
   type TokenLine,
 } from "./resolve";
 import { IGNORE, type InspectorAsk, type InspectorPin } from "./InspectorGate";
 import { readLocation } from "./source";
-import { patternElements, readPatterns, readState, readStyles } from "./styles";
+import { patternElements, readPatterns, readState, readStyles, setsColor } from "./styles";
 
 /**
  * The inspect mode. Lazy-loaded by InspectorGate only when the URL carries
@@ -104,6 +107,35 @@ const LINK = "text-brand-main underline-offset-2 hover:underline";
  *  that says it is empty rather than disappearing. */
 function Missing({ children }: { children: ReactNode }) {
   return <span className="italic text-fg-gray">{children}</span>;
+}
+
+/** A token's value in each theme, the one in play first. A token that
+ *  does not flip says so; a refused feed knows only the value in play. */
+function themeValues(t: InspectorToken, theme: string | null, gated: boolean): string {
+  if (gated || !t.light) return `${t.current ?? "no value"}, the other theme not known${gated ? ": the record is gated" : ""}`;
+  if (!t.dark) return `${t.light} in both themes`;
+  return theme === "dark" ? `dark ${t.dark} · light ${t.light}` : `light ${t.light} · dark ${t.dark}`;
+}
+
+/** "4.62:1", to the figure the styleguide's ladder prints. */
+function ratioText(n: number): string {
+  return `${n.toFixed(2)}:1`;
+}
+
+/** A sentence with the component names in it linked to their entries. */
+function linkNames(text: string, names: { name: string; url: string }[]): ReactNode {
+  if (!names.length) return text;
+  const re = new RegExp(`\\b(${names.map((n) => n.name).join("|")})\\b`);
+  return text.split(re).map((part, i) => {
+    const hit = i % 2 === 1 ? names.find((n) => n.name === part) : null;
+    return hit ? (
+      <a key={i} href={hit.url} target="_blank" rel="noreferrer" className={LINK}>
+        {part}
+      </a>
+    ) : (
+      <Fragment key={i}>{part}</Fragment>
+    );
+  });
 }
 
 /** The short word for where a token line came from. */
@@ -199,14 +231,16 @@ export function InspectorOverlay({ ask, onExit }: { ask: InspectorAsk | null; on
       const index = buildIndex(d.tokens, probe);
       const component = identifyComponent(el, d.components);
       const location = readLocation(el, new Set(d.components.map((c) => c.file)));
+      const styles = readStyles(el, d, index);
       const next: PinnedContext = {
         element: el,
         component,
         patterns: readPatterns(el, d, IGNORE),
-        ...readStyles(el, d, index),
+        ...styles,
         state,
         location: location.now,
         componentInstances: component ? componentElements(component.component, IGNORE).length : 0,
+        contrast: readContrast(el, styles.tokens, index, d.theme, d.ladderUrl, (n) => setsColor(n, d)),
       };
       // Set here as well as in state, so a key pressed before the re-render
       // moves from this pin rather than the last one.
@@ -395,6 +429,53 @@ export function InspectorOverlay({ ask, onExit }: { ask: InspectorAsk | null; on
       </p>
     );
   };
+
+  /** How the pinned text reads where it sits: the figure, the floor and the
+   *  word, then the pair. The word carries the verdict; colour is not used. */
+  const contrastSection = (k: ContrastReport) => (
+    <section aria-label="Contrast" className="mt-2 flex flex-col gap-0.5 border-t border-edge-light pt-2 text-2xs">
+      {k.status === "measured" ? (
+        <>
+          <p className="flex flex-wrap items-baseline gap-x-1.5">
+            <span className="font-semibold text-fg-tertiary">Contrast</span>
+            <span className="font-mono text-fg-primary">{ratioText(k.ratio)}</span>
+            {!k.passes && <span className="font-semibold text-fg-primary">under</span>}
+            <span className="text-fg-tertiary">
+              floor {k.floor}:1{k.large ? ", large text" : ""}
+            </span>
+          </p>
+          <p className="text-fg-tertiary">
+            <span className="font-mono text-fg-secondary">{k.textToken?.name ?? k.text}</span> on{" "}
+            <span className="font-mono text-fg-secondary">{k.groundToken?.name ?? k.ground}</span>
+            {k.groundNode ? `, the fill of ${nodeLabel(k.groundNode)}` : ", the browser's white canvas"}
+            {k.layers > 0 && `, under ${k.layers} translucent fill${k.layers === 1 ? "" : "s"}`}
+            {/* Both sides tokens: the pair's defect is the tokens', so the
+                link is to where they are measured, not to this callsite.
+                The ladder there holds text rungs on surfaces only, so the
+                words name the page, never claim this pair is on it. */}
+            {k.ladderUrl ? (
+              <>
+                . Both are tokens, so a fix lands on the tokens:{" "}
+                <a href={k.ladderUrl} target="_blank" rel="noreferrer" className={LINK}>
+                  the ladder
+                </a>
+                .
+              </>
+            ) : (
+              "."
+            )}
+          </p>
+        </>
+      ) : (
+        <p className="flex flex-wrap items-baseline gap-x-1.5">
+          <span className="font-semibold text-fg-tertiary">Contrast</span>
+          <Missing>
+            {k.status}: {k.why}
+          </Missing>
+        </p>
+      )}
+    </section>
+  );
 
   const c = report?.component ?? null;
   const loc = report?.location ?? null;
@@ -603,7 +684,7 @@ export function InspectorOverlay({ ask, onExit }: { ask: InspectorAsk | null; on
                   </p>
                   <p className="leading-relaxed text-fg-tertiary">
                     <span className="font-semibold">Not for: </span>
-                    {c.whenNot ?? <Missing>No @whenNot tag in the docblock.</Missing>}
+                    {c.whenNot ? linkNames(c.whenNot, c.alternatives) : <Missing>No @whenNot tag in the docblock.</Missing>}
                   </p>
                   {c.variants.length > 0 && (
                     <p className="text-2xs text-fg-tertiary">{c.variants.map(variantPhrase).join(" · ")}</p>
@@ -648,6 +729,8 @@ export function InspectorOverlay({ ask, onExit }: { ask: InspectorAsk | null; on
                 </section>
               )}
 
+              {report.contrast && contrastSection(report.contrast)}
+
               {/* Tokens in play, each with where its name came from: a rule
                   or a class as written, inherited, or matched by value. The
                   full source, file and line, is in the tooltip and the block. */}
@@ -671,8 +754,17 @@ export function InspectorOverlay({ ask, onExit }: { ask: InspectorAsk | null; on
                       ) : (
                         <span className={m.from.kind === "inherited" ? "text-fg-secondary" : "text-warning-strong"}>
                           {m.value} · no token
+                          {m.equals && <span className="text-fg-tertiary"> · equals {m.equals}</span>}
                         </span>
                       )}
+                      {/* Each token's value in the other theme beside the
+                          one in play. A value match names its best only. */}
+                      {(m.from.kind === "value" ? m.tokens.slice(0, 1) : m.tokens).map((t) => (
+                        <span key={t.name} className="block font-sans text-2xs text-fg-tertiary">
+                          {m.tokens.length > 1 && m.from.kind !== "value" ? `${t.name}: ` : ""}
+                          {themeValues(t, report.view.theme, report.gated)}
+                        </span>
+                      ))}
                     </span>
                     {/* A state or pseudo-element line says so beside its
                         source, where the column has room: "rule on hover". */}
@@ -694,6 +786,27 @@ export function InspectorOverlay({ ask, onExit }: { ask: InspectorAsk | null; on
           {data && (data.docs.length > 0 || c) && (
             <div className="mt-3 border-t border-edge-light pt-2">
               <p className="text-2xs font-semibold uppercase tracking-wide text-fg-tertiary">Docs</p>
+
+              {/* The feature doc that describes this page, from the
+                  `routes:` its frontmatter declares; a page none covers says
+                  so. A refused feed knows no docs. */}
+              {report?.pageDocs && (
+                <p className="mt-1">
+                  <span className="text-fg-tertiary">This page: </span>
+                  {report.pageDocs.length ? (
+                    report.pageDocs.map((d, i) => (
+                      <Fragment key={d.path}>
+                        {listSeparator(i, report.pageDocs!.length)}
+                        <a href={d.url} target="_blank" rel="noreferrer" className={LINK} title={d.path}>
+                          {d.title}
+                        </a>
+                      </Fragment>
+                    ))
+                  ) : (
+                    <Missing>no feature doc declares its route.</Missing>
+                  )}
+                </p>
+              )}
 
               {c && report && (
                 <ul className="mt-1 space-y-0.5">

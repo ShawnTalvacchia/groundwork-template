@@ -4,6 +4,8 @@ import {
   readUtility,
   STANDARD,
   summaryOf,
+  tokensEqualTo,
+  UTILITIES,
   utilityFor,
   valueLines,
   type InspectorData,
@@ -215,13 +217,35 @@ function tokensIn(value: string, property: string, data: InspectorData): Inspect
 }
 
 /** Properties the token set has a family for, so a value written without a
- *  token is a line of its own: "not a token", as written. A keyword
- *  (`none`, `0`, `inherit`) says nothing a token would. A border shorthand
- *  counts only for a colour written into it, since widths have no tokens. */
+ *  token is a line of its own: "not a token", as written. A value made only
+ *  of keywords and percentages (`none`, `0 auto`, `100%`) says nothing a
+ *  token would. A border shorthand counts only for a colour written into it,
+ *  since widths have no tokens.
+ *
+ *  Two tables answer it, and they must agree. This list is what holds on
+ *  any feed, a refused one included; `UTILITIES` adds each property a prefix
+ *  there sets whose @theme namespace the project fills (`hasFamily`). That
+ *  is how margin counts (`--spacing-`, the padding family), and max-width
+ *  counts only where a project defines `--container-*`. */
 const DESIGN_PROPERTY = /^(color|background(-color)?|font-(size|weight|family)|letter-spacing|line-height|border(-(top|right|bottom|left))?-color|(border-(top|bottom)-(left|right)-)?radius|border-radius|box-shadow|padding(-[\w-]+)?|(row-|column-)?gap)$/;
 const BORDER = /^border(-(top|right|bottom|left))?$/;
 const COLOR_LITERAL = /#[0-9a-f]{3,8}\b|\b(rgba?|hsla?|oklch|oklab|color-mix)\(/i;
-const KEYWORD = /^(none|0|0px|transparent|auto|normal|inherit|initial|unset|revert|currentcolor)$/i;
+const KEYWORD = /^(none|0|0px|transparent|auto|normal|inherit|initial|unset|revert|currentcolor|[\d.]+%)$/i;
+
+/** Whether a value is only keywords: nothing a token would say. */
+function keywordsOnly(value: string): boolean {
+  return value.trim().split(/\s+/).every((w) => KEYWORD.test(w));
+}
+
+/** Whether a utility in `UTILITIES` sets `property` exactly, and the @theme
+ *  layer holds a name in its namespace. */
+function themedFamily(property: string, data: InspectorData): boolean {
+  return UTILITIES.some(([, ns, prop]) => prop === property && data.theme.some((t) => t.name.startsWith(ns)));
+}
+
+function hasFamily(property: string, data: InspectorData): boolean {
+  return DESIGN_PROPERTY.test(property) || themedFamily(property, data);
+}
 
 /** A declaration that leaves the value to the parent sets nothing itself. */
 const DEFERS = /^(inherit|unset)$/i;
@@ -230,7 +254,7 @@ function asWrittenLine(c: Candidate, data: InspectorData): TokenLine | null {
   if (c.property.startsWith("--")) return null;
   const tokens = tokensIn(c.value, c.property, data);
   const untokened =
-    (DESIGN_PROPERTY.test(c.property) && !KEYWORD.test(c.value)) || (BORDER.test(c.property) && COLOR_LITERAL.test(c.value));
+    (hasFamily(c.property, data) && !keywordsOnly(c.value)) || (BORDER.test(c.property) && COLOR_LITERAL.test(c.value));
   if (!tokens.length && !untokened) return null;
   return {
     property: c.property,
@@ -252,27 +276,58 @@ function rawOf(name: string, data: InspectorData): string {
 
 const STATE_VARIANTS = new Set(["hover", "focus", "focus-visible", "focus-within", "active"]);
 
-/** A worn class read back to its token: the property it sets, the states it
- *  waits for, and the widest breakpoint it sits under (0 for none). Null
- *  when it is not a token utility, or carries a variant this does not read
+/** A bracketed class read back: the property its prefix sets and, when the
+ *  brackets hold a token (`bg-[var(--x)]`, v4's `bg-(--x)`), that token.
+ *  Null when no prefix in `UTILITIES` sets a property the project has a
+ *  family for, so `h-[24px]` says nothing. Where a prefix sets two
+ *  (`text-` is a colour or a size), the value's type picks, as Tailwind's
+ *  does: a colour is a colour, a number is a weight. */
+function readArbitrary(
+  utility: string,
+  data: InspectorData
+): { property: string; token: string | null } | null {
+  const m = utility.match(/^-?(.+?)-(?:\[(.+)\]|\((--[\w-]+)\))(?:\/[\w.]+)?$/);
+  if (!m) return null;
+  const inner = m[3] ? `var(${m[3]})` : m[2].replace(/^[\w-]+:(?=.)/, "").replace(/_/g, " ");
+  const named = inner.match(/^var\((--[\w-]+)\)$/)?.[1] ?? null;
+  const known = named && (data.tokens.some((t) => t.name === named) || data.theme.some((t) => t.name === named)) ? named : null;
+  if (!known && keywordsOnly(inner)) return null; // `rounded-[inherit]` says nothing a token would
+  const rows = UTILITIES.filter(([prefix, ns]) => prefix === m[1] && data.theme.some((t) => t.name.startsWith(ns)));
+  if (!rows.length) return null;
+  const value = known ? getComputedStyle(document.documentElement).getPropertyValue(known).trim() : inner;
+  const colour = CSS.supports("color", value);
+  const row =
+    rows.length === 1
+      ? rows[0]
+      : (rows.find(([, ns]) => (ns === "--color-") === colour && (ns !== "--font-weight-" || /^\d+$/.test(value))) ??
+        rows.find(([, ns]) => (ns === "--color-") === colour) ??
+        rows[0]);
+  const token = known ? (data.theme.find((t) => t.name === known)?.target ?? known) : null;
+  return { property: row[2], token };
+}
+
+/** A worn class read back to its token: the property it sets, the token it
+ *  names (null for a bracketed value that is not one), the states it waits
+ *  for, and the widest breakpoint it sits under (0 for none). Null when it
+ *  is not a utility this reads, or carries a variant this does not read
  *  (`dark:`, `group-hover:`), or sits under a breakpoint that does not hold. */
 function readClass(
   cls: string,
   data: InspectorData
-): { property: string; token: string; states: string[]; breakpoint: number } | null {
+): { property: string; token: string | null; states: string[]; breakpoint: number } | null {
   const parts: string[] = [];
   let depth = 0;
   let cur = "";
   for (const ch of cls) {
-    if (ch === "[") depth++;
-    else if (ch === "]") depth--;
+    if (ch === "[" || ch === "(") depth++;
+    else if (ch === "]" || ch === ")") depth--;
     if (ch === ":" && depth === 0) {
       parts.push(cur);
       cur = "";
     } else cur += ch;
   }
   const utility = cur.replace(/^!|!$/g, "");
-  const read = readUtility(utility, data.theme);
+  const read = readUtility(utility, data.theme) ?? readArbitrary(utility, data);
   if (!read) return null;
   const states: string[] = [];
   let breakpoint = 0;
@@ -314,7 +369,7 @@ function classLines(el: Element, data: InspectorData, ruledAtAll: Set<string>): 
     const line: TokenLine = {
       property: read.property,
       value: cls,
-      tokens: [{ name: read.token, raw: rawOf(read.token, data), utility: cls }],
+      tokens: read.token ? [{ name: read.token, raw: rawOf(read.token, data), utility: cls }] : [],
       from: { kind: "class", className: cls },
       state: read.states.length ? read.states.join(", ") : null,
       pseudo: null,
@@ -437,6 +492,13 @@ function inheritedLine(
   };
 }
 
+/** Whether the stylesheets, the style attribute or a class set a node's own
+ *  colour at rest. `inherit` and `unset` leave it to the parent. */
+export function setsColor(el: Element, data: InspectorData): boolean {
+  const { written, ruled } = readWritten(el, data);
+  return written.some((l) => !l.state && !l.pseudo && COVERS.color(l.property)) || [...ruled.keys()].some(COVERS.color);
+}
+
 /** Everything the stylesheets and the element's classes say about it, then
  *  the computed values nothing written answers for. */
 export function readStyles(
@@ -447,6 +509,14 @@ export function readStyles(
   const cache = new Map<Element, StyleReading>();
   const { styledBy, written, ruled } = readWritten(el, data);
   const resting = written.filter((l) => !l.state && !l.pseudo);
+  // A one-off class in play names the token its value equals, if one does:
+  // the fix is that token's class.
+  const cs = getComputedStyle(el);
+  for (const l of resting) {
+    if (l.from.kind !== "class" || l.tokens.length) continue;
+    const property = l.property.replace(/ \((\w+)\)$/, "");
+    l.equals = tokensEqualTo(property, cs.getPropertyValue(property).trim(), index)[0]?.name ?? null;
+  }
   const fallback: TokenLine[] = [];
   for (const p of STANDARD) {
     // Something as written answers it, a line or a keyword (`background:
