@@ -31,6 +31,7 @@ Canonical rules + glossary: `docs/CONTRIBUTING.md` → "The Work Model." Live pi
 5. **Phase close = doc review.** See `docs/product-lifecycle.md` → Closing a Phase.
 6. **Push back, don't just comply.** When there's a better approach, make the case — lead with a recommendation, not a menu.
 7. **Never run `npm audit fix --force`.** In this dependency tree it "fixes" advisories by **downgrading Next.js to 9.x** — a pre-App-Router version from 2020 that cannot run this app. `npm audit fix` (without `--force`) is safe. See "A note on `npm audit`" below before acting on a vulnerability report.
+8. **When the user points at an element on a page of this Next app, ask the inspector first.** A picker sends the element, not what it means in this design system. If they pinned it in `?inspect` mode, read `window.__inspectorPin` in the page. If they picked it in the preview or named it, call `await window.__inspector.pin(target)` there. `target` is an element, a selector matching one, or `{ selector, text }` with any part of its text, the picker's included. It resolves with `{ report, block }` without a reload, and leaves the page in `?inspect` mode, which Esc exits. Reason from the block, a pointer to the files, lines, pattern and tokens, and open what it names. `components/inspector/InspectorGate.tsx` says how.
 
 ## A note on `npm audit`
 

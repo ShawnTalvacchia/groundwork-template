@@ -30,14 +30,15 @@ import {
   type PinReport,
   type TokenLine,
 } from "./resolve";
+import { IGNORE, type InspectorAsk, type InspectorPin } from "./InspectorGate";
 import { readLocation } from "./source";
 import { patternElements, readPatterns, readState, readStyles } from "./styles";
 
 /**
  * The inspect mode. Lazy-loaded by InspectorGate only when the URL carries
- * `?inspect` — nothing here runs during normal use (phase board: opt-in,
- * never always-on; read-only by design: the mode selects and reports, it
- * never writes).
+ * `?inspect` or a session calls `window.__inspector.pin` — nothing here runs
+ * during normal use (opt-in, never always-on; read-only by design: the mode
+ * selects and reports, it never writes).
  *
  * Interaction: hover highlights, click pins (and is swallowed, so links and
  * buttons don't fire while inspecting), Esc unpins then exits. The panel and
@@ -65,15 +66,13 @@ import { patternElements, readPatterns, readState, readStyles } from "./styles";
  * It is null while inspecting with nothing pinned, and absent when inspect
  * mode is off, so the three states read apart. While the location's
  * `lines` is `pending`, the block says so; it is rewritten when they land.
+ *
+ * A session's ask (`window.__inspector.pin`, resolved to one element by the
+ * gate) pins through the same `pin` a click does, once the feed has loaded,
+ * and settles with the very object published at `window.__inspectorPin` once
+ * the lines have landed. A pin or an Esc that comes first rejects it, saying
+ * which; an exit is the gate's to answer.
  */
-
-declare global {
-  interface Window {
-    __inspectorPin?: { report: PinReport; block: string } | null;
-  }
-}
-
-const IGNORE = "[data-gw-inspector]";
 
 /** Children ↓ never lands on: nothing that renders, and never the overlay. */
 const UNPINNABLE = "script, style, template, noscript, link, meta";
@@ -128,7 +127,12 @@ function rectOf(el: Element): Rect {
   return { top: r.top, left: r.left, width: r.width, height: r.height };
 }
 
-export function InspectorOverlay({ onExit }: { onExit: () => void }) {
+/** The location is still being read from the dev server's source map. */
+function linesPending(r: PinReport): boolean {
+  return r.location.status === "found" && r.location.lines === "pending";
+}
+
+export function InspectorOverlay({ ask, onExit }: { ask: InspectorAsk | null; onExit: () => void }) {
   const [data, setData] = useState<InspectorData | null>(null);
   const [gated, setGated] = useState(false);
   const [hoverRect, setHoverRect] = useState<Rect | null>(null);
@@ -148,9 +152,18 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
   /** The elements ↑ climbed out of, the current pin's own child first, so ↓
    *  retraces them. */
   const climbedRef = useRef<Element[]>([]);
+  /** A session's ask waiting on its pin's lines, with that pin's number. */
+  const askRef = useRef<{ ask: InspectorAsk; seq: number } | null>(null);
   useEffect(() => {
     dataRef.current = data;
   }, [data]);
+
+  /** Turn away the ask still waiting, saying what came first. */
+  const dropAsk = useCallback((why: string) => {
+    const waiting = askRef.current;
+    askRef.current = null;
+    waiting?.ask.reject(new Error(why));
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -176,7 +189,7 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
   }, []);
 
   const pin = useCallback(
-    (el: Element) => {
+    (el: Element, asked?: InspectorAsk) => {
       const d = dataRef.current;
       const probe = probeRef.current;
       if (!d || !probe) return;
@@ -199,16 +212,20 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
       // moves from this pin rather than the last one.
       pinnedRef.current = next;
       const seq = ++pinSeq.current;
+      dropAsk("Another pin replaced it before its location landed.");
+      if (asked) askRef.current = { ask: asked, seq };
       setReport(describePin(d, next, { gated: gatedRef.current, page: window.location.pathname }));
       setPinnedRect(rectOf(el));
       clearShown();
       setCopied(false);
       setOpen({}); // a new pin starts collapsed
+      // A production build or an unknown spot has nothing to map, and
+      // resolves to the report already published.
       location.mapped.then((loc) => {
-        if (pinSeq.current === seq) setReport((r) => (r ? { ...r, location: loc } : r));
+        if (pinSeq.current === seq && loc !== location.now) setReport((r) => (r ? { ...r, location: loc } : r));
       });
     },
-    [clearShown]
+    [clearShown, dropAsk]
   );
 
   /** Pin an ancestor `levels` up, remembering the way back down. */
@@ -274,6 +291,7 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
       }
       if (e.key !== "Escape") return;
       if (pinnedRef.current) {
+        dropAsk("Esc cleared the pin before its location landed.");
         pinnedRef.current = null;
         pinSeq.current++;
         climbedRef.current = [];
@@ -300,14 +318,31 @@ export function InspectorOverlay({ onExit }: { onExit: () => void }) {
       document.removeEventListener("keydown", onKey, true);
       window.removeEventListener("scroll", onScroll, true);
     };
-  }, [pin, climb, descend, onExit, clearShown]);
+  }, [pin, climb, descend, onExit, clearShown, dropAsk]);
+
+  // A session's ask pins once the feed is here, since `pin` needs it.
+  const askedRef = useRef<InspectorAsk | null>(null);
+  useEffect(() => {
+    if (!ask || !data || askedRef.current === ask) return;
+    askedRef.current = ask;
+    climbedRef.current = [];
+    pin(ask.element, ask);
+  }, [ask, data, pin]);
 
   // One rendering of the block, so the global and the Copy button can never
   // hand over two different texts.
   const block = useMemo(() => (report ? buildContextBlock(report) : null), [report]);
 
+  // Published, then handed to the ask that waits on it, so the promise and
+  // the global hold one object.
   useEffect(() => {
-    window.__inspectorPin = report && block ? { report, block } : null;
+    const now: InspectorPin | null = report && block ? { report, block } : null;
+    window.__inspectorPin = now;
+    const waiting = askRef.current;
+    if (now && waiting && waiting.seq === pinSeq.current && !linesPending(now.report)) {
+      askRef.current = null;
+      waiting.ask.resolve(now);
+    }
   }, [report, block]);
   useEffect(
     () => () => {

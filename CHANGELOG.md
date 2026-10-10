@@ -16,6 +16,31 @@ Every change the template ships that a project built on it may want. Numbered, n
 
 **Every entry names the issues it resolves.** Its **Resolves** line lists the GitHub issues on this repo that the entry fixes, or `none`. It never names an entry in your outbox. You judge those yourself, against What changed, at step 4 of an upgrade.
 
+## 19 · A session asks the inspector for any element, with no click and no reload
+
+**Class:** parser · convention
+**Depends on:** the element inspector (`3a9e01b`)
+**Resolves:** none
+
+**Does this affect you?** Every project that kept the element inspector (`?inspect`) and has sessions driving a browser on it. If you removed the inspector, take step 3 only if you put it back.
+
+**What changed.**
+
+- **A session can ask for a reading itself.** Until now both routes to a session began with a person pinning in `?inspect` mode: the copied block, or `window.__inspectorPin`. Now a session driving the browser calls `await window.__inspector.pin(target)` in the page. It pins the element through the same path a click takes and resolves with `{ report, block }`, the very object `window.__inspectorPin` then holds. It waits for the location's lines, so the block names a line, not `pending`. A production build has none to wait for and resolves at once.
+- **The target is an element, a selector matching exactly one, or `{ selector, text }`.** The last keeps the matches whose text, or `aria-label` for an icon-only control, contains `text`, ignoring case and spacing, for the selectors a picker gives that match many. The text a picker sends matches as it is, across the element's blocks. A target matching none is refused saying so. One matching several is refused with the count and the first three, each by its tag, first class and opening text: the inspector never picks among matches. A refusal loads nothing and leaves the mode off.
+- **Asking enters the mode as the flag does.** The URL gains `?inspect`, the panel shows the pin, Esc clears and exits, and clicks pin. No reload, so an open menu or a half-filled field the element depends on survives. An ask replaces whatever is pinned. A newer ask, a click, an Esc or an exit before the lines land rejects the waiting call, saying which.
+- **The opt-in holds.** The overlay still downloads only when asked, by the flag or by the call. The gate's one addition to a normal page is the function, which takes the gate from about 0.4 KB to 1.2 KB gzipped.
+- **The briefing says when to ask.** `CLAUDE.md` gains Workflow Rule 8: when the user points at an element on a page of this app, read `window.__inspectorPin` if they pinned it, or call `window.__inspector.pin` if they picked it in the preview or named it, passing the picker's text, and reason from the block.
+- **A stale comment is corrected.** The gate said Next's router never sees a `history.replaceState` write. It does: the flag the gate writes is read back by `useSearchParams`.
+
+**How to adopt.**
+
+1. **`components/inspector/InspectorGate.tsx`, from this entry's commit.** Take it whole unless you changed it. If you did, the changes are the `window.__inspector` effect, `targetElement` with `squash` and `matchName`, `writeFlag`, the `ask` state passed to the overlay, and the effect that turns away a waiting ask when the mode ends. `IGNORE` and the two window globals' types now live here.
+2. **`components/inspector/InspectorOverlay.tsx`.** Take it whole unless you changed it. If you did: it takes an `ask` prop, `pin` takes the ask as a second argument, a new effect pins the ask once the feed has loaded, and the effect that publishes `window.__inspectorPin` resolves the waiting ask with the object it publishes. `IGNORE` is imported from the gate.
+3. **`CLAUDE.md`:** add Workflow Rule 8 as written, renumbered to follow your own rules.
+
+**Check:** run `npm run dev` and open `/` without `?inspect`. In the browser console, `await window.__inspector.pin(".theme-toggle-option")` is refused: `".theme-toggle-option" matches 3 elements`, naming each by its label. Then `await window.__inspector.pin({ selector: ".theme-toggle-option", text: "dark" })` resolves. The URL reads `/?inspect`, the panel shows the button pinned, and the block reads `Rendered at: components/ui/ThemeToggle.tsx:61, in ThemeToggle`.
+
 ## 18 · A pin names its CSS pattern, reads its tokens as written, and says which line renders it
 
 **Class:** parser
